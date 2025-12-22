@@ -13,6 +13,8 @@ jobs:
   prepare:
     name: Lint & Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     container:
       image: node:20-alpine
 
@@ -48,6 +50,8 @@ jobs:
   deploy:
     name: Build & Deploy Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: prepare
     if: |
       github.event_name != 'pull_request' &&
