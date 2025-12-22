@@ -1,0 +1,10 @@
+{
+	"plugins": [],
+	"trailingComma": "all",
+	"tabWidth": 4,
+	"semi": true,
+	"singleQuote": false,
+	"bracketSpacing": true,
+	"useTabs": true,
+	"printWidth": 120
+}
