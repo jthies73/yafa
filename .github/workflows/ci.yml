@@ -93,6 +93,11 @@ jobs:
           echo "🏗️ Building yafa-pwa image..."
           docker build -t yafa-pwa-image .
 
+      - name: Setup Docker network
+        run: |
+          echo "🔧 Setting up Docker network..."
+          docker network ls | grep yafa-net || docker network create --subnet=172.37.0.0/24 yafa-net
+
       - name: Deploy Docker container
         run: |
           echo "🚀 Deploying yafa-pwa image to production..."
