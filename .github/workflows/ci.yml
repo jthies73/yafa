@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup environment file
-        if: env.ENV != ''
+        if: secrets.ENV != ''
         run: echo "$ENV" > ./.env
         env:
           ENV: ${{ secrets.ENV }}
@@ -68,11 +68,15 @@ jobs:
 
       - name: Build Docker image
         run: |
+          # Build Docker image with same tag as GitLab CI for consistency
           docker build -t yafa-pwa-image .
 
       - name: Deploy Docker container
         if: github.ref == 'refs/heads/main'
         run: |
+          # Deploy to Docker network matching GitLab CI configuration
+          # Prerequisites: Docker network 'yafa-net' must exist
+          # Create with: docker network create --subnet=172.37.0.0/24 yafa-net
           docker stop yafa-pwa || true
           docker rm yafa-pwa || true
           docker run -d --net yafa-net --ip 172.37.0.26 --name yafa-pwa yafa-pwa-image
