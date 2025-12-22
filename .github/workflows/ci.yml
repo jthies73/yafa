@@ -1,0 +1,96 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  prepare:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container:
+      image: node:20-alpine
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup environment file
+        if: ${{ secrets.ENV != '' }}
+        run: echo "$ENV" > ./.env
+        env:
+          ENV: ${{ secrets.ENV }}
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Lint code
+        run: yarn lint
+
+      - name: Run tests
+        run: yarn test
+
+      - name: Build application
+        run: yarn build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  deploy:
+    name: Build & Deploy Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: prepare
+    if: |
+      github.event_name != 'pull_request' &&
+      (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          # Build Docker image with same tag as GitLab CI for consistency
+          docker build -t yafa-pwa-image .
+
+      - name: Deploy Docker container
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Deploy to Docker network matching GitLab CI configuration
+          # Prerequisites: Docker network 'yafa-net' must exist
+          # Create with: docker network create --subnet=172.37.0.0/24 yafa-net
+          docker stop yafa-pwa || true
+          docker rm yafa-pwa || true
+          docker run -d --net yafa-net --ip 172.37.0.26 --name yafa-pwa yafa-pwa-image
+
+      - name: Manual deployment placeholder
+        if: github.ref != 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Manual deployment triggered for branch: ${{ github.ref_name }}"
+          echo "Docker image built successfully: yafa-pwa-image"
+          echo "To deploy manually, run the following commands on your server:"
+          echo "  docker stop yafa-pwa || true"
+          echo "  docker rm yafa-pwa || true"
+          echo "  docker run -d --net yafa-net --ip 172.37.0.26 --name yafa-pwa yafa-pwa-image"
