@@ -219,13 +219,18 @@ export function exampleAmrapProgression() {
 	return nextState;
 }
 
-// Run all examples if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-	console.log('=== Progression Logic Examples ===\n');
-	exampleRpeAutoregulation();
-	exampleLinkedBackoff();
-	exampleDoubleProgression();
-	exampleCompleteRoutine();
-	exampleAmrapProgression();
-	console.log('\n=== All examples completed ===');
+// Run all examples if this file is executed directly (Node.js only)
+// Note: This is a simple check and may not work in all environments
+try {
+	if (typeof process !== 'undefined' && process.argv && import.meta.url.endsWith(process.argv[1])) {
+		console.log('=== Progression Logic Examples ===\n');
+		exampleRpeAutoregulation();
+		exampleLinkedBackoff();
+		exampleDoubleProgression();
+		exampleCompleteRoutine();
+		exampleAmrapProgression();
+		console.log('\n=== All examples completed ===');
+	}
+} catch {
+	// Ignore errors in detection - this is just a convenience feature
 }

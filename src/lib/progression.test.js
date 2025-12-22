@@ -478,4 +478,27 @@ describe('ProgressionCalculator - Edge Cases', () => {
 		expect(result.needsReview).toBe(true);
 		expect(result.message).toContain('Unknown');
 	});
+
+	it('should handle bonusReps explicitly set to 0', () => {
+		const entry = new ExerciseEntry({
+			id: 'entry-1',
+			exerciseId: 'squat',
+			progressionType: ProgressionType.AMRAP_AUTOREG,
+			currentWeight: 100,
+			settings: { minReps: 5, incrementPerBonusRep: 2.5 },
+		});
+
+		const log = new WorkoutLog({
+			id: 'log-1',
+			entryId: 'entry-1',
+			date: '2024-01-01T10:00:00Z',
+			actualReps: 5,
+			actualWeight: 100,
+			bonusReps: 0, // Explicitly 0, not null
+		});
+
+		const result = ProgressionCalculator.calculateNextState(entry, [log]);
+		expect(result.nextWeight).toBe(100); // No increase with 0 bonus reps
+		expect(result.needsReview).toBe(false);
+	});
 });

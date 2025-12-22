@@ -291,7 +291,7 @@ export class ProgressionCalculator {
 		const { settings } = entry;
 		const { minReps, incrementPerBonusRep = 2.5, maxIncrement = 10 } = settings;
 
-		const bonusReps = lastLog.bonusReps !== null 
+		const bonusReps = lastLog.bonusReps !== null && lastLog.bonusReps !== undefined
 			? lastLog.bonusReps 
 			: Math.max(0, lastLog.actualReps - minReps);
 
