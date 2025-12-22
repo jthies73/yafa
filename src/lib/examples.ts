@@ -5,9 +5,9 @@
  * calculator to implement a complete strength training progression workflow.
  */
 
-import { ProgressionType } from './constants.js';
-import { ExerciseEntry, Routine, WorkoutLog } from './models.js';
-import { ProgressionCalculator, calculateBackoff } from './progression.js';
+import { ProgressionType } from './constants';
+import { ExerciseEntry, Routine, WorkoutLog } from './models';
+import { ProgressionCalculator, calculateBackoff } from './progression';
 
 /**
  * Example 1: RPE-based Autoregulation for Main Lifts
@@ -72,7 +72,7 @@ export function exampleLinkedBackoff() {
 	});
 
 	// 3. Calculate the backoff weight immediately
-	const backoffWeight = calculateBackoff(topSetWeight, backoffEntry.settings);
+	const backoffWeight = calculateBackoff(topSetWeight, backoffEntry.settings as { offsetPct: number });
 
 	console.log('\nLinked Backoff Example:');
 	console.log(`Top Set: ${topSetWeight}kg`);
@@ -222,7 +222,7 @@ export function exampleAmrapProgression() {
 // Run all examples if this file is executed directly (Node.js only)
 // Note: This is a simple check and may not work in all environments
 try {
-	if (typeof process !== 'undefined' && process.argv && import.meta.url.endsWith(process.argv[1])) {
+	if (typeof process !== 'undefined' && process.argv && process.argv[1] && import.meta.url.endsWith(process.argv[1])) {
 		console.log('=== Progression Logic Examples ===\n');
 		exampleRpeAutoregulation();
 		exampleLinkedBackoff();

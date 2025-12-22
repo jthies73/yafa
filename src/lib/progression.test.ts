@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { ProgressionType } from './constants.js';
-import { ExerciseEntry, WorkoutLog } from './models.js';
-import { ProgressionCalculator, calculateBackoff, calculateE1RM } from './progression.js';
+import { ProgressionType, ProgressionTypeValue } from './constants';
+import { ExerciseEntry, WorkoutLog } from './models';
+import { ProgressionCalculator, calculateBackoff, calculateE1RM } from './progression';
 
 describe('ProgressionCalculator - calculateE1RM', () => {
 	it('should calculate E1RM using Brzycki formula', () => {
@@ -462,7 +462,7 @@ describe('ProgressionCalculator - Edge Cases', () => {
 		const entry = new ExerciseEntry({
 			id: 'entry-1',
 			exerciseId: 'squat',
-			progressionType: 'UNKNOWN_TYPE',
+			progressionType: 'UNKNOWN_TYPE' as unknown as ProgressionTypeValue,
 			currentWeight: 100,
 		});
 

@@ -1,12 +1,12 @@
 # Strength Training Progression Logic
 
-This directory contains the core progression logic for the YAFA strength training application. The system is built with pure JavaScript (ES6+) and uses extensive JSDoc comments for type safety and IDE support.
+This directory contains the core progression logic for the YAFA strength training application. The system is built with **TypeScript** for type safety and excellent IDE support.
 
 ## Architecture
 
 The progression system is organized into three main modules:
 
-### 1. Constants (`constants.js`)
+### 1. Constants (`constants.ts`)
 
 Defines the progression types and their default settings:
 
@@ -16,7 +16,7 @@ Defines the progression types and their default settings:
 - **LINEAR_FIXED**: Beginner-friendly fixed weight increments
 - **AMRAP_AUTOREG**: AMRAP sets with bonus rep scaling
 
-### 2. Models (`models.js`)
+### 2. Models (`models.ts`)
 
 Three core data models, all JSON-serializable for IndexedDB storage:
 
@@ -24,7 +24,7 @@ Three core data models, all JSON-serializable for IndexedDB storage:
 - **Routine**: Collection of exercise entries forming a training day
 - **WorkoutLog**: Record of a completed set
 
-### 3. Progression Engine (`progression.js`)
+### 3. Progression Engine (`progression.ts`)
 
 Pure functions for calculating progression:
 
@@ -34,10 +34,10 @@ Pure functions for calculating progression:
 
 ## Quick Start
 
-```javascript
-import { ProgressionType } from './constants.js';
-import { ExerciseEntry, WorkoutLog } from './models.js';
-import { ProgressionCalculator } from './progression.js';
+```typescript
+import { ProgressionType } from './constants';
+import { ExerciseEntry, WorkoutLog } from './models';
+import { ProgressionCalculator } from './progression';
 
 // 1. Create an exercise entry
 const squat = new ExerciseEntry({

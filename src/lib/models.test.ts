@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { ProgressionType } from './constants.js';
-import { ExerciseEntry, Routine, WorkoutLog } from './models.js';
+import { ProgressionType, ProgressionTypeValue } from './constants';
+import { ExerciseEntry, Routine, WorkoutLog } from './models';
 
 describe('ExerciseEntry', () => {
 	describe('constructor', () => {
@@ -31,9 +31,9 @@ describe('ExerciseEntry', () => {
 				settings: { incrementOnSuccess: 5 },
 			});
 
-			expect(entry.settings.incrementOnSuccess).toBe(5);
-			expect(entry.settings.targetRpe).toBeDefined(); // Should have default
-			expect(entry.settings.rpeTolerance).toBeDefined(); // Should have default
+			expect((entry.settings as { incrementOnSuccess?: number }).incrementOnSuccess).toBe(5);
+			expect((entry.settings as { targetRpe?: number }).targetRpe).toBeDefined(); // Should have default
+			expect((entry.settings as { rpeTolerance?: number }).rpeTolerance).toBeDefined(); // Should have default
 		});
 
 		it('should use default values for optional fields', () => {
@@ -154,10 +154,11 @@ describe('ExerciseEntry', () => {
 
 		it('should fail validation without id', () => {
 			const entry = new ExerciseEntry({
+				id: 'entry-temp',
 				exerciseId: 'squat',
 				progressionType: ProgressionType.LINEAR_FIXED,
 			});
-			entry.id = null;
+			entry.id = '' as unknown as string;
 
 			const result = entry.validate();
 			expect(result.valid).toBe(false);
@@ -168,7 +169,7 @@ describe('ExerciseEntry', () => {
 			const entry = new ExerciseEntry({
 				id: 'entry-1',
 				exerciseId: 'squat',
-				progressionType: 'INVALID_TYPE',
+				progressionType: 'INVALID_TYPE' as unknown as ProgressionTypeValue,
 			});
 
 			const result = entry.validate();
@@ -206,6 +207,10 @@ describe('ExerciseEntry', () => {
 				targetRpe: 8,
 				targetReps: 5,
 				currentWeight: 100,
+				settings: {},
+				currentReps: null,
+				parentEntryId: null,
+				metadata: {},
 			};
 
 			const entry = ExerciseEntry.fromJSON(data);
@@ -326,6 +331,7 @@ describe('Routine', () => {
 				id: 'routine-1',
 				name: 'Upper A',
 				entryIds: ['entry-1', 'entry-2'],
+				metadata: {},
 			};
 
 			const routine = Routine.fromJSON(data);
@@ -395,7 +401,7 @@ describe('WorkoutLog', () => {
 				actualReps: 5,
 				actualWeight: 100,
 			});
-			log.id = null;
+			log.id = '' as unknown as string;
 
 			const result = log.validate();
 			expect(result.valid).toBe(false);
@@ -472,6 +478,10 @@ describe('WorkoutLog', () => {
 				date: '2024-01-01T10:00:00Z',
 				actualReps: 5,
 				actualWeight: 100,
+				actualRpe: null,
+				bonusReps: null,
+				completed: true,
+				metadata: {},
 			};
 
 			const log = WorkoutLog.fromJSON(data);

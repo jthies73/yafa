@@ -5,37 +5,40 @@
  * performance data. All functions are deterministic and side-effect free.
  */
 
-import { ProgressionType } from './constants.js';
+import { ProgressionType } from './constants';
+import { ExerciseEntry, WorkoutLog } from './models';
 
 /**
- * @typedef {import('./models.js').ExerciseEntry} ExerciseEntry
- * @typedef {import('./models.js').WorkoutLog} WorkoutLog
+ * Result of calculating the next workout state
  */
+export interface NextStateResult {
+	nextWeight: number;
+	nextReps: number | null;
+	needsReview: boolean;
+	message: string | null;
+	metadata: Record<string, unknown>;
+}
 
 /**
- * @typedef {Object} NextStateResult
- * @property {number} nextWeight - Recommended weight for next session
- * @property {number|null} nextReps - Recommended reps for next session (null if same as current)
- * @property {boolean} needsReview - Flag indicating user should review before proceeding
- * @property {string|null} message - Human-readable explanation of the calculation
- * @property {Object} metadata - Additional calculation details
+ * Settings interface for backoff calculation
  */
+interface BackoffSettings {
+	offsetPct?: number;
+}
 
 /**
  * ProgressionCalculator class containing pure functions for progression math.
- * 
- * @class ProgressionCalculator
  */
 export class ProgressionCalculator {
 	/**
 	 * Calculates the next state for an exercise based on recent performance.
 	 * This is the main entry point for progression calculations.
 	 * 
-	 * @param {ExerciseEntry} entry - The current exercise configuration
-	 * @param {WorkoutLog[]} logs - Array of recent workout logs for this entry, sorted by date descending
-	 * @returns {NextStateResult} The calculated next state
+	 * @param entry - The current exercise configuration
+	 * @param logs - Array of recent workout logs for this entry, sorted by date descending
+	 * @returns The calculated next state
 	 */
-	static calculateNextState(entry, logs) {
+	static calculateNextState(entry: ExerciseEntry, logs: WorkoutLog[] | null): NextStateResult {
 		if (!logs || logs.length === 0) {
 			return {
 				nextWeight: entry.currentWeight,
@@ -89,12 +92,12 @@ export class ProgressionCalculator {
 	 * Formula: E1RM = weight × (36 / (37 - reps))
 	 * With RPE adjustment: effective reps = actual reps + (10 - RPE)
 	 * 
-	 * @param {number} weight - Weight lifted
-	 * @param {number} reps - Reps completed
-	 * @param {number} rpe - Rate of Perceived Exertion (6-10 scale)
-	 * @returns {number} Estimated 1RM
+	 * @param weight - Weight lifted
+	 * @param reps - Reps completed
+	 * @param rpe - Rate of Perceived Exertion (6-10 scale)
+	 * @returns Estimated 1RM
 	 */
-	static calculateE1RM(weight, reps, rpe) {
+	static calculateE1RM(weight: number, reps: number, rpe: number): number {
 		// Adjust reps based on RPE (reps in reserve)
 		// RPE 10 = 0 RIR, RPE 9 = 1 RIR, RPE 8 = 2 RIR, etc.
 		const effectiveReps = reps + (10 - rpe);
@@ -114,12 +117,11 @@ export class ProgressionCalculator {
 	 * Calculates the target weight for backoff sets based on top set weight.
 	 * This is used in real-time during a workout, not for next-session planning.
 	 * 
-	 * @param {number} topSetWeight - The weight used in the top/main set
-	 * @param {Object} settings - Settings object containing offsetPct
-	 * @param {number} settings.offsetPct - Percentage offset (e.g., -0.10 for -10%)
-	 * @returns {number} The calculated backoff weight
+	 * @param topSetWeight - The weight used in the top/main set
+	 * @param settings - Settings object containing offsetPct
+	 * @returns The calculated backoff weight
 	 */
-	static calculateBackoff(topSetWeight, settings) {
+	static calculateBackoff(topSetWeight: number, settings: BackoffSettings): number {
 		const { offsetPct = -0.10 } = settings;
 		const backoffWeight = topSetWeight * (1 + offsetPct);
 		return Math.round(backoffWeight * 100) / 100; // Round to 2 decimal places
@@ -130,16 +132,16 @@ export class ProgressionCalculator {
 	 * Adjusts weight based on how difficult the last set felt.
 	 * 
 	 * @private
-	 * @param {ExerciseEntry} entry - The exercise entry
-	 * @param {WorkoutLog[]} logs - Recent logs
-	 * @returns {NextStateResult} Next state
 	 */
-	static _calculateRpeAutoregProgression(entry, logs) {
-		const lastLog = logs[0]; // Most recent log
+	private static _calculateRpeAutoregProgression(entry: ExerciseEntry, logs: WorkoutLog[]): NextStateResult {
+		const lastLog = logs[0]!; // Most recent log
 		const { targetRpe, targetReps, settings } = entry;
-		const { incrementOnSuccess = 2.5, rpeTolerance = 0.5 } = settings;
+		const { incrementOnSuccess = 2.5, rpeTolerance = 0.5 } = settings as {
+			incrementOnSuccess?: number;
+			rpeTolerance?: number;
+		};
 
-		if (!lastLog.actualRpe) {
+		if (!lastLog || !lastLog.actualRpe) {
 			return {
 				nextWeight: entry.currentWeight,
 				nextReps: targetReps,
@@ -149,7 +151,7 @@ export class ProgressionCalculator {
 			};
 		}
 
-		const rpeDifference = lastLog.actualRpe - targetRpe;
+		const rpeDifference = lastLog.actualRpe - targetRpe!;
 
 		// Case 1: RPE is within tolerance - maintain
 		if (Math.abs(rpeDifference) <= rpeTolerance) {
@@ -189,14 +191,15 @@ export class ProgressionCalculator {
 	 * Double progression: increase reps until ceiling, then increase weight.
 	 * 
 	 * @private
-	 * @param {ExerciseEntry} entry - The exercise entry
-	 * @param {WorkoutLog[]} logs - Recent logs
-	 * @returns {NextStateResult} Next state
 	 */
-	static _calculateDoubleProgression(entry, logs) {
-		const lastLog = logs[0];
+	private static _calculateDoubleProgression(entry: ExerciseEntry, logs: WorkoutLog[]): NextStateResult {
+		const lastLog = logs[0]!;
 		const { settings } = entry;
-		const { repFloor, repCeiling, weightIncrement = 2.5 } = settings;
+		const { repFloor, repCeiling, weightIncrement = 2.5 } = settings as {
+			repFloor: number;
+			repCeiling: number;
+			weightIncrement?: number;
+		};
 
 		const currentReps = entry.currentReps || repFloor;
 		const repsCompleted = lastLog.actualReps;
@@ -239,21 +242,21 @@ export class ProgressionCalculator {
 	 * Linear fixed progression: add fixed weight on successful completion.
 	 * 
 	 * @private
-	 * @param {ExerciseEntry} entry - The exercise entry
-	 * @param {WorkoutLog[]} logs - Recent logs
-	 * @returns {NextStateResult} Next state
 	 */
-	static _calculateLinearFixedProgression(entry, logs) {
+	private static _calculateLinearFixedProgression(entry: ExerciseEntry, logs: WorkoutLog[]): NextStateResult {
 		const { targetReps, settings } = entry;
-		const { fixedIncrement = 2.5, targetSets = 3 } = settings;
+		const { fixedIncrement = 2.5, targetSets = 3 } = settings as {
+			fixedIncrement?: number;
+			targetSets?: number;
+		};
 
 		// Get logs from the last session (same date)
-		const lastSessionDate = logs[0].date.split('T')[0]; // Get date part only
+		const lastSessionDate = logs[0]!.date.split('T')[0]!; // Get date part only
 		const lastSessionLogs = logs.filter(log => log.date.startsWith(lastSessionDate));
 
 		// Count successful sets (completed target reps)
 		const successfulSets = lastSessionLogs.filter(
-			log => log.completed && log.actualReps >= targetReps
+			log => log.completed && log.actualReps >= targetReps!
 		).length;
 
 		// Case 1: Failed to complete all sets - maintain
@@ -282,14 +285,15 @@ export class ProgressionCalculator {
 	 * AMRAP autoregulation: weight increase scales with bonus reps.
 	 * 
 	 * @private
-	 * @param {ExerciseEntry} entry - The exercise entry
-	 * @param {WorkoutLog[]} logs - Recent logs
-	 * @returns {NextStateResult} Next state
 	 */
-	static _calculateAmrapAutoregProgression(entry, logs) {
-		const lastLog = logs[0];
+	private static _calculateAmrapAutoregProgression(entry: ExerciseEntry, logs: WorkoutLog[]): NextStateResult {
+		const lastLog = logs[0]!;
 		const { settings } = entry;
-		const { minReps, incrementPerBonusRep = 2.5, maxIncrement = 10 } = settings;
+		const { minReps, incrementPerBonusRep = 2.5, maxIncrement = 10 } = settings as {
+			minReps: number;
+			incrementPerBonusRep?: number;
+			maxIncrement?: number;
+		};
 
 		const bonusReps = lastLog.bonusReps !== null && lastLog.bonusReps !== undefined
 			? lastLog.bonusReps 
@@ -325,12 +329,12 @@ export class ProgressionCalculator {
  * Standalone helper function to calculate E1RM.
  * Wrapper around ProgressionCalculator.calculateE1RM for convenience.
  * 
- * @param {number} weight - Weight lifted
- * @param {number} reps - Reps completed
- * @param {number} rpe - Rate of Perceived Exertion (6-10 scale)
- * @returns {number} Estimated 1RM
+ * @param weight - Weight lifted
+ * @param reps - Reps completed
+ * @param rpe - Rate of Perceived Exertion (6-10 scale)
+ * @returns Estimated 1RM
  */
-export function calculateE1RM(weight, reps, rpe) {
+export function calculateE1RM(weight: number, reps: number, rpe: number): number {
 	return ProgressionCalculator.calculateE1RM(weight, reps, rpe);
 }
 
@@ -338,10 +342,10 @@ export function calculateE1RM(weight, reps, rpe) {
  * Standalone helper function to calculate backoff weight.
  * Wrapper around ProgressionCalculator.calculateBackoff for convenience.
  * 
- * @param {number} topSetWeight - The weight used in the top set
- * @param {Object} settings - Settings object containing offsetPct
- * @returns {number} The calculated backoff weight
+ * @param topSetWeight - The weight used in the top set
+ * @param settings - Settings object containing offsetPct
+ * @returns The calculated backoff weight
  */
-export function calculateBackoff(topSetWeight, settings) {
+export function calculateBackoff(topSetWeight: number, settings: BackoffSettings): number {
 	return ProgressionCalculator.calculateBackoff(topSetWeight, settings);
 }

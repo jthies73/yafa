@@ -5,7 +5,7 @@ import {
 	ProgressionType,
 	getDefaultSettings,
 	isValidProgressionType,
-} from './constants.js';
+} from './constants';
 
 describe('ProgressionType Constants', () => {
 	it('should define all required progression types', () => {
@@ -23,6 +23,7 @@ describe('ProgressionType Constants', () => {
 	it('should not allow modification of values', () => {
 		const originalValue = ProgressionType.RPE_AUTOREG;
 		try {
+			// @ts-expect-error - Testing immutability
 			ProgressionType.RPE_AUTOREG = 'MODIFIED';
 		} catch {
 			// Expected in strict mode
@@ -94,18 +95,18 @@ describe('isValidProgressionType', () => {
 	it('should return false for invalid progression types', () => {
 		expect(isValidProgressionType('INVALID_TYPE')).toBe(false);
 		expect(isValidProgressionType('')).toBe(false);
-		expect(isValidProgressionType(null)).toBe(false);
-		expect(isValidProgressionType(undefined)).toBe(false);
-		expect(isValidProgressionType(123)).toBe(false);
+		expect(isValidProgressionType(null as unknown as string)).toBe(false);
+		expect(isValidProgressionType(undefined as unknown as string)).toBe(false);
+		expect(isValidProgressionType(123 as unknown as string)).toBe(false);
 	});
 });
 
 describe('getDefaultSettings', () => {
 	it('should return default settings for valid progression types', () => {
-		const rpeSettings = getDefaultSettings(ProgressionType.RPE_AUTOREG);
+		const rpeSettings = getDefaultSettings(ProgressionType.RPE_AUTOREG) as { targetRpe?: number; targetReps?: number };
 		expect(rpeSettings).toBeDefined();
-		expect(rpeSettings.targetRpe).toBeDefined();
-		expect(rpeSettings.targetReps).toBeDefined();
+		expect(rpeSettings?.targetRpe).toBeDefined();
+		expect(rpeSettings?.targetReps).toBeDefined();
 	});
 
 	it('should return a copy of settings (not reference)', () => {
@@ -117,17 +118,19 @@ describe('getDefaultSettings', () => {
 
 	it('should return null for invalid progression types', () => {
 		expect(getDefaultSettings('INVALID_TYPE')).toBeNull();
-		expect(getDefaultSettings(null)).toBeNull();
-		expect(getDefaultSettings(undefined)).toBeNull();
+		expect(getDefaultSettings(null as unknown as string)).toBeNull();
+		expect(getDefaultSettings(undefined as unknown as string)).toBeNull();
 	});
 
 	it('should return mutable copies that do not affect original', () => {
-		const settings = getDefaultSettings(ProgressionType.RPE_AUTOREG);
-		const originalValue = settings.targetRpe;
-		settings.targetRpe = 999;
+		const settings = getDefaultSettings(ProgressionType.RPE_AUTOREG) as { targetRpe?: number };
+		const originalValue = settings?.targetRpe;
+		if (settings) {
+			settings.targetRpe = 999;
+		}
 		
-		const freshSettings = getDefaultSettings(ProgressionType.RPE_AUTOREG);
-		expect(freshSettings.targetRpe).toBe(originalValue);
-		expect(freshSettings.targetRpe).not.toBe(999);
+		const freshSettings = getDefaultSettings(ProgressionType.RPE_AUTOREG) as { targetRpe?: number };
+		expect(freshSettings?.targetRpe).toBe(originalValue);
+		expect(freshSettings?.targetRpe).not.toBe(999);
 	});
 });

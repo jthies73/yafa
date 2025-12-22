@@ -5,43 +5,66 @@
  * Each class provides a toJSON() method for explicit serialization control.
  */
 
-import { ProgressionType, getDefaultSettings } from './constants.js';
+import { ProgressionSettings, ProgressionType, ProgressionTypeValue, getDefaultSettings } from './constants';
 
 /**
- * @typedef {Object} ExerciseEntryData
- * @property {string} id - Unique identifier for this entry
- * @property {string} exerciseId - Reference to the exercise definition (e.g., "squat", "bench")
- * @property {string} progressionType - The progression strategy (from ProgressionType enum)
- * @property {number|null} targetRpe - Target RPE for RPE-based progressions (6-10 scale)
- * @property {number|null} targetReps - Target number of reps
- * @property {Object} settings - Type-specific settings (e.g., offsetPct, repFloor, etc.)
- * @property {number} currentWeight - Current working weight in kg or lb
- * @property {number|null} currentReps - Current working reps (for double progression)
- * @property {string|null} parentEntryId - Reference to parent entry for LINKED_BACKOFF
- * @property {Object} metadata - Additional flexible data (notes, tags, etc.)
+ * Data structure for ExerciseEntry
  */
+export interface ExerciseEntryData {
+	id: string;
+	exerciseId: string;
+	progressionType: string;
+	targetRpe: number | null;
+	targetReps: number | null;
+	settings: Partial<ProgressionSettings>;
+	currentWeight: number;
+	currentReps: number | null;
+	parentEntryId: string | null;
+	metadata: Record<string, unknown>;
+}
+
+/**
+ * Constructor parameters for ExerciseEntry
+ */
+export interface ExerciseEntryParams {
+	id: string;
+	exerciseId: string;
+	progressionType: ProgressionTypeValue;
+	targetRpe?: number | null;
+	targetReps?: number | null;
+	settings?: Partial<ProgressionSettings>;
+	currentWeight?: number;
+	currentReps?: number | null;
+	parentEntryId?: string | null;
+	metadata?: Record<string, unknown>;
+}
+
+/**
+ * Validation result
+ */
+export interface ValidationResult {
+	valid: boolean;
+	errors: string[];
+}
 
 /**
  * ExerciseEntry represents a single exercise slot in a routine.
  * This is the configuration that defines how an exercise should progress over time.
- * 
- * @class ExerciseEntry
  */
 export class ExerciseEntry {
+	public id: string;
+	public exerciseId: string;
+	public progressionType: ProgressionTypeValue;
+	public targetRpe: number | null;
+	public targetReps: number | null;
+	public settings: Partial<ProgressionSettings>;
+	public currentWeight: number;
+	public currentReps: number | null;
+	public parentEntryId: string | null;
+	public metadata: Record<string, unknown>;
+
 	/**
 	 * Creates a new ExerciseEntry instance.
-	 * 
-	 * @param {Object} params - Configuration parameters
-	 * @param {string} params.id - Unique identifier
-	 * @param {string} params.exerciseId - Exercise reference
-	 * @param {string} params.progressionType - Progression strategy from ProgressionType
-	 * @param {number} [params.targetRpe=null] - Target RPE (optional)
-	 * @param {number} [params.targetReps=null] - Target reps (optional)
-	 * @param {Object} [params.settings={}] - Progression-specific settings
-	 * @param {number} [params.currentWeight=0] - Starting weight
-	 * @param {number} [params.currentReps=null] - Starting reps (for double progression)
-	 * @param {string} [params.parentEntryId=null] - Parent entry ID for backoff sets
-	 * @param {Object} [params.metadata={}] - Additional metadata
 	 */
 	constructor({
 		id,
@@ -54,48 +77,27 @@ export class ExerciseEntry {
 		currentReps = null,
 		parentEntryId = null,
 		metadata = {},
-	}) {
-		/** @type {string} */
+	}: ExerciseEntryParams) {
 		this.id = id;
-		
-		/** @type {string} */
 		this.exerciseId = exerciseId;
-		
-		/** @type {string} */
 		this.progressionType = progressionType;
-		
-		/** @type {number|null} */
 		this.targetRpe = targetRpe;
-		
-		/** @type {number|null} */
 		this.targetReps = targetReps;
-		
-		/** @type {Object} */
 		this.settings = {
 			...getDefaultSettings(progressionType),
 			...settings,
 		};
-		
-		/** @type {number} */
 		this.currentWeight = currentWeight;
-		
-		/** @type {number|null} */
 		this.currentReps = currentReps;
-		
-		/** @type {string|null} */
 		this.parentEntryId = parentEntryId;
-		
-		/** @type {Object} */
 		this.metadata = metadata;
 	}
 
 	/**
 	 * Validates that this entry has all required fields for its progression type.
-	 * 
-	 * @returns {Object} Validation result { valid: boolean, errors: string[] }
 	 */
-	validate() {
-		const errors = [];
+	validate(): ValidationResult {
+		const errors: string[] = [];
 
 		if (!this.id) {
 			errors.push('ExerciseEntry must have an id');
@@ -124,16 +126,16 @@ export class ExerciseEntry {
 				if (!this.parentEntryId) {
 					errors.push('LINKED_BACKOFF requires parentEntryId');
 				}
-				if (typeof this.settings.offsetPct !== 'number') {
+				if (typeof (this.settings as { offsetPct?: number }).offsetPct !== 'number') {
 					errors.push('LINKED_BACKOFF requires settings.offsetPct as a number');
 				}
 				break;
 
 			case ProgressionType.DOUBLE_PROGRESSION:
-				if (!this.settings.repFloor || !this.settings.repCeiling) {
+				if (!(this.settings as { repFloor?: number }).repFloor || !(this.settings as { repCeiling?: number }).repCeiling) {
 					errors.push('DOUBLE_PROGRESSION requires settings.repFloor and settings.repCeiling');
 				}
-				if (this.settings.repFloor >= this.settings.repCeiling) {
+				if ((this.settings as { repFloor?: number; repCeiling?: number }).repFloor! >= (this.settings as { repFloor?: number; repCeiling?: number }).repCeiling!) {
 					errors.push('DOUBLE_PROGRESSION repFloor must be less than repCeiling');
 				}
 				break;
@@ -145,7 +147,7 @@ export class ExerciseEntry {
 				break;
 
 			case ProgressionType.AMRAP_AUTOREG:
-				if (!this.settings.minReps) {
+				if (!(this.settings as { minReps?: number }).minReps) {
 					errors.push('AMRAP_AUTOREG requires settings.minReps');
 				}
 				break;
@@ -159,10 +161,8 @@ export class ExerciseEntry {
 
 	/**
 	 * Serializes this entry to a plain JSON object for storage.
-	 * 
-	 * @returns {ExerciseEntryData} Plain object representation
 	 */
-	toJSON() {
+	toJSON(): ExerciseEntryData {
 		return {
 			id: this.id,
 			exerciseId: this.exerciseId,
@@ -179,63 +179,60 @@ export class ExerciseEntry {
 
 	/**
 	 * Creates an ExerciseEntry from a plain object (e.g., from IndexedDB).
-	 * 
-	 * @param {ExerciseEntryData} data - Plain object data
-	 * @returns {ExerciseEntry} New ExerciseEntry instance
 	 */
-	static fromJSON(data) {
-		return new ExerciseEntry(data);
+	static fromJSON(data: ExerciseEntryData): ExerciseEntry {
+		return new ExerciseEntry(data as ExerciseEntryParams);
 	}
 }
 
 /**
- * @typedef {Object} RoutineData
- * @property {string} id - Unique identifier for this routine
- * @property {string} name - Human-readable name (e.g., "Upper A", "Lower B")
- * @property {string[]} entryIds - Array of ExerciseEntry IDs in this routine
- * @property {Object} metadata - Additional flexible data
+ * Data structure for Routine
  */
+export interface RoutineData {
+	id: string;
+	name: string;
+	entryIds: string[];
+	metadata: Record<string, unknown>;
+}
+
+/**
+ * Constructor parameters for Routine
+ */
+export interface RoutineParams {
+	id: string;
+	name: string;
+	entryIds?: string[];
+	metadata?: Record<string, unknown>;
+}
 
 /**
  * Routine represents a collection of exercise entries forming a training day.
- * 
- * @class Routine
  */
 export class Routine {
+	public id: string;
+	public name: string;
+	public entryIds: string[];
+	public metadata: Record<string, unknown>;
+
 	/**
 	 * Creates a new Routine instance.
-	 * 
-	 * @param {Object} params - Configuration parameters
-	 * @param {string} params.id - Unique identifier
-	 * @param {string} params.name - Routine name
-	 * @param {string[]} [params.entryIds=[]] - Array of entry IDs
-	 * @param {Object} [params.metadata={}] - Additional metadata
 	 */
 	constructor({
 		id,
 		name,
 		entryIds = [],
 		metadata = {},
-	}) {
-		/** @type {string} */
+	}: RoutineParams) {
 		this.id = id;
-		
-		/** @type {string} */
 		this.name = name;
-		
-		/** @type {string[]} */
 		this.entryIds = [...entryIds];
-		
-		/** @type {Object} */
 		this.metadata = metadata;
 	}
 
 	/**
 	 * Adds an entry to this routine.
-	 * 
-	 * @param {string} entryId - The entry ID to add
 	 */
-	addEntry(entryId) {
+	addEntry(entryId: string): void {
 		if (!this.entryIds.includes(entryId)) {
 			this.entryIds.push(entryId);
 		}
@@ -243,19 +240,15 @@ export class Routine {
 
 	/**
 	 * Removes an entry from this routine.
-	 * 
-	 * @param {string} entryId - The entry ID to remove
 	 */
-	removeEntry(entryId) {
+	removeEntry(entryId: string): void {
 		this.entryIds = this.entryIds.filter(id => id !== entryId);
 	}
 
 	/**
 	 * Serializes this routine to a plain JSON object for storage.
-	 * 
-	 * @returns {RoutineData} Plain object representation
 	 */
-	toJSON() {
+	toJSON(): RoutineData {
 		return {
 			id: this.id,
 			name: this.name,
@@ -266,48 +259,59 @@ export class Routine {
 
 	/**
 	 * Creates a Routine from a plain object (e.g., from IndexedDB).
-	 * 
-	 * @param {RoutineData} data - Plain object data
-	 * @returns {Routine} New Routine instance
 	 */
-	static fromJSON(data) {
+	static fromJSON(data: RoutineData): Routine {
 		return new Routine(data);
 	}
 }
 
 /**
- * @typedef {Object} WorkoutLogData
- * @property {string} id - Unique identifier for this log entry
- * @property {string} entryId - Reference to the ExerciseEntry this log is for
- * @property {string} date - ISO 8601 date string of when this set was performed
- * @property {number} actualReps - Number of reps actually completed
- * @property {number} actualWeight - Weight used in kg or lb
- * @property {number|null} actualRpe - Perceived exertion (6-10 scale, or null if not tracked)
- * @property {number|null} bonusReps - Extra reps beyond target (for AMRAP)
- * @property {boolean} completed - Whether the set was successfully completed
- * @property {Object} metadata - Additional flexible data (notes, video links, etc.)
+ * Data structure for WorkoutLog
  */
+export interface WorkoutLogData {
+	id: string;
+	entryId: string;
+	date: string;
+	actualReps: number;
+	actualWeight: number;
+	actualRpe: number | null;
+	bonusReps: number | null;
+	completed: boolean;
+	metadata: Record<string, unknown>;
+}
+
+/**
+ * Constructor parameters for WorkoutLog
+ */
+export interface WorkoutLogParams {
+	id: string;
+	entryId: string;
+	date: string;
+	actualReps: number;
+	actualWeight: number;
+	actualRpe?: number | null;
+	bonusReps?: number | null;
+	completed?: boolean;
+	metadata?: Record<string, unknown>;
+}
 
 /**
  * WorkoutLog represents a record of a completed set.
  * Multiple logs can exist for the same entry (one per set performed).
- * 
- * @class WorkoutLog
  */
 export class WorkoutLog {
+	public id: string;
+	public entryId: string;
+	public date: string;
+	public actualReps: number;
+	public actualWeight: number;
+	public actualRpe: number | null;
+	public bonusReps: number | null;
+	public completed: boolean;
+	public metadata: Record<string, unknown>;
+
 	/**
 	 * Creates a new WorkoutLog instance.
-	 * 
-	 * @param {Object} params - Configuration parameters
-	 * @param {string} params.id - Unique identifier
-	 * @param {string} params.entryId - Entry ID this log belongs to
-	 * @param {string} params.date - ISO 8601 date string
-	 * @param {number} params.actualReps - Reps completed
-	 * @param {number} params.actualWeight - Weight used
-	 * @param {number} [params.actualRpe=null] - RPE recorded (optional)
-	 * @param {number} [params.bonusReps=null] - Bonus reps for AMRAP (optional)
-	 * @param {boolean} [params.completed=true] - Success flag
-	 * @param {Object} [params.metadata={}] - Additional metadata
 	 */
 	constructor({
 		id,
@@ -319,42 +323,23 @@ export class WorkoutLog {
 		bonusReps = null,
 		completed = true,
 		metadata = {},
-	}) {
-		/** @type {string} */
+	}: WorkoutLogParams) {
 		this.id = id;
-		
-		/** @type {string} */
 		this.entryId = entryId;
-		
-		/** @type {string} */
 		this.date = date;
-		
-		/** @type {number} */
 		this.actualReps = actualReps;
-		
-		/** @type {number} */
 		this.actualWeight = actualWeight;
-		
-		/** @type {number|null} */
 		this.actualRpe = actualRpe;
-		
-		/** @type {number|null} */
 		this.bonusReps = bonusReps;
-		
-		/** @type {boolean} */
 		this.completed = completed;
-		
-		/** @type {Object} */
 		this.metadata = metadata;
 	}
 
 	/**
 	 * Validates that this log has all required fields.
-	 * 
-	 * @returns {Object} Validation result { valid: boolean, errors: string[] }
 	 */
-	validate() {
-		const errors = [];
+	validate(): ValidationResult {
+		const errors: string[] = [];
 
 		if (!this.id) {
 			errors.push('WorkoutLog must have an id');
@@ -388,10 +373,8 @@ export class WorkoutLog {
 
 	/**
 	 * Serializes this log to a plain JSON object for storage.
-	 * 
-	 * @returns {WorkoutLogData} Plain object representation
 	 */
-	toJSON() {
+	toJSON(): WorkoutLogData {
 		return {
 			id: this.id,
 			entryId: this.entryId,
@@ -407,11 +390,8 @@ export class WorkoutLog {
 
 	/**
 	 * Creates a WorkoutLog from a plain object (e.g., from IndexedDB).
-	 * 
-	 * @param {WorkoutLogData} data - Plain object data
-	 * @returns {WorkoutLog} New WorkoutLog instance
 	 */
-	static fromJSON(data) {
+	static fromJSON(data: WorkoutLogData): WorkoutLog {
 		return new WorkoutLog(data);
 	}
 }
