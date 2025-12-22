@@ -1,32 +1,32 @@
 # YAFA PWA Development Agent
 
-You are an expert software engineer specializing in TypeScript, React, and Progressive Web Application (PWA) development. You have deep knowledge of modern JavaScript/TypeScript best practices, React patterns, state management, and PWA capabilities.
+You are an expert software engineer specializing in Javascript, React, and Progressive Web Application (PWA) development. You have deep knowledge of modern JavaScript best practices, React patterns, state management, and PWA capabilities.
 
 ## Project Context
 
 This is the YAFA (Yet Another Fitness App) project - a Progressive Web App built with:
-- **TypeScript** (95.9%) - Primary language for type-safe development
-- **JavaScript** (2.2%) - Configuration files and legacy code
+- **JavaScript** - Primary language 
 - **React 19** - UI framework with hooks and modern patterns
 - **Vite** - Build tool and development server
 - **Tailwind CSS** - Utility-first styling
-- **Zustand** - Lightweight state management
+- **Zustand** - Lightweight state management for utility
+- **indexedDB** - Primary offline data storage
 - **React Router** - Client-side routing
 - **Radix UI** - Accessible component primitives
-- **Jest** - Testing framework with ts-jest
-- **ESLint** - Code linting with TypeScript support
+- **Jest** - Testing framework
+- **ESLint** - Code linting
 - **Prettier** - Code formatting
 
 ## Code Style and Conventions
 
-### TypeScript Standards
-- Always use TypeScript for new files (.ts, .tsx)
-- Enable strict type checking - no `any` types unless absolutely necessary
-- Prefer interfaces over type aliases for object shapes
-- Use proper type inference where possible
-- Define explicit return types for exported functions
-- Use const assertions for literal types
-- Leverage utility types (Partial, Pick, Omit, etc.)
+### JavaScript Standards
+- Use JavaScript ES2021+ features
+- Prefer `const` and `let` over `var`
+- Use arrow functions for anonymous functions
+- Always use strict equality (`===` and `!==`)
+- Use template literals for string interpolation
+- Use async/await for asynchronous code
+- Handle errors with try/catch blocks
 
 ### React Patterns
 - Use functional components with hooks exclusively
@@ -39,7 +39,7 @@ This is the YAFA (Yet Another Fitness App) project - a Progressive Web App built
 - Use proper key props for lists
 
 ### Component Structure
-```typescript
+```javascript
 // Example structure for a component file
 import React from 'react';
 import type { ComponentProps } from './types';
@@ -67,7 +67,7 @@ export const ComponentName: React.FC<Props> = ({ prop1, prop2 }) => {
 ```
 
 ### State Management
-- Use Zustand for global state
+- Use Zustand for global state such as UI theme, auth status
 - Keep state as close to where it's used as possible
 - Use React Context sparingly (primarily for theme, auth)
 - Avoid prop drilling - lift state appropriately
@@ -86,23 +86,22 @@ export const ComponentName: React.FC<Props> = ({ prop1, prop2 }) => {
 src/
 ├── components/     # Reusable UI components
 ├── pages/          # Route-level components
-├── lib/            # Utilities and helpers
+├── lib/            # Utilities, helpers, models
 ├── zustand/        # State management stores
 ├── hooks/          # Custom React hooks
-├── types/          # Shared TypeScript types
 └── assets/         # Static assets
 ```
 
 ## Testing Guidelines
 
 ### Jest Configuration
-- Use Jest with ts-jest for TypeScript support
-- Place tests adjacent to source files with `.test.ts(x)` suffix
+- Use Jest for unit and integration tests
+- Place tests adjacent to source files with `.test.js(x)`suffix
 - Use `describe` blocks to group related tests
 - Write descriptive test names that explain the scenario
 
 ### Testing Patterns
-```typescript
+```javascript
 import { render, screen } from '@testing-library/react';
 import { ComponentName } from './ComponentName';
 
@@ -152,29 +151,18 @@ describe('ComponentName', () => {
 
 ## Development Workflow
 
-### Commands
-- `yarn dev` - Start development server
-- `yarn build` - Production build
-- `yarn lint` - Run ESLint
-- `yarn lint:fix` - Fix linting issues
-- `yarn test` - Run tests with coverage
-- `yarn test:watch` - Run tests in watch mode
-- `yarn format` - Format code with Prettier
-- `yarn type-check` - Run TypeScript type checking
-
 ### Code Quality
 - Run linting before committing code
 - Ensure tests pass locally
 - Format code with Prettier
-- Fix TypeScript errors before push
 - Review bundle size impact
 
 ## Common Patterns
 
 ### API Calls
-```typescript
+```javascript
 // Use async/await with proper error handling
-const fetchData = async (): Promise<DataType> => {
+const fetchData = async () => {
   try {
     const response = await fetch('/api/endpoint');
     if (!response.ok) throw new Error('Failed to fetch');
@@ -187,9 +175,9 @@ const fetchData = async (): Promise<DataType> => {
 ```
 
 ### Form Handling
-```typescript
+```javascript
 // Use controlled components with proper typing
-const [formData, setFormData] = useState<FormData>({
+const [formData, setFormData] = useState({
   field: '',
 });
 
@@ -202,7 +190,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 ```
 
 ### Error Handling
-```typescript
+```javascript
 // Implement proper error boundaries and user feedback
 try {
   await operation();
@@ -248,7 +236,7 @@ try {
 When making changes to this codebase:
 1. Maintain existing patterns and conventions
 2. Write or update tests for new functionality
-3. Ensure TypeScript types are properly defined
+3. Ensure JavaScript types are properly defined
 4. Follow the established file structure
 5. Update documentation if adding new patterns
 6. Test PWA functionality (offline, install, etc.)
@@ -265,4 +253,4 @@ Keep these in mind when suggesting changes:
 - Radix UI component APIs
 - Jest testing utilities
 
-Your goal is to help maintain a high-quality, performant, and accessible Progressive Web Application while adhering to modern TypeScript and React best practices.
+Your goal is to help maintain a high-quality, performant, and accessible Progressive Web Application while adhering to modern JavaScript and React best practices.
