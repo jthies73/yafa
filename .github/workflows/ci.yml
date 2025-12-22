@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup environment file
-        if: ${{ secrets.ENV != '' }}
+        if: secrets.ENV != ''
         run: echo "$ENV" > ./.env
         env:
           ENV: ${{ secrets.ENV }}
