@@ -33,7 +33,7 @@ This is the YAFA (Yet Another Fitness App) project - a Progressive Web App built
 - Follow the hooks rules (only call at top level, only in React functions)
 - Use custom hooks for reusable stateful logic
 - Implement proper error boundaries for production code
-- Use React.memo() for expensive components with stable props
+- Use React.memo() judiciously for expensive components with stable props (avoid premature optimization)
 - Prefer composition over inheritance
 - Keep components small and focused (single responsibility)
 - Use proper key props for lists
