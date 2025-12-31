@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -105,3 +106,36 @@ jobs:
           docker rm yafa-pwa || true
           docker run -d --net yafa-net --ip 172.37.0.26 --name yafa-pwa yafa-pwa-image
           echo "✅ Production deployment complete!"
+
+  metadata-overlay:
+    name: Generate Image with Metadata Overlay
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies
+        run: |
+          echo "📦 Installing Python dependencies..."
+          pip install Pillow exifread requests
+
+      - name: Run metadata overlay script
+        run: |
+          echo "🎨 Running image metadata overlay script..."
+          python scripts/image_metadata_overlay.py
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-with-metadata
+          path: output_with_metadata.jpg
+          retention-days: 7
