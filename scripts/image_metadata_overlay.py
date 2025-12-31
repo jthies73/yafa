@@ -16,12 +16,13 @@ from io import BytesIO
 # Sample image URL with EXIF data - can be changed to use different images
 SAMPLE_IMAGE_URL = "https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/Canon_40D.jpg"
 OUTPUT_FILENAME = "output_with_metadata.jpg"
+REQUEST_TIMEOUT = 30  # seconds
 
 
 def download_image(url):
     """Download image from URL and return as PIL Image and raw content."""
     print(f"Downloading image from {url}...")
-    response = requests.get(url, timeout=30)
+    response = requests.get(url, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
     content = response.content
     return Image.open(BytesIO(content)), content
@@ -89,9 +90,15 @@ def extract_exif_data(image_content):
         # Format: YYYY:MM:DD HH:MM:SS
         datetime_str = str(datetime_original)
         # Convert to more readable format
-        date_part, time_part = datetime_str.split(' ')
-        date_part = date_part.replace(':', '-')
-        metadata['datetime'] = f"{date_part} {time_part}"
+        try:
+            if ' ' in datetime_str:
+                date_part, time_part = datetime_str.split(' ', 1)
+                date_part = date_part.replace(':', '-')
+                metadata['datetime'] = f"{date_part} {time_part}"
+            else:
+                metadata['datetime'] = datetime_str
+        except (ValueError, AttributeError):
+            metadata['datetime'] = datetime_str
     else:
         metadata['datetime'] = "Unknown Date"
     
