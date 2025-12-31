@@ -111,6 +111,8 @@ jobs:
     name: Generate Image with Metadata Overlay
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
