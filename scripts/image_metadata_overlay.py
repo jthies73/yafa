@@ -19,20 +19,19 @@ OUTPUT_FILENAME = "output_with_metadata.jpg"
 
 
 def download_image(url):
-    """Download image from URL and return as PIL Image."""
+    """Download image from URL and return as PIL Image and raw content."""
     print(f"Downloading image from {url}...")
     response = requests.get(url, timeout=30)
     response.raise_for_status()
-    return Image.open(BytesIO(response.content))
+    content = response.content
+    return Image.open(BytesIO(content)), content
 
 
-def extract_exif_data(url):
-    """Extract EXIF metadata from image."""
+def extract_exif_data(image_content):
+    """Extract EXIF metadata from image content."""
     print("Extracting EXIF metadata...")
-    response = requests.get(url, timeout=30)
-    response.raise_for_status()
     
-    tags = exifread.process_file(BytesIO(response.content))
+    tags = exifread.process_file(BytesIO(image_content))
     
     metadata = {}
     
@@ -60,8 +59,11 @@ def extract_exif_data(url):
         aperture_str = str(aperture)
         if '/' in aperture_str:
             num, denom = aperture_str.split('/')
-            aperture_value = float(num) / float(denom)
-            metadata['aperture'] = f"f/{aperture_value:.1f}"
+            if float(denom) != 0:
+                aperture_value = float(num) / float(denom)
+                metadata['aperture'] = f"f/{aperture_value:.1f}"
+            else:
+                metadata['aperture'] = "f/?"
         else:
             metadata['aperture'] = f"f/{aperture_str}"
     else:
@@ -134,7 +136,8 @@ def overlay_metadata(image, metadata):
                 break
         if font is None:
             font = ImageFont.load_default()
-    except:
+    except (OSError, IOError) as e:
+        print(f"Warning: Could not load TrueType font ({e}), using default font")
         font = ImageFont.load_default()
     
     # Get image dimensions
@@ -196,10 +199,10 @@ def main():
     """Main function to execute the script."""
     try:
         # Download image
-        image = download_image(SAMPLE_IMAGE_URL)
+        image, image_content = download_image(SAMPLE_IMAGE_URL)
         
         # Extract EXIF metadata
-        metadata = extract_exif_data(SAMPLE_IMAGE_URL)
+        metadata = extract_exif_data(image_content)
         
         print("\nExtracted Metadata:")
         for key, value in metadata.items():
