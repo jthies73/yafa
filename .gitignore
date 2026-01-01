@@ -37,3 +37,6 @@ tsconfig.tsbuildinfo
 @lib
 
 *.env*
+
+# Python script outputs
+output_with_metadata.jpg
