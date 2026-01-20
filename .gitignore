@@ -37,3 +37,6 @@ tsconfig.tsbuildinfo
 @lib
 
 *.env*
+
+# personal website
+public/jthies73.html
