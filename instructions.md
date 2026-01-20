@@ -322,3 +322,35 @@ interface ExportData {
 | Type Safety | Discriminated unions, strict interfaces |
 | Immutability | Spread operators, no mutations |
 | Persistence-Agnostic | Dexie.js compatible, JSON portable |
+
+---
+
+## Design Guidelines
+
+**Philosophy**: Minimalistic, inspired by **Scalable Capital**. Clean lines, high contrast, and data-centric.
+
+### Color System
+- **Modes**: Fully supported Dark & Light modes.
+  - **Dark Mode**: Deep blacks/grays background, white text, `#1fc7b9` accent.
+  - **Light Mode**: White/off-white background, black text, **Blue** accent.
+
+### Typography
+- **Fonts**: System sans-serif (Inter/SF Pro/Roboto) for clean readability.
+- **Sizes**: 
+  - Headings: Bold, tight letter-spacing.
+  - Body: Readable transparency (e.g., `text-gray-300` in dark mode).
+
+### Components
+- **Buttons**:
+  - *Primary*: Solid `#1fc7b9` background with contrast text (black). Rounded corners (4-6px).
+  - *Secondary*: Outline or Ghost style with accent text.
+- **Form Fields**: Minimalist. 
+  - Default: Transparent/light background, subtle bottom border or full border.
+  - Focus: Sharp accent color glow or border. 
+  - *Labels*: Small, uppercase, or floating labels.
+- **Cards**:
+  - Flat or very subtle elevation.
+  - Dark Mode: Dark gray surface (`#1c1c1e`) against black background.
+  - Light Mode: White surface with subtle stroke or shadow.
+- **Dropdowns**: Minimalist lists. Hover states use distinct but subtle background changes.
+- **Spacings**: Generous whitespace. 4-point grid (4, 8, 16, 24, 32px).
