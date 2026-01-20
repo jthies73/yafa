@@ -311,8 +311,6 @@ interface ExportData {
 - Import validates schema version and migrates if needed
 - All data is POJO – no serialization issues
 
----
-
 ## Summary
 
 | Principle | Implementation |
@@ -322,6 +320,14 @@ interface ExportData {
 | Type Safety | Discriminated unions, strict interfaces |
 | Immutability | Spread operators, no mutations |
 | Persistence-Agnostic | Dexie.js compatible, JSON portable |
+
+---
+
+## Agent Operational Guidelines
+
+- **Implementation Phase**: Agents should only begin implementation once the refinement phase is complete and the task requirements are fully transparent and unambiguous.
+- **Clarification**: If any major components, requirements, or architectural details are missing or unclear, the agent must pause and ask for explicit clarification before proceeding.
+- **Adherence**: Strictly follow the "No-Class" policy and other architectural constraints defined in this document.
 
 ---
 
