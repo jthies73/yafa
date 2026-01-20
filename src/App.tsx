@@ -2,7 +2,9 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 
 import CalculatorPage from "@/pages/CalculatorPage";
-import NewCalculatorPage from "@/pages/NewCalculatorPage";
+import HomePage from "@/pages/HomePage";
+import PlansPage from "@/pages/PlansPage";
+import CreatePlanPage from "@/pages/CreatePlanPage";
 import { EditExercisePage } from "@/pages/EditExercisePage";
 import { EditMeasurementPage } from "@/pages/EditMeasurementPage.tsx";
 import ExercisesPage from "@/pages/ExercisesPage.tsx";
@@ -27,7 +29,9 @@ function App() {
 				<Route path="*" element={<Navigate to="/old/calculator" replace />} />
 
 				{/* New Routes */}
-				<Route path="/calculator" element={<NewCalculatorPage />} />
+				<Route path="/" element={<HomePage />} />
+				<Route path="/plans" element={<PlansPage />} />
+				<Route path="/plans/create" element={<CreatePlanPage />} />
 			</Routes>
 			<SideBarMenu />
 		</BrowserRouter>
