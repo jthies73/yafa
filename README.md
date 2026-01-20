@@ -1,22 +1,118 @@
-YAFA - PWA
+# YAFA - Yet Another Fitness App
 
-Local Storage Brainstorm:
-// "100","100","2023-12-06T21:46:31.603Z","1","115","8","121.76",
-// -> 118 Bytes
-// LS: 5MB
+A gym companion tool designed to provide a flexible framework for tracking progress and managing training variables. The primary goal is to facilitate **progressive overload** through user-created plans that incorporate periodization and autoregulation.
 
-// 7x per week
-// per week: 118 _ 6 exercises _ 5 sets _ 7 days = 24.78 KB
-// per year: 118 _ 6 exercises _ 5 sets _ 365 days = 1.14 MB
-// 5 / 1.14 = 4.38 years
+## Tech Stack
 
-// 3x per week
-// per week: 118 _ 4 exercises _ 4 sets _ 3 days = 17.856 KB
-// per year: 118 _ 4 exercises _ 4 sets _ 156 days = 0.44 MB
-// 5 / 1.11 = 4.5 years
+React 19 + TypeScript · Vite · Tailwind CSS · Zustand · Radix UI
 
-// no uuid
-// per week: 62 _ 4 exercises _ 4 sets _ 3 days = 9.408 KB
-// per year: 62 _ 4 exercises _ 4 sets _ 156 days = 0.23 MB
-// 5 / 0.59 = 8.47 years
-# yafa
+---
+
+## Features
+
+### 🧮 Weight Calculator
+
+The core feature of YAFA is an intelligent weight calculator that determines the optimal load for any exercise based on your training parameters.
+
+**How it works:**
+
+1. **Select an Exercise** – Choose from your custom exercise library
+2. **View Your E1RM** – Your estimated one-rep max is displayed based on previous performance
+3. **Enter Target Reps** – Specify how many repetitions you plan to perform
+4. **Set Target RPE** – Choose your intended Rate of Perceived Exertion (6-10 scale)
+5. **Get Your Weight** – The calculator outputs the recommended weight, adjusted to your equipment's minimum increment
+
+**After completing a set:**
+
+- Log your **actual RPE** to capture real-world performance
+- The app calculates a new E1RM from the set you just performed
+- If your performance exceeded expectations (new E1RM > old E1RM), you're prompted to update your baseline
+
+**Supported 1RM formulas:**
+- Brzycki (default)
+- Epley, Lander, Lombardi, Mayhew, O'Conner, Wathan
+- Average of all formulas
+
+**RPE-based adjustments:**
+- The calculator automatically suggests appropriate target RPE based on rep ranges
+- Lower rep ranges (1–4) → RPE 7
+- Medium rep ranges (5–6) → RPE 8–9
+- Higher rep ranges (7+) → RPE 10
+
+**Bodyweight exercise support:**
+- Exercises can specify a bodyweight percentage (e.g., pull-ups use ~100% bodyweight, dips ~80%)
+- The calculator factors in your current bodyweight from measurements to compute accurate load recommendations
+
+---
+
+### 🏋️ Exercise Management
+
+Create and manage a personalized exercise library with exercise-specific configuration:
+
+- **Name** – Exercise identifier
+- **E1RM** – Estimated one-rep max, automatically updated as you train
+- **Minimum Weight Increment** – Matches your available equipment (e.g., 2.5 kg for barbell, 2 kg for dumbbells)
+- **Bodyweight Percentage** – For movements where bodyweight contributes to the load
+
+Exercises can be created, edited, and deleted. Deleting an exercise also removes associated history entries.
+
+---
+
+### 📊 Workout History
+
+A chronological log of all completed sets, grouped by day:
+
+| Data Point | Description |
+|------------|-------------|
+| **Exercise** | Which movement was performed |
+| **Sets** | Number of sets completed that day |
+| **Best Set** | The set with the highest calculated E1RM (reps × weight @ RPE) |
+| **E1RM** | Estimated one-rep max from the best set |
+
+You can manually add sets to the history for past workouts.
+
+---
+
+### 📏 Measurements Tracking
+
+Track any measurable metric over time:
+
+- **Bodyweight** – Pre-configured, used by the calculator for bodyweight-adjusted exercises
+- **Custom Measurements** – Add any metric with a custom name and unit (e.g., arm circumference in cm, body fat %)
+
+Each measurement maintains a timestamped history of entries that can be viewed and edited.
+
+---
+
+## Data Persistence
+
+All data is stored locally in the browser using Zustand's persist middleware with localStorage:
+
+| Store | Purpose |
+|-------|---------|
+| `calculator-storage` | Current calculator state (selected exercise, reps, RPE, weight) |
+| `exercise-storage` | Exercise library with E1RM values |
+| `history-storage` | Complete workout history |
+| `measurement-storage` | Body measurements and custom metrics |
+
+---
+
+## Development
+
+```bash
+# Install dependencies
+yarn
+
+# Start development server
+yarn dev
+
+# Run tests
+yarn test
+
+# Lint and format
+yarn lint
+yarn format
+
+# Type check
+yarn type-check
+```
