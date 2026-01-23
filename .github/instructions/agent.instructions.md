@@ -14,14 +14,14 @@ The app currently features a built-in calculator to derive working weights from 
 
 ## Tech Stack
 
-| Layer | Technology | Status |
-|-------|------------|--------|
-| UI Framework | React 19 + TypeScript | ✅ Current |
-| Build Tool | Vite | ✅ Current |
-| Styling | Tailwind CSS + Radix UI | ✅ Current |
-| State Management | Zustand | ⏳ Transitional |
-| Persistence | LocalStorage | ⏳ Transitional |
-| Persistence (Target) | **Dexie.js (IndexedDB)** | 🔜 Planned |
+| Layer                | Technology               | Status          |
+| -------------------- | ------------------------ | --------------- |
+| UI Framework         | React 19 + TypeScript    | ✅ Current      |
+| Build Tool           | Vite                     | ✅ Current      |
+| Styling              | Tailwind CSS + Radix UI  | ✅ Current      |
+| State Management     | Zustand                  | ⏳ Transitional |
+| Persistence          | LocalStorage             | ⏳ Transitional |
+| Persistence (Target) | **Dexie.js (IndexedDB)** | 🔜 Planned      |
 
 ### Migration Path
 
@@ -41,10 +41,10 @@ LocalStorage → Dexie.js (IndexedDB)
 
 The app distinguishes between two fundamental concepts:
 
-| Concept | Purpose | Mutability |
-|---------|---------|------------|
-| **Plan** | Configuration/Template – defines *what* to do | User-editable |
-| **Log** | Execution History – records *what was done* | Append-only |
+| Concept  | Purpose                                       | Mutability    |
+| -------- | --------------------------------------------- | ------------- |
+| **Plan** | Configuration/Template – defines _what_ to do | User-editable |
+| **Log**  | Execution History – records _what was done_   | Append-only   |
 
 A **Plan** is a blueprint that describes exercises, rep schemes, and progression rules. A **Log** captures the actual sets performed, timestamps, and outcomes. This separation allows:
 
@@ -59,6 +59,7 @@ A **Plan** is a blueprint that describes exercises, rep schemes, and progression
 **Why:** Classes break serialization in IndexedDB and complicate JSON export/import. Dexie.js stores raw objects; class instances lose their prototype chain on retrieval.
 
 **Instead of:**
+
 ```typescript
 // ❌ DO NOT USE
 class Exercise {
@@ -68,6 +69,7 @@ class Exercise {
 ```
 
 **Use:**
+
 ```typescript
 // ✅ CORRECT APPROACH
 interface Exercise {
@@ -87,14 +89,14 @@ Use factory functions to create data objects with sensible defaults:
 ```typescript
 // src/lib/factories/exercise.ts
 function createExercise(overrides?: Partial<Exercise>): Exercise {
-  return {
-    id: generateId(),
-    name: '',
-    e1rm: 0,
-    minWeightIncrement: 2.5,
-    bodyweightPercentage: 0,
-    ...overrides,
-  };
+	return {
+		id: generateId(),
+		name: "",
+		e1rm: 0,
+		minWeightIncrement: 2.5,
+		bodyweightPercentage: 0,
+		...overrides,
+	};
 }
 ```
 
@@ -118,10 +120,10 @@ A training program spanning multiple weeks/cycles.
 
 ```typescript
 interface Plan {
-  id: string;
-  name: string;
-  routines: Routine[];
-  createdAt: string;
+	id: string;
+	name: string;
+	routines: Routine[];
+	createdAt: string;
 }
 ```
 
@@ -131,9 +133,9 @@ A single workout session template (e.g., "Push Day A").
 
 ```typescript
 interface Routine {
-  id: string;
-  name: string;
-  slots: ExerciseSlot[];
+	id: string;
+	name: string;
+	slots: ExerciseSlot[];
 }
 ```
 
@@ -143,17 +145,17 @@ A placeholder within a routine, linking an exercise to its prescribed sets and p
 
 ```typescript
 interface ExerciseSlot {
-  id: string;
-  exerciseId: string;
-  setScheme: SetScheme;
-  progression: ProgressionConfig;
+	id: string;
+	exerciseId: string;
+	setScheme: SetScheme;
+	progression: ProgressionConfig;
 }
 
 interface SetScheme {
-  sets: number;
-  reps: number;         // Target reps
-  rpe: number;          // Target RPE
-  restSeconds: number;
+	sets: number;
+	reps: number; // Target reps
+	rpe: number; // Target RPE
+	restSeconds: number;
 }
 ```
 
@@ -164,10 +166,7 @@ interface SetScheme {
 Three progression types are supported, defined as a **Discriminated Union**:
 
 ```typescript
-type ProgressionConfig =
-  | RpeAutoregConfig
-  | LinkedBackoffConfig
-  | DoubleProgressionConfig;
+type ProgressionConfig = RpeAutoregConfig | LinkedBackoffConfig | DoubleProgressionConfig;
 ```
 
 ### 1. RPE_AUTOREG
@@ -176,13 +175,14 @@ Autoregulation based on Rate of Perceived Exertion. Weight is calculated from E1
 
 ```typescript
 interface RpeAutoregConfig {
-  type: 'RPE_AUTOREG';
-  targetRpe: number;          // e.g., 8
-  e1rmAdjustment: 'ALWAYS' | 'ON_PR' | 'MANUAL';
+	type: "RPE_AUTOREG";
+	targetRpe: number; // e.g., 8
+	e1rmAdjustment: "ALWAYS" | "ON_PR" | "MANUAL";
 }
 ```
 
 **Behavior:**
+
 - Calculator outputs weight for given reps @ RPE
 - After set completion, new E1RM is derived from actual performance
 - E1RM update policy controlled by `e1rmAdjustment`
@@ -193,15 +193,16 @@ Top set followed by percentage-based backoff sets.
 
 ```typescript
 interface LinkedBackoffConfig {
-  type: 'LINKED_BACKOFF';
-  topSetRpe: number;
-  backoffPercent: number;     // e.g., 0.90 = 90% of top set weight
-  backoffSets: number;
-  backoffReps: number;
+	type: "LINKED_BACKOFF";
+	topSetRpe: number;
+	backoffPercent: number; // e.g., 0.90 = 90% of top set weight
+	backoffSets: number;
+	backoffReps: number;
 }
 ```
 
 **Behavior:**
+
 - First set is calculated as RPE autoreg (top set)
 - Subsequent sets use `topSetWeight * backoffPercent`
 
@@ -211,13 +212,14 @@ Linear progression within a rep range. Increase weight when top of range is achi
 
 ```typescript
 interface DoubleProgressionConfig {
-  type: 'DOUBLE_PROGRESSION';
-  repRange: { min: number; max: number };
-  weightIncrement: number;
+	type: "DOUBLE_PROGRESSION";
+	repRange: { min: number; max: number };
+	weightIncrement: number;
 }
 ```
 
 **Behavior:**
+
 - Start at `repRange.min` with current weight
 - When `repRange.max` is achieved for all sets, increase weight by `weightIncrement`
 - Reset reps to `repRange.min`
@@ -248,13 +250,8 @@ All domain logic lives in `src/lib` as pure functions:
 
 ```typescript
 // src/lib/calculator/weight.ts
-export function calculateWorkingWeight(
-  e1rm: number,
-  reps: number,
-  rpe: number,
-  formula: Formula = 'brzycki'
-): number {
-  // Pure calculation, no state access
+export function calculateWorkingWeight(e1rm: number, reps: number, rpe: number, formula: Formula = "brzycki"): number {
+	// Pure calculation, no state access
 }
 ```
 
@@ -282,13 +279,13 @@ src/
 
 ### 5. Naming Conventions
 
-| Element | Convention | Example |
-|---------|------------|---------|
-| Interfaces | PascalCase | `ExerciseSlot` |
-| Type aliases | PascalCase | `ProgressionConfig` |
-| Functions | camelCase | `calculateWorkingWeight` |
-| Files | kebab-case | `weight-calculator.ts` |
-| Constants | SCREAMING_SNAKE | `DEFAULT_RPE` |
+| Element      | Convention      | Example                  |
+| ------------ | --------------- | ------------------------ |
+| Interfaces   | PascalCase      | `ExerciseSlot`           |
+| Type aliases | PascalCase      | `ProgressionConfig`      |
+| Functions    | camelCase       | `calculateWorkingWeight` |
+| Files        | kebab-case      | `weight-calculator.ts`   |
+| Constants    | SCREAMING_SNAKE | `DEFAULT_RPE`            |
 
 ---
 
@@ -298,12 +295,12 @@ The app must support full JSON export/import:
 
 ```typescript
 interface ExportData {
-  version: string;
-  exportedAt: string;
-  exercises: Exercise[];
-  plans: Plan[];
-  logs: WorkoutLog[];
-  measurements: Measurement[];
+	version: string;
+	exportedAt: string;
+	exercises: Exercise[];
+	plans: Plan[];
+	logs: WorkoutLog[];
+	measurements: Measurement[];
 }
 ```
 
@@ -313,13 +310,13 @@ interface ExportData {
 
 ## Summary
 
-| Principle | Implementation |
-|-----------|----------------|
-| Data-First | POJOs only, no classes |
-| Logic Separation | Pure functions in `src/lib` |
-| Type Safety | Discriminated unions, strict interfaces |
-| Immutability | Spread operators, no mutations |
-| Persistence-Agnostic | Dexie.js compatible, JSON portable |
+| Principle            | Implementation                          |
+| -------------------- | --------------------------------------- |
+| Data-First           | POJOs only, no classes                  |
+| Logic Separation     | Pure functions in `src/lib`             |
+| Type Safety          | Discriminated unions, strict interfaces |
+| Immutability         | Spread operators, no mutations          |
+| Persistence-Agnostic | Dexie.js compatible, JSON portable      |
 
 ---
 
@@ -336,27 +333,30 @@ interface ExportData {
 **Philosophy**: Minimalistic, inspired by **Scalable Capital**. Clean lines, high contrast, and data-centric.
 
 ### Color System
+
 - **Modes**: Fully supported Dark & Light modes.
-  - **Dark Mode**: Deep blacks/grays background, white text, `#1fc7b9` accent.
-  - **Light Mode**: White/off-white background, black text, **Blue** accent.
+    - **Dark Mode**: Deep blacks/grays background, white text, `#1fc7b9` accent.
+    - **Light Mode**: White/off-white background, black text, **Blue** accent.
 
 ### Typography
+
 - **Fonts**: System sans-serif (Inter/SF Pro/Roboto) for clean readability.
-- **Sizes**: 
-  - Headings: Bold, tight letter-spacing.
-  - Body: Readable transparency (e.g., `text-gray-300` in dark mode).
+- **Sizes**:
+    - Headings: Bold, tight letter-spacing.
+    - Body: Readable transparency (e.g., `text-gray-300` in dark mode).
 
 ### Components
+
 - **Buttons**:
-  - *Primary*: Solid `#1fc7b9` background with contrast text (black). Rounded corners (4-6px).
-  - *Secondary*: Outline or Ghost style with accent text.
-- **Form Fields**: Minimalist. 
-  - Default: Transparent/light background, subtle bottom border or full border.
-  - Focus: Sharp accent color glow or border. 
-  - *Labels*: Small, uppercase, or floating labels.
+    - _Primary_: Solid `#1fc7b9` background with contrast text (black). Rounded corners (4-6px).
+    - _Secondary_: Outline or Ghost style with accent text.
+- **Form Fields**: Minimalist.
+    - Default: Transparent/light background, subtle bottom border or full border.
+    - Focus: Sharp accent color glow or border.
+    - _Labels_: Small, uppercase, or floating labels.
 - **Cards**:
-  - Flat or very subtle elevation.
-  - Dark Mode: Dark gray surface (`#1c1c1e`) against black background.
-  - Light Mode: White surface with subtle stroke or shadow.
+    - Flat or very subtle elevation.
+    - Dark Mode: Dark gray surface (`#1c1c1e`) against black background.
+    - Light Mode: White surface with subtle stroke or shadow.
 - **Dropdowns**: Minimalist lists. Hover states use distinct but subtle background changes.
 - **Spacings**: Generous whitespace. 4-point grid (4, 8, 16, 24, 32px).

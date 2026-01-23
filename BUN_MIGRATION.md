@@ -1,6 +1,7 @@
 # Bun Migration Guide
 
 This project has been migrated to use [Bun](https://bun.sh) as the primary runtime for all operations including:
+
 - Package management
 - Running the development server
 - Building for production
@@ -10,6 +11,7 @@ This project has been migrated to use [Bun](https://bun.sh) as the primary runti
 ## Prerequisites
 
 Install Bun:
+
 ```bash
 curl -fsSL https://bun.sh/install | bash
 ```
@@ -17,43 +19,51 @@ curl -fsSL https://bun.sh/install | bash
 ## Getting Started
 
 ### Install Dependencies
+
 ```bash
 bun install
 ```
 
 ### Development
+
 ```bash
 bun dev
 ```
 
 ### Build
+
 ```bash
 bun run build
 ```
 
 ### Test
+
 ```bash
 bun test
 ```
 
 ### Type Check
+
 ```bash
 bun type-check
 ```
 
 ### Lint
+
 ```bash
 bun lint
 bun lint:fix  # Auto-fix issues
 ```
 
 ### Format
+
 ```bash
 bun format
 bun format:check
 ```
 
 ### CI Pipeline
+
 ```bash
 bun ci  # Runs format:check, type-check, lint, and test
 ```
@@ -70,13 +80,14 @@ bun ci  # Runs format:check, type-check, lint, and test
 ## Test Files
 
 Test files have been updated to use Bun's test API:
+
 ```typescript
 import { describe, expect, test } from "bun:test";
 
 describe("MyComponent", () => {
-  test("should work", () => {
-    expect(true).toBe(true);
-  });
+	test("should work", () => {
+		expect(true).toBe(true);
+	});
 });
 ```
 

@@ -5,6 +5,7 @@ You are an expert software engineer specializing in TypeScript, React, and Progr
 ## Project Context
 
 This is the YAFA (Yet Another Fitness App) project - a Progressive Web App built with:
+
 - **TypeScript** - Primary language with strict type checking
 - **React 19** - UI framework with hooks and modern patterns
 - **Vite** - Build tool and development server
@@ -20,6 +21,7 @@ This is the YAFA (Yet Another Fitness App) project - a Progressive Web App built
 ## Code Style and Conventions
 
 ### TypeScript Standards
+
 - Use TypeScript with strict mode enabled
 - Prefer `const` and `let` over `var`
 - Use arrow functions for anonymous functions
@@ -34,6 +36,7 @@ This is the YAFA (Yet Another Fitness App) project - a Progressive Web App built
 - Avoid `any` type - use `unknown` when type is truly unknown
 
 ### React Patterns
+
 - Use functional components with hooks exclusively
 - Follow the hooks rules (only call at top level, only in React functions)
 - Use custom hooks for reusable stateful logic
@@ -44,6 +47,7 @@ This is the YAFA (Yet Another Fitness App) project - a Progressive Web App built
 - Use proper key props for lists
 
 ### Component Structure
+
 ```typescript
 // Example structure for a component file
 import React from 'react';
@@ -57,12 +61,12 @@ interface Props {
 export const ComponentName: React.FC<Props> = ({ prop1, prop2, onAction }) => {
   // hooks at the top
   const [state, setState] = React.useState<string>('');
-  
+
   // event handlers
   const handleEvent = (): void => {
     // implementation
   };
-  
+
   // render
   return (
     <div>
@@ -73,6 +77,7 @@ export const ComponentName: React.FC<Props> = ({ prop1, prop2, onAction }) => {
 ```
 
 ### State Management
+
 - Use Zustand for global state such as UI theme, auth status
 - Keep state as close to where it's used as possible
 - Use React Context sparingly (primarily for theme, auth)
@@ -80,6 +85,7 @@ export const ComponentName: React.FC<Props> = ({ prop1, prop2, onAction }) => {
 - Persist critical state to localStorage when needed for PWA offline capability
 
 ### Naming Conventions
+
 - Components: PascalCase (e.g., `UserProfile.tsx`)
 - Hooks: camelCase with 'use' prefix (e.g., `useAuth.ts`)
 - Utilities: camelCase (e.g., `formatDate.ts`)
@@ -88,6 +94,7 @@ export const ComponentName: React.FC<Props> = ({ prop1, prop2, onAction }) => {
 - Files: Match the primary export name
 
 ### File Organization
+
 ```
 src/
 ├── components/     # Reusable UI components
@@ -101,12 +108,14 @@ src/
 ## Testing Guidelines
 
 ### Jest Configuration
+
 - Use Jest with ts-jest for TypeScript support
 - Place tests adjacent to source files with `.test.ts(x)` suffix
 - Use `describe` blocks to group related tests
 - Write descriptive test names that explain the scenario
 
 ### Testing Patterns
+
 ```typescript
 import { render, screen } from '@testing-library/react';
 import { ComponentName } from './ComponentName';
@@ -116,7 +125,7 @@ describe('ComponentName', () => {
     render(<ComponentName prop1="value" prop2={42} />);
     expect(screen.getByText('value')).toBeInTheDocument();
   });
-  
+
   it('should handle user interaction', () => {
     const handleClick = jest.fn();
     render(<ComponentName prop1="test" prop2={1} onAction={handleClick} />);
@@ -126,6 +135,7 @@ describe('ComponentName', () => {
 ```
 
 ### Test Coverage
+
 - Aim for meaningful test coverage, not just high percentages
 - Test user interactions and edge cases
 - Mock external dependencies appropriately
@@ -134,6 +144,7 @@ describe('ComponentName', () => {
 ## PWA Best Practices
 
 ### Performance
+
 - Lazy load routes and heavy components
 - Optimize images and assets
 - Use code splitting for better initial load
@@ -141,6 +152,7 @@ describe('ComponentName', () => {
 - Minimize bundle size
 
 ### Offline Capability
+
 - Design for offline-first when possible
 - Use service workers for caching
 - Implement proper error handling for network failures
@@ -148,6 +160,7 @@ describe('ComponentName', () => {
 - Provide clear offline indicators
 
 ### Accessibility
+
 - Use semantic HTML elements
 - Provide proper ARIA labels
 - Ensure keyboard navigation works
@@ -158,6 +171,7 @@ describe('ComponentName', () => {
 ## Development Workflow
 
 ### Code Quality
+
 - Run linting before committing code
 - Ensure tests pass locally
 - Format code with Prettier
@@ -166,67 +180,70 @@ describe('ComponentName', () => {
 ## Common Patterns
 
 ### API Calls
+
 ```typescript
 // Use async/await with proper error handling and typing
 interface ApiResponse {
-  data: unknown;
-  status: number;
+	data: unknown;
+	status: number;
 }
 
 const fetchData = async (): Promise<ApiResponse> => {
-  try {
-    const response = await fetch('/api/endpoint');
-    if (!response.ok) throw new Error('Failed to fetch');
-    const data = await response.json();
-    return { data, status: response.status };
-  } catch (error) {
-    console.error('API Error:', error);
-    throw error;
-  }
+	try {
+		const response = await fetch("/api/endpoint");
+		if (!response.ok) throw new Error("Failed to fetch");
+		const data = await response.json();
+		return { data, status: response.status };
+	} catch (error) {
+		console.error("API Error:", error);
+		throw error;
+	}
 };
 ```
 
 ### Form Handling
+
 ```typescript
 // Use controlled components with proper typing
 interface FormData {
-  field: string;
-  email: string;
+	field: string;
+	email: string;
 }
 
 const [formData, setFormData] = React.useState<FormData>({
-  field: '',
-  email: '',
+	field: "",
+	email: "",
 });
 
 const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-  setFormData(prev => ({
-    ...prev,
-    [e.target.name]: e.target.value,
-  }));
+	setFormData((prev) => ({
+		...prev,
+		[e.target.name]: e.target.value,
+	}));
 };
 ```
 
 ### Error Handling
+
 ```typescript
 // Implement proper error boundaries and user feedback
 class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ValidationError';
-  }
+	constructor(message: string) {
+		super(message);
+		this.name = "ValidationError";
+	}
 }
 
 try {
-  await operation();
+	await operation();
 } catch (error) {
-  if (error instanceof ValidationError) {
-    // Handle validation errors
-  } else {
-    // Handle unexpected errors
-    logError(error);
-    showToast('An error occurred');
-  }
+	if (error instanceof ValidationError) {
+		// Handle validation errors
+	} else {
+		// Handle unexpected errors
+		logError(error);
+		showToast("An error occurred");
+	}
 }
 ```
 
@@ -259,6 +276,7 @@ try {
 ## Guidelines for Changes
 
 When making changes to this codebase:
+
 1. Maintain existing patterns and conventions
 2. Write or update tests for new functionality
 3. Ensure TypeScript types are properly defined and strict
@@ -273,6 +291,7 @@ When making changes to this codebase:
 ## Dependencies
 
 Keep these in mind when suggesting changes:
+
 - TypeScript 5.2+ features and strict mode
 - React 19 APIs and patterns with proper typing
 - Vite-specific configurations
