@@ -4,7 +4,7 @@ A gym companion tool designed to provide a flexible framework for tracking progr
 
 ## Tech Stack
 
-React 19 + TypeScript · Vite · Tailwind CSS · Zustand · Radix UI
+React 19 + TypeScript · Bun · Vite · Tailwind CSS · Zustand · Radix UI
 
 ---
 
@@ -29,17 +29,20 @@ The core feature of YAFA is an intelligent weight calculator that determines the
 - If your performance exceeded expectations (new E1RM > old E1RM), you're prompted to update your baseline
 
 **Supported 1RM formulas:**
+
 - Brzycki (default)
 - Epley, Lander, Lombardi, Mayhew, O'Conner, Wathan
 - Average of all formulas
 
 **RPE-based adjustments:**
+
 - The calculator automatically suggests appropriate target RPE based on rep ranges
 - Lower rep ranges (1–4) → RPE 7
 - Medium rep ranges (5–6) → RPE 8–9
 - Higher rep ranges (7+) → RPE 10
 
 **Bodyweight exercise support:**
+
 - Exercises can specify a bodyweight percentage (e.g., pull-ups use ~100% bodyweight, dips ~80%)
 - The calculator factors in your current bodyweight from measurements to compute accurate load recommendations
 
@@ -62,12 +65,12 @@ Exercises can be created, edited, and deleted. Deleting an exercise also removes
 
 A chronological log of all completed sets, grouped by day:
 
-| Data Point | Description |
-|------------|-------------|
-| **Exercise** | Which movement was performed |
-| **Sets** | Number of sets completed that day |
+| Data Point   | Description                                                    |
+| ------------ | -------------------------------------------------------------- |
+| **Exercise** | Which movement was performed                                   |
+| **Sets**     | Number of sets completed that day                              |
 | **Best Set** | The set with the highest calculated E1RM (reps × weight @ RPE) |
-| **E1RM** | Estimated one-rep max from the best set |
+| **E1RM**     | Estimated one-rep max from the best set                        |
 
 You can manually add sets to the history for past workouts.
 
@@ -88,31 +91,39 @@ Each measurement maintains a timestamped history of entries that can be viewed a
 
 All data is stored locally in the browser using Zustand's persist middleware with localStorage:
 
-| Store | Purpose |
-|-------|---------|
-| `calculator-storage` | Current calculator state (selected exercise, reps, RPE, weight) |
-| `exercise-storage` | Exercise library with E1RM values |
-| `history-storage` | Complete workout history |
-| `measurement-storage` | Body measurements and custom metrics |
+| Store                 | Purpose                                                         |
+| --------------------- | --------------------------------------------------------------- |
+| `calculator-storage`  | Current calculator state (selected exercise, reps, RPE, weight) |
+| `exercise-storage`    | Exercise library with E1RM values                               |
+| `history-storage`     | Complete workout history                                        |
+| `measurement-storage` | Body measurements and custom metrics                            |
 
 ---
 
 ## Development
 
+> **Note:** This project uses [Bun](https://bun.sh) as the runtime. See [BUN_MIGRATION.md](./BUN_MIGRATION.md) for details.
+
 ```bash
+# Install Bun (if not already installed)
+curl -fsSL https://bun.sh/install | bash
+
 # Install dependencies
-yarn
+bun install
 
 # Start development server
-yarn dev
+bun dev
 
 # Run tests
-yarn test
+bun test
 
 # Lint and format
-yarn lint
-yarn format
+bun lint
+bun format
 
 # Type check
-yarn type-check
+bun type-check
+
+# Run full CI checks
+bun ci
 ```

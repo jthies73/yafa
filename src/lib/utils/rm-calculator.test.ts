@@ -1,9 +1,9 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, test } from "bun:test";
 
 import { calculateE1RM } from "@/lib/utils/rmCalculator.ts";
 
 describe("RmCalculator", () => {
-	it("[ BENCHPRESS ] should calculate 1RM correctly for a double at RPE 9.5 in", () => {
+	test("[ BENCHPRESS ] should calculate 1RM correctly for a double at RPE 9.5 in", () => {
 		const weight = 130;
 		const reps = 2;
 		const rpe = 9.5;
@@ -22,7 +22,7 @@ describe("RmCalculator", () => {
 		expect(resultWathan).toBeLessThanOrEqual(140);
 	});
 
-	it("[ BENCHPRESS ] calculate 1RM correctly for 10 reps at RPE 9.5", () => {
+	test("[ BENCHPRESS ] calculate 1RM correctly for 10 reps at RPE 9.5", () => {
 		const weight = 110;
 		const reps = 10;
 		const rpe = 10;
@@ -35,7 +35,7 @@ describe("RmCalculator", () => {
 		expect(resultOConner).toBeLessThanOrEqual(140);
 	});
 
-	it("[ BENCHPRESS ] calculate 1RM correctly for 15 reps at RPE 10", () => {
+	test("[ BENCHPRESS ] calculate 1RM correctly for 15 reps at RPE 10", () => {
 		const weight = 100;
 		const reps = 15;
 		const rpe = 10;
@@ -48,7 +48,7 @@ describe("RmCalculator", () => {
 		expect(resultOConner).toBeLessThanOrEqual(140);
 	});
 
-	it("[ MILITARY ] calculate 1RM correctly for 3 reps at RPE 9.5", () => {
+	test("[ MILITARY ] calculate 1RM correctly for 3 reps at RPE 9.5", () => {
 		const weight = 80;
 		const reps = 3;
 		const rpe = 9.5;
@@ -70,7 +70,7 @@ describe("RmCalculator", () => {
 		expect(resultWathan).toBeLessThanOrEqual(90);
 	});
 
-	it("[ MILITARY ] calculate 1RM correctly for 5 reps at RPE 8", () => {
+	test("[ MILITARY ] calculate 1RM correctly for 5 reps at RPE 8", () => {
 		const weight = 70;
 		const reps = 5;
 		const rpe = 8;
@@ -92,7 +92,7 @@ describe("RmCalculator", () => {
 		expect(resultWathan).toBeLessThanOrEqual(90);
 	});
 
-	it("[ MILITARY ] calculate 1RM correctly for 11 reps at RPE 10", () => {
+	test("[ MILITARY ] calculate 1RM correctly for 11 reps at RPE 10", () => {
 		const weight = 60;
 		const reps = 12;
 		const rpe = 9.5;

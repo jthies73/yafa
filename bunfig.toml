@@ -1,0 +1,22 @@
+# Bun configuration file
+# https://bun.sh/docs/runtime/bunfig
+
+[install]
+# Install configuration
+optional = true
+dev = true
+peer = true
+
+[install.cache]
+# Disable cache for CI environments
+disable = false
+
+[test]
+# Test runner configuration
+preload = []
+coverage = true
+coverageThreshold = 0
+
+[run]
+# Runtime configuration
+bun = true

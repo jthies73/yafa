@@ -34,7 +34,10 @@
 		"baseUrl": "./",
 		"paths": {
 			"@/*": ["./src/*"]
-		}
+		},
+
+		/* Bun */
+		"types": ["bun-types"]
 	},
 	"include": ["src/**/*", "vite.config.ts"],
 	"exclude": ["node_modules", "dist", "coverage"]

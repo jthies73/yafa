@@ -1,11 +1,17 @@
-# Use latest official Node.js runtime as the base image
-FROM node:20-alpine as builder
+# Use Bun runtime as the base image for building
+FROM oven/bun:1 as builder
 # Set the working directory in the container
 WORKDIR /app
-# Copy build outputs into the container
-COPY ./dist ./dist
+# Copy package files
+COPY package.json bun.lockb* bunfig.toml* ./
+# Install dependencies with bun
+RUN bun install --frozen-lockfile
+# Copy the rest of the application
+COPY . .
+# Build the application with bun
+RUN bun run build
 
-# Use the official Nginx image as the base image
+# Use the official Nginx image as the base image for serving
 FROM nginx:1.19.6-alpine
 # Copy the custom Nginx configuration file to the container
 COPY nginx.conf /etc/nginx/conf.d/default.conf
