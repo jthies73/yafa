@@ -4,7 +4,7 @@ A gym companion tool designed to provide a flexible framework for tracking progr
 
 ## Tech Stack
 
-React 19 + TypeScript · Vite · Tailwind CSS · Zustand · Radix UI
+React 19 + TypeScript · Bun · Vite · Tailwind CSS · Zustand · Radix UI
 
 ---
 
@@ -99,20 +99,28 @@ All data is stored locally in the browser using Zustand's persist middleware wit
 
 ## Development
 
+> **Note:** This project uses [Bun](https://bun.sh) as the runtime. See [BUN_MIGRATION.md](./BUN_MIGRATION.md) for details.
+
 ```bash
+# Install Bun (if not already installed)
+curl -fsSL https://bun.sh/install | bash
+
 # Install dependencies
-yarn
+bun install
 
 # Start development server
-yarn dev
+bun dev
 
 # Run tests
-yarn test
+bun test
 
 # Lint and format
-yarn lint
-yarn format
+bun lint
+bun format
 
 # Type check
-yarn type-check
+bun type-check
+
+# Run full CI checks
+bun ci
 ```

@@ -40,3 +40,7 @@ tsconfig.tsbuildinfo
 
 # personal website
 public/jthies73.html
+
+# Lock files (we use bun.lockb)
+package-lock.json
+yarn.lock
