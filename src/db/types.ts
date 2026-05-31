@@ -102,24 +102,6 @@ export interface Workout {
 }
 
 // ----------------------------------------------
-// User Data
-// ----------------------------------------------
-
-export interface AthleteProfile {
-  age: number;
-  gender: 'male' | 'female' | 'other';
-  height: number; // in cm
-  weight: number; // in kg
-  bodyFat?: number; // percentage (e.g., 20)
-  trainingAge?: number; // in years
-  currentSplit?: string;
-  sessionLength?: number; // minutes
-  facility?: string;
-  e1RMs: Record<string, number>; // keyed by exercise name or exercise ID to load in kg
-  supplements?: string[];
-}
-
-// ----------------------------------------------
 // Global State
 // ----------------------------------------------
 
