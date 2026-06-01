@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark, .dark *));
+
 @theme {
   /* Custom Tailwind Accent Palette */
   --color-accent: #1fc7b9;
@@ -18,6 +20,7 @@
 }
 
 @layer base {
+
   html,
   body {
     margin: 0;
@@ -38,37 +41,28 @@
       color 0.3s ease;
   }
 
-  @media (prefers-color-scheme: dark) {
-    html,
-    body {
-      background-color: var(--color-bg-dark);
-      color: var(--color-text-dark);
-    }
+  .dark body,
+  .dark {
+    background-color: var(--color-bg-dark);
+    color: var(--color-text-dark);
   }
 
   #app {
-    width: 1126px;
-    max-width: 100%;
-    margin: 0 auto;
-    text-align: center;
-    border-left: 1px solid var(--color-border-light);
-    border-right: 1px solid var(--color-border-light);
+    width: 100%;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
   }
 
-  @media (prefers-color-scheme: dark) {
-    #app {
-      border-color: var(--color-border-dark);
-    }
-  }
+
 }
 
-/* Custom Tailwind v4 Utility Animations */
-@utility animate-fade-in-up {
-  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* Custom Tailwind Utility Animations */
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 }
 
 @keyframes fade-in-up {
@@ -76,6 +70,7 @@
     opacity: 0;
     transform: translateY(24px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
