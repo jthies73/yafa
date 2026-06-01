@@ -68,14 +68,14 @@ onMounted(() => {
         <Transition name="sidebar-transition">
           <DialogContent
             v-if="sidebarOpen"
-            class="fixed right-0 top-0 bottom-0 z-50 w-3/4 max-w-xs bg-bg-light dark:bg-bg-dark shadow-2xl p-6 focus:outline-none border-l border-border-light dark:border-border-dark flex flex-col justify-between h-full"
+            class="fixed right-0 top-0 bottom-0 z-50 w-3/4 max-w-xs bg-bg-light dark:bg-bg-dark text-text-light dark:text-text-dark shadow-2xl p-6 focus:outline-none border-l border-border-light dark:border-border-dark flex flex-col justify-between h-full"
           >
             <div class="flex flex-col gap-6">
               <div class="flex items-center justify-between">
                 <DialogTitle class="text-lg font-bold tracking-wider text-accent uppercase">
                   Menu
                 </DialogTitle>
-                <DialogClose as="button" class="p-2 -mr-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer">
+                <DialogClose as="button" class="text-text-light dark:text-text-dark p-2 -mr-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer">
                   <!-- Close Icon -->
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 6 6 18" />
