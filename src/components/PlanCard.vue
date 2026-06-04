@@ -26,7 +26,7 @@ defineEmits<{
         </h3>
         <span
           v-if="plan.active"
-          class="px-2 py-1 text-xs font-semibold bg-accent/20 text-accent rounded-md uppercase tracking-wider animate-pulse-subtle"
+          class="px-2 py-1 text-xs font-semibold bg-accent/20 text-accent rounded-md uppercase tracking-wider"
         >
           Active
         </span>
@@ -65,19 +65,3 @@ defineEmits<{
     </div>
   </div>
 </template>
-
-<style scoped>
-@keyframes pulse-subtle {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.85;
-  }
-}
-
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-</style>

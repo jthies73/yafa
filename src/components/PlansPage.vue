@@ -4,7 +4,7 @@ import { liveQuery } from "dexie";
 import { db } from "../db/db";
 import type { Plan, Routine } from "../db/types";
 import PlanCard from "./PlanCard.vue";
-import NewPlanFab from "./NewPlanFab.vue";
+import AppFab from "./AppFab.vue";
 
 const plans = ref<Plan[]>([]);
 const routinesMap = ref<Record<string, Routine>>({});
@@ -102,6 +102,6 @@ const handleCreatePlan = () => {
     </div>
 
     <!-- FAB Button -->
-    <NewPlanFab label="New Plan" @click="handleCreatePlan" />
+    <AppFab label="New Plan" @click="handleCreatePlan" />
   </div>
 </template>
