@@ -85,22 +85,31 @@ const toggleActiveState = async () => {
   });
 };
 
-const getProgressionText = (config?: any) => {
-  if (!config) return "No parameters configured";
+const getProgressionType = (config?: any) => {
+  if (!config) return "—";
+  const model = config.progressionModel;
+  if (model === "linear") return "Linear Progression";
+  if (model === "double") return "Double Progression";
+  if (model === "topset_backoff") return "Top Set + Back-Off Progression";
+  return "Custom Progression";
+};
+
+const getSetsAndReps = (config?: any) => {
+  if (!config) return "—";
   const model = config.progressionModel;
   const params = config.progressionParams;
-  if (!params) return "Custom configuration";
+  if (!params) return "—";
 
   if (model === "linear") {
-    return `Linear Progression • ${params.targetSets} sets × ${params.targetReps} reps • +${params.weightIncrement}kg`;
+    return `${params.targetSets} × ${params.targetReps}`;
   }
   if (model === "double") {
-    return `Double Progression • ${params.targetSets} sets, ${params.minReps}-${params.maxReps} reps • +${params.weightIncrement}kg`;
+    return `${params.targetSets} × ${params.minReps}-${params.maxReps}`;
   }
   if (model === "topset_backoff") {
-    return `Top Set • 1 set × ${params.topSetTargetReps} reps @ RPE ${params.topSetTargetRpe} + ${params.backOffSets} back-offs (-${params.percentageDrop}% wt, +${params.weightIncrement}kg)`;
+    return `1 × ${params.topSetTargetReps} + ${params.backOffSets} back-offs`;
   }
-  return "Custom Progression Model";
+  return "Custom";
 };
 </script>
 
@@ -168,7 +177,7 @@ const getProgressionText = (config?: any) => {
             "
             @click="toggleActiveState"
           >
-            {{ plan.active ? "Deactivate Plan" : "Set as Active Plan" }}
+            {{ plan.active ? "Deactivate" : "Set as Active Plan" }}
           </button>
         </div>
       </div>
@@ -230,45 +239,36 @@ const getProgressionText = (config?: any) => {
                 <div
                   v-for="(rEx, idx) in routine.exercises"
                   :key="rEx.exerciseId + '-' + idx"
-                  class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-border-light dark:border-border-dark pb-3.5 last:border-0 last:pb-0 gap-2"
+                  class="flex items-start justify-between border-b border-border-light dark:border-border-dark pb-3.5 last:border-0 last:pb-0 gap-4"
                 >
-                  <div>
-                    <div class="flex items-center gap-2">
+                  <div class="flex flex-col min-w-0 flex-grow">
+                    <div class="flex items-start gap-2">
                       <span
-                        class="text-sm font-semibold text-text-light dark:text-text-dark opacity-50"
+                        class="text-sm font-semibold text-text-light dark:text-text-dark opacity-50 shrink-0 mt-0.5"
                       >
                         {{ idx + 1 }}.
                       </span>
                       <h4
-                        class="font-bold text-text-h-light dark:text-text-h-dark text-sm sm:text-base"
+                        class="font-bold text-text-h-light dark:text-text-h-dark text-sm sm:text-base break-words"
                       >
                         {{
                           exercisesMap[rEx.exerciseId]?.name ||
                           "Loading Exercise..."
                         }}
                       </h4>
-                      <span
-                        v-if="exercisesMap[rEx.exerciseId]?.primaryMuscleGroup"
-                        class="text-[10px] px-1.5 py-0.5 bg-black/10 dark:bg-white/10 text-text-light dark:text-text-dark rounded font-semibold uppercase tracking-wider"
-                      >
-                        {{ exercisesMap[rEx.exerciseId].primaryMuscleGroup }}
-                      </span>
                     </div>
-
-                    <!-- Progression Config details -->
-                    <p
-                      class="text-xs text-text-light dark:text-text-dark opacity-75 mt-1"
+                    <span
+                      class="text-xs text-text-light dark:text-text-dark opacity-60 pl-5 mt-0.5 break-words"
                     >
-                      {{ getProgressionText(rEx.config) }}
-                    </p>
-
-                    <!-- Exercise Custom Notes -->
-                    <p
-                      v-if="rEx.config?.notes"
-                      class="text-xs italic text-text-light dark:text-text-dark opacity-60 mt-1"
+                      {{ getProgressionType(rEx.config) }}
+                    </span>
+                  </div>
+                  <div class="text-right shrink-0 max-w-[45%] flex justify-end">
+                    <span
+                      class="text-xs sm:text-sm text-text-h-light dark:text-text-h-dark font-mono font-semibold break-words text-right"
                     >
-                      Note: {{ rEx.config.notes }}
-                    </p>
+                      {{ getSetsAndReps(rEx.config) }}
+                    </span>
                   </div>
                 </div>
               </div>
