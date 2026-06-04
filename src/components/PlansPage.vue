@@ -49,7 +49,7 @@ const handleCreatePlan = () => {
 </script>
 
 <template>
-  <div class="p-6 relative min-h-full flex flex-col animate-fade-in">
+  <div class="p-6 relative min-h-full flex flex-col">
     <div class="mb-6 flex items-center justify-between">
       <h1
         class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"

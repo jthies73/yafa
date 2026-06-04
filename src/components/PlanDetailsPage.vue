@@ -118,14 +118,12 @@ const handleRoutineClick = (routine: Routine) => {
 };
 
 const handleAddRoutine = () => {
-  console.log("Add Routine FAB clicked");
+  console.log("New Routine FAB clicked");
 };
 </script>
 
 <template>
-  <div
-    class="p-6 relative min-h-full flex flex-col animate-fade-in gap-6"
-  >
+  <div class="p-6 relative min-h-full flex flex-col gap-6">
     <!-- Back Button & Page Header -->
     <div class="flex flex-col gap-4">
       <button
@@ -326,6 +324,6 @@ const handleAddRoutine = () => {
     </div>
 
     <!-- FAB Button -->
-    <AppFab v-if="plan" label="Add Routine" @click="handleAddRoutine" />
+    <AppFab v-if="plan" label="New Routine" @click="handleAddRoutine" />
   </div>
 </template>
