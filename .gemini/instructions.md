@@ -13,6 +13,7 @@ This file contains base instructions and technical guidelines for Google Gemini 
 * **Alignment & Consistency**: When creating new components or populating pages, align the new designs seamlessly with existing stylings, typography, and spacing.
 * **Asset Integrity**: Never use generic image placeholders. Prefer inline SVGs or clean programmatic graphics styled with Tailwind utility classes.
 * **Interactive Cursor**: Explicitly apply the `cursor-pointer` utility class (or `cursor: pointer` in CSS) to all clickable elements (buttons, links, triggers, interactive controls) to ensure clear visual feedback.
+* **Interactive Feedback**: Clickable elements must change color slightly on hover to indicate clickability (in addition to having `cursor-pointer`). There should be no animation (such as scale or translate transitions) on hover.
 
 ---
 

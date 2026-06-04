@@ -108,6 +108,7 @@ export interface Workout {
 // ----------------------------------------------
 
 export interface AppState {
+  activePage: string;
   activeWorkoutId: string | null;
   theme: "dark" | "light" | "system";
   units: "metric" | "imperial";

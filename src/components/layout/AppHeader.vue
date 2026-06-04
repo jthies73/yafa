@@ -10,6 +10,16 @@ import {
   DialogDescription,
   DialogClose,
 } from "reka-ui";
+import { useRouter, useRoute } from "vue-router";
+
+// Routing logic
+const router = useRouter();
+const route = useRoute();
+
+const navigateTo = (routeName: string) => {
+  router.push({ name: routeName });
+  sidebarOpen.value = false;
+};
 
 // Theme toggling logic
 const isDark = ref(false);
@@ -139,7 +149,13 @@ onMounted(() => {
                 <!-- Execute Routine / Execute with Calculator / Analytics -->
                 <a
                   href="#"
-                  class="flex items-center gap-3 text-text-h-light dark:text-text-h-dark font-medium text-lg hover:text-accent transition-colors cursor-pointer group"
+                  @click.prevent="navigateTo('dashboard')"
+                  :class="[
+                    'flex items-center gap-3 font-medium text-lg transition-colors cursor-pointer group',
+                    route.name === 'dashboard'
+                      ? 'text-accent'
+                      : 'text-text-h-light dark:text-text-h-dark hover:text-accent',
+                  ]"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -151,7 +167,12 @@ onMounted(() => {
                     stroke-width="2"
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    class="w-5 h-5 text-accent"
+                    :class="[
+                      'w-5 h-5 transition-colors',
+                      route.name === 'dashboard'
+                        ? 'text-accent'
+                        : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent',
+                    ]"
                   >
                     <rect width="7" height="9" x="3" y="3" rx="1" />
                     <rect width="7" height="5" x="14" y="3" rx="1" />
@@ -164,7 +185,13 @@ onMounted(() => {
                 <!-- Configure / Activate Plans & Routines -->
                 <a
                   href="#"
-                  class="flex items-center gap-3 text-text-light dark:text-text-dark font-medium text-lg hover:text-accent transition-colors cursor-pointer group"
+                  @click.prevent="navigateTo('plans')"
+                  :class="[
+                    'flex items-center gap-3 font-medium text-lg transition-colors cursor-pointer group',
+                    route.name === 'plans'
+                      ? 'text-accent'
+                      : 'text-text-light dark:text-text-dark hover:text-accent',
+                  ]"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -176,7 +203,12 @@ onMounted(() => {
                     stroke-width="2"
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    class="w-5 h-5 text-text-light/70 dark:text-text-dark/70 group-hover:text-accent transition-colors"
+                    :class="[
+                      'w-5 h-5 transition-colors',
+                      route.name === 'plans'
+                        ? 'text-accent'
+                        : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent',
+                    ]"
                   >
                     <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
                     <line x1="16" x2="16" y1="2" y2="6" />

@@ -11,11 +11,15 @@
   --color-text-light: #6b6375;
   --color-text-h-light: #08060d;
   --color-bg-light: #ffffff;
+  --color-surface-light: #f9f9fb;
+  --color-surface-light-hover: #f0f0f3;
   --color-border-light: #e5e4e7;
 
   --color-text-dark: #9ca3af;
   --color-text-h-dark: #f3f4f6;
   --color-bg-dark: #16171d;
+  --color-surface-dark: #1d1e24;
+  --color-surface-dark-hover: #252730;
   --color-border-dark: #2e303a;
 }
 

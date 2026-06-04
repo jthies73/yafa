@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AppHeader from "./components/layout/AppHeader.vue";
-import Dashboard from "./components/Dashboard.vue";
 </script>
 
 <template>
@@ -9,7 +8,7 @@ import Dashboard from "./components/Dashboard.vue";
   >
     <AppHeader />
     <main class="grow flex flex-col w-full relative">
-      <Dashboard />
+      <router-view />
     </main>
   </div>
 </template>

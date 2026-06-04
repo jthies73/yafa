@@ -320,6 +320,7 @@ const plan: Plan = {
 
 const state: AppState & { id: string } = {
   id: "settings",
+  activePage: "dashboard",
   activeWorkoutId: null,
   theme: "dark",
   units: "metric",
