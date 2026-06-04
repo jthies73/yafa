@@ -72,7 +72,7 @@ const close = () => {
 const save = () => {
   const config: RoutineExerciseConfig = {
     progressionModel: configModel.value,
-    progressionParams: configParams.value as any,
+    progressionParams: { ...configParams.value } as any,
     ...(configNotes.value ? { notes: configNotes.value } : {}),
   };
   emit("save", config);

@@ -71,35 +71,10 @@ const handleSavePlan = async (input: PlanInput) => {
     <!-- Empty State -->
     <div
       v-if="plans.length === 0"
-      class="flex-grow flex flex-col items-center justify-center text-center p-8 bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm"
+      class="text-sm italic text-text-light dark:text-text-dark opacity-60"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="64"
-        height="64"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="text-accent mb-4 opacity-80"
-      >
-        <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-        <line x1="16" x2="16" y1="2" y2="6" />
-        <line x1="8" x2="8" y1="2" y2="6" />
-        <line x1="3" x2="21" y1="10" y2="10" />
-        <path d="m9 16 2 2 4-4" />
-      </svg>
-      <h2
-        class="text-xl font-semibold mb-2 text-text-h-light dark:text-text-h-dark"
-      >
-        No plans yet
-      </h2>
-      <p class="text-text-light dark:text-text-dark opacity-70 max-w-sm">
-        Create your first training plan to start organizing your routines and
-        track your progression.
-      </p>
+      No plans yet. Create your first training plan to start organizing your
+      routines.
     </div>
 
     <!-- Plans List -->

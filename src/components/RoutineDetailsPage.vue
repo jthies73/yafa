@@ -7,11 +7,14 @@ import type { Routine, Exercise, RoutineExerciseConfig } from "../db/types";
 import {
   updateRoutine,
   deleteRoutine,
+  createExercise,
   type RoutineInput,
+  type ExerciseInput,
 } from "../db/repository";
 import AppFab from "./AppFab.vue";
 import ExercisePickerSheet from "./ExercisePickerSheet.vue";
 import ExerciseConfigSheet from "./ExerciseConfigSheet.vue";
+import ExerciseFormSheet from "./ExerciseFormSheet.vue";
 import RoutineFormSheet from "./RoutineFormSheet.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
 
@@ -86,6 +89,26 @@ const confirmDeleteRoutine = async () => {
 // --- Exercise Picker Sheet ---
 const showPicker = ref(false);
 
+// --- New Exercise Sheet (create in library, then add to this routine) ---
+const showExerciseForm = ref(false);
+
+const handleCreateExercise = async () => {
+  showPicker.value = false;
+  await nextTick();
+  showExerciseForm.value = true;
+};
+
+const handleSaveNewExercise = async (input: ExerciseInput) => {
+  const id = await createExercise(input);
+  showExerciseForm.value = false;
+  // Flow straight into configuring the freshly created exercise for this routine.
+  configExerciseId.value = id;
+  configExerciseName.value = input.name.trim();
+  editingIndex.value = null;
+  await nextTick();
+  showConfig.value = true;
+};
+
 // --- Config Sheet ---
 const showConfig = ref(false);
 const editingIndex = ref<number | null>(null);
@@ -118,11 +141,26 @@ const editExercise = (idx: number) => {
   showConfig.value = true;
 };
 
+const toPlainConfig = (
+  cfg?: RoutineExerciseConfig,
+): RoutineExerciseConfig | undefined => {
+  if (!cfg) return undefined;
+  return {
+    progressionModel: cfg.progressionModel,
+    progressionParams: { ...cfg.progressionParams } as any,
+    ...(cfg.notes ? { notes: cfg.notes } : {}),
+  };
+};
+
 const handleSaveConfig = async (config: RoutineExerciseConfig) => {
   if (!routine.value || saving.value) return;
   saving.value = true;
   try {
-    const exercises = [...routine.value.exercises];
+    // Reconstruct exercises array, stripping Proxies from existing exercises
+    const exercises = routine.value.exercises.map((ex) => ({
+      exerciseId: ex.exerciseId,
+      config: toPlainConfig(ex.config),
+    }));
     if (editingIndex.value === null) {
       exercises.push({ exerciseId: configExerciseId.value, config });
     } else {
@@ -271,35 +309,9 @@ const getSummary = (config?: RoutineExerciseConfig) => {
 
         <div
           v-if="routine.exercises.length === 0"
-          class="flex flex-col items-center justify-center py-16 text-center"
+          class="text-sm italic text-text-light dark:text-text-dark opacity-60"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="text-text-light dark:text-text-dark opacity-25 mb-3"
-          >
-            <path
-              d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"
-            ></path>
-            <line x1="6" y1="1" x2="6" y2="4"></line>
-            <line x1="10" y1="1" x2="10" y2="4"></line>
-            <line x1="14" y1="1" x2="14" y2="4"></line>
-          </svg>
-          <p class="text-sm text-text-light dark:text-text-dark opacity-50">
-            No exercises added yet.
-          </p>
-          <p
-            class="text-xs text-text-light dark:text-text-dark opacity-35 mt-1"
-          >
-            Tap "Add Exercise" to get started.
-          </p>
+          No exercises configured for this routine.
         </div>
 
         <div
@@ -358,7 +370,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
 
             <!-- Delete button -->
             <button
-              class="p-1.5 -mr-1 text-text-light dark:text-text-dark hover:text-red-500 cursor-pointer transition-colors duration-150 shrink-0"
+              class="p-1.5 -mr-1 text-red-500/70 hover:text-red-500 dark:text-red-400/70 dark:hover:text-red-400 cursor-pointer transition-colors duration-150 shrink-0"
               title="Remove exercise"
               @click.stop="removeExercise(idx)"
             >
@@ -428,6 +440,13 @@ const getSummary = (config?: RoutineExerciseConfig) => {
   <ExercisePickerSheet
     v-model:open="showPicker"
     @select="handleSelectExercise"
+    @create="handleCreateExercise"
+  />
+
+  <ExerciseFormSheet
+    v-model:open="showExerciseForm"
+    :is-editing="false"
+    @save="handleSaveNewExercise"
   />
 
   <ExerciseConfigSheet
