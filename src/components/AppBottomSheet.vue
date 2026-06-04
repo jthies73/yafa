@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onUnmounted } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 
 const props = defineProps<{
   title?: string;
@@ -70,8 +70,31 @@ watch(
   { immediate: true },
 );
 
+function handleKeydown(e: KeyboardEvent) {
+  // ESC to close
+  if (e.key === "Escape") {
+    e.preventDefault();
+    open.value = false;
+  }
+  // ENTER to submit (click the primary/accent button in footer)
+  if (e.key === "Enter") {
+    const primaryBtn = document.querySelector(
+      "[role='dialog'] button.bg-accent, [role='dialog'] .bg-accent",
+    ) as HTMLButtonElement;
+    if (primaryBtn) {
+      e.preventDefault();
+      primaryBtn.click();
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeydown);
+});
+
 onUnmounted(() => {
   document.body.style.overflow = "";
+  window.removeEventListener("keydown", handleKeydown);
   cleanupListeners();
 });
 

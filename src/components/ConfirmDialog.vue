@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, onUnmounted } from "vue";
+import { watch, onMounted, onUnmounted } from "vue";
 
 withDefaults(
   defineProps<{
@@ -24,12 +24,35 @@ const emit = defineEmits<{
   (e: "confirm"): void;
 }>();
 
+function handleKeydown(e: KeyboardEvent) {
+  if (!open.value) return;
+  // ESC to cancel
+  if (e.key === "Escape") {
+    e.preventDefault();
+    open.value = false;
+  }
+}
+
 watch(open, (isOpen) => {
   document.body.style.overflow = isOpen ? "hidden" : "";
+  // Focus cancel button when dialog opens so ENTER/TAB work naturally
+  if (isOpen) {
+    setTimeout(() => {
+      const cancelBtn = document.querySelector(
+        "[role='alertdialog'] button:first-of-type",
+      ) as HTMLButtonElement;
+      cancelBtn?.focus();
+    }, 0);
+  }
+});
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeydown);
 });
 
 onUnmounted(() => {
   document.body.style.overflow = "";
+  window.removeEventListener("keydown", handleKeydown);
 });
 
 const confirm = () => {
@@ -70,17 +93,17 @@ const confirm = () => {
 
           <div class="mt-1 flex gap-3">
             <button
-              class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-2.5 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer"
+              class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-2.5 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent"
               @click="open = false"
             >
               {{ cancelLabel }}
             </button>
             <button
-              class="flex-1 rounded-lg py-2.5 text-sm font-bold transition-colors duration-150 cursor-pointer"
+              class="flex-1 rounded-lg py-2.5 text-sm font-bold transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1"
               :class="
                 danger
-                  ? 'bg-red-500 text-white hover:bg-red-600'
-                  : 'bg-accent text-bg-dark hover:bg-accent/90'
+                  ? 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500'
+                  : 'bg-accent text-bg-dark hover:bg-accent/90 focus:ring-accent'
               "
               @click="confirm"
             >
