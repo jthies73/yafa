@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import AppBottomSheet from "./AppBottomSheet.vue";
 
 const router = useRouter();
+const showActiveWorkoutSheet = ref(false);
 
 const today = computed(() => {
   return new Date().toLocaleDateString("en-US", {
@@ -160,7 +162,7 @@ const navigateTo = (routeName: string) => {
         <div class="flex flex-col gap-3">
           <button
             class="w-full bg-accent hover:bg-accent/90 text-bg-dark font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors duration-150 text-sm tracking-wide uppercase"
-            @click="() => console.log('Start workout clicked')"
+            @click="showActiveWorkoutSheet = true"
           >
             Start Active Workout
           </button>
@@ -259,4 +261,12 @@ const navigateTo = (routeName: string) => {
       </div>
     </div>
   </div>
+
+  <AppBottomSheet v-model:open="showActiveWorkoutSheet" title="Active Workout">
+    <div
+      class="h-64 flex items-center justify-center text-text-light dark:text-text-dark"
+    >
+      <p class="text-sm opacity-60">Active workout session will appear here</p>
+    </div>
+  </AppBottomSheet>
 </template>

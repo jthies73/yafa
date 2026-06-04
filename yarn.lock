@@ -930,11 +930,6 @@
   resolved "https://registry.yarnpkg.com/@oxc-project/types/-/types-0.133.0.tgz#2e282ef9e1d26e06b68ccd14b73f310a3b2cf7f8"
   integrity sha512-KzkdCd6Uxqnf6l3HOw1xfatAlUURA0g14cvBYFyJ5SaNOQbOUvBr9PKArcPcrNIeRsBdgcUzOGrhKveVpvOIGA==
 
-"@plainsheet/core@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@plainsheet/core/-/core-1.0.1.tgz#d28db377452c187947fceeb30aca7894c515a205"
-  integrity sha512-FaDvma+xqodrHiXJxGF66l7YH0lAYxMB3/6YbBgtnWdjaAxBZK6rO3BU/1SiBirsOhlSws42dLj3948PbCm8bw==
-
 "@rolldown/binding-android-arm64@1.0.3":
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@rolldown/binding-android-arm64/-/binding-android-arm64-1.0.3.tgz#54ce8f8382213f4a314a0c2f7ba83f81ffeae592"

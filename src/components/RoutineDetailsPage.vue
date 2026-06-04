@@ -3,11 +3,7 @@ import { ref, computed, nextTick, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { liveQuery } from "dexie";
 import { db } from "../db/db";
-import type {
-  Routine,
-  Exercise,
-  RoutineExerciseConfig,
-} from "../db/types";
+import type { Routine, Exercise, RoutineExerciseConfig } from "../db/types";
 import AppFab from "./AppFab.vue";
 import ExercisePickerSheet from "./ExercisePickerSheet.vue";
 import ExerciseConfigSheet from "./ExerciseConfigSheet.vue";
@@ -136,9 +132,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
 </script>
 
 <template>
-  <div
-    class="p-6 relative min-h-full flex flex-col gap-6 pb-24"
-  >
+  <div class="p-6 relative min-h-full flex flex-col gap-6 pb-24">
     <!-- Back Button & Page Header -->
     <div class="flex flex-col gap-4">
       <button

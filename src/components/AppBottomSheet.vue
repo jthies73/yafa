@@ -1,192 +1,233 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onUnmounted, watch } from "vue";
-import { createBottomSheet, type BottomSheetCore } from "@plainsheet/core";
+import { ref, computed, watch, nextTick, onUnmounted } from "vue";
 
-defineProps<{
+const props = defineProps<{
   title?: string;
+  duration?: number; // animation duration in ms, default 300
 }>();
 
 const open = defineModel<boolean>("open", { required: true });
 
-const contentWrapper = ref<HTMLElement | null>(null);
-let sheet: BottomSheetCore | null = null;
-let darkObserver: MutationObserver | null = null;
+const sheetEl = ref<HTMLElement | null>(null);
+const visible = ref(false);
+const translateY = ref(0);
+const isDragging = ref(false);
 
-const isDark = () => document.documentElement.classList.contains("dark");
+let dragStartClientY = 0;
+let dragStartTranslateY = 0;
+let lastClientY = 0;
+let lastEventTime = 0;
+let releaseVelocity = 0; // px/ms, positive = downward
 
-const syncDarkMode = () => {
-  if (!sheet?.elements) return;
-  const dark = isDark();
-  const root = sheet.elements.bottomSheetRoot;
-  const container = sheet.elements.bottomSheetContainer;
-  const gapFiller = sheet.elements.bottomSheetContainerGapFiller;
+const duration = computed(() => props.duration ?? 300);
+const transition = computed(() => `${duration.value}ms ease`);
 
-  if (root) {
-    root.classList.toggle("dark", dark);
-  }
+const sheetStyle = computed(() => ({
+  transform: `translateY(${translateY.value}px)`,
+  transition: isDragging.value ? "none" : `transform ${transition.value}`,
+}));
 
-  // Override plainsheet's CSS variable for container background
-  const bg = dark
-    ? getComputedStyle(document.documentElement)
-        .getPropertyValue("--color-bg-dark")
-        .trim()
-    : getComputedStyle(document.documentElement)
-        .getPropertyValue("--color-bg-light")
-        .trim();
-
-  if (container) {
-    container.style.setProperty("--pbs-container-background-color", bg);
-    container.style.backgroundColor = bg;
-  }
-  if (gapFiller) {
-    gapFiller.style.backgroundColor = bg;
-  }
-};
-
-onMounted(() => {
-  sheet = createBottomSheet({
-    content: "",
-    width: "100%",
-    containerBorderRadius: "16px",
-    shouldShowBackdrop: true,
-    shouldShowHandle: true,
-    expandable: false,
-    backdropColor: "rgba(0, 0, 0, 0.6)",
-    afterClose: () => {
-      open.value = false;
-    },
-  });
-
-  sheet.mount();
-
-  // Grab the content wrapper for our Teleport
-  if (sheet.elements.bottomSheetContentWrapper) {
-    contentWrapper.value = sheet.elements.bottomSheetContentWrapper;
-  }
-
-  // Style the container/handle
-  if (sheet.elements.bottomSheetContainer) {
-    sheet.elements.bottomSheetContainer.style.width = "100%";
-    sheet.elements.bottomSheetContainer.style.maxHeight = "92vh";
-  }
-  if (sheet.elements.bottomSheetHandleBar) {
-    sheet.elements.bottomSheetHandleBar.style.backgroundColor = isDark()
-      ? "#2e303a"
-      : "#e5e4e7";
-  }
-
-  // Initial dark mode sync
-  syncDarkMode();
-
-  // Observe dark class changes on <html>
-  darkObserver = new MutationObserver(() => {
-    syncDarkMode();
-    // Also update handle bar color
-    if (sheet?.elements.bottomSheetHandleBar) {
-      sheet.elements.bottomSheetHandleBar.style.backgroundColor = isDark()
-        ? "#2e303a"
-        : "#e5e4e7";
-    }
-  });
-  darkObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
-
-  if (open.value) {
-    nextTick(() => sheet?.open());
-  }
+const backdropStyle = computed(() => {
+  const h = sheetEl.value?.offsetHeight ?? 0;
+  const ratio = h > 0 ? 1 - translateY.value / h : visible.value ? 1 : 0;
+  return {
+    opacity: 0.6 * Math.max(0, Math.min(1, ratio)),
+    transition: isDragging.value ? "none" : `opacity ${transition.value}`,
+  };
 });
 
-watch(open, async (isOpen) => {
-  if (!sheet) return;
-  if (isOpen) {
-    await nextTick();
-    syncDarkMode();
-    sheet.open();
-  } else {
-    sheet.close();
-  }
-});
+function getSheetHeight(): number {
+  return sheetEl.value?.offsetHeight ?? window.innerHeight;
+}
+
+async function animateIn() {
+  // Push off-screen before the sheet is visible so there's no position flash
+  translateY.value = window.innerHeight;
+  visible.value = true;
+  await nextTick();
+  // Double rAF ensures the off-screen position is committed to the GPU before animating
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      translateY.value = 0;
+    }),
+  );
+}
+
+function animateOut() {
+  translateY.value = getSheetHeight();
+  setTimeout(() => {
+    visible.value = false;
+    translateY.value = 0;
+  }, duration.value);
+}
+
+watch(
+  open,
+  (isOpen) => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    isOpen ? animateIn() : animateOut();
+  },
+  { immediate: true },
+);
 
 onUnmounted(() => {
-  darkObserver?.disconnect();
-  sheet?.unmount();
+  document.body.style.overflow = "";
+  cleanupListeners();
 });
+
+// ── Drag ─────────────────────────────────────────────────────────────────────
+
+function onDragStart(e: Event) {
+  // Let buttons and inputs handle their own events
+  if ((e.target as HTMLElement).closest("button, a, input, select, textarea"))
+    return;
+
+  isDragging.value = true;
+  const y = getEventY(e);
+  dragStartClientY = y;
+  dragStartTranslateY = translateY.value;
+  lastClientY = y;
+  lastEventTime = Date.now();
+  releaseVelocity = 0;
+
+  if (e instanceof TouchEvent) {
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onDragEnd);
+  } else {
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onDragEnd);
+  }
+}
+
+function onTouchMove(e: TouchEvent) {
+  e.preventDefault();
+  applyDrag(e.touches[0].clientY);
+}
+
+function onMouseMove(e: MouseEvent) {
+  applyDrag(e.clientY);
+}
+
+function applyDrag(y: number) {
+  const now = Date.now();
+  const dt = now - lastEventTime;
+  if (dt > 0) releaseVelocity = (y - lastClientY) / dt;
+  lastClientY = y;
+  lastEventTime = now;
+  translateY.value = Math.max(0, dragStartTranslateY + (y - dragStartClientY));
+}
+
+function onDragEnd() {
+  isDragging.value = false;
+  cleanupListeners();
+
+  const DISTANCE_THRESHOLD = getSheetHeight() * 0.35;
+  const VELOCITY_THRESHOLD = 0.5; // px/ms
+
+  if (
+    translateY.value > DISTANCE_THRESHOLD ||
+    releaseVelocity > VELOCITY_THRESHOLD
+  ) {
+    open.value = false;
+  } else {
+    translateY.value = 0; // snap back
+  }
+}
+
+function cleanupListeners() {
+  window.removeEventListener("touchmove", onTouchMove);
+  window.removeEventListener("touchend", onDragEnd);
+  window.removeEventListener("mousemove", onMouseMove);
+  window.removeEventListener("mouseup", onDragEnd);
+}
+
+function getEventY(e: Event): number {
+  if (e instanceof TouchEvent) return e.touches[0]?.clientY ?? 0;
+  if (e instanceof MouseEvent) return e.clientY;
+  return 0;
+}
 </script>
 
 <template>
-  <Teleport v-if="contentWrapper" :to="contentWrapper">
-    <!-- Header -->
-    <div
-      class="flex items-center justify-between px-5 py-4 border-b border-border-light dark:border-border-dark shrink-0"
-    >
-      <div class="min-w-0">
-        <slot name="title">
-          <h2
-            class="text-lg font-bold text-text-h-light dark:text-text-h-dark truncate"
-          >
-            {{ title }}
-          </h2>
-        </slot>
-      </div>
-
-      <button
+  <Teleport to="body">
+    <div v-if="visible" class="fixed inset-0 z-50">
+      <!-- Backdrop -->
+      <div
+        class="absolute inset-0 bg-black"
+        :style="backdropStyle"
         @click="open = false"
-        class="p-2 -mr-2 text-text-light dark:text-text-dark hover:text-text-h-light dark:hover:text-text-h-dark cursor-pointer shrink-0"
+      />
+
+      <!-- Sheet -->
+      <div
+        ref="sheetEl"
+        :style="sheetStyle"
+        class="absolute bottom-0 left-0 right-0 flex flex-col w-full max-h-[92vh] rounded-t-2xl bg-bg-light dark:bg-bg-dark"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+        <!-- Drag zone: handle bar + header -->
+        <div
+          :class="isDragging ? 'cursor-grabbing' : 'cursor-grab'"
+          class="shrink-0 touch-none select-none"
+          @touchstart="onDragStart"
+          @mousedown="onDragStart"
         >
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
+          <!-- Handle bar -->
+          <div class="flex justify-center pt-3 pb-1">
+            <div class="w-10 h-1 rounded-full bg-border-light dark:bg-border-dark" />
+          </div>
 
-    <!-- Subheader -->
-    <slot name="subheader"></slot>
+          <!-- Header -->
+          <div
+            class="flex items-center justify-between px-5 py-4 border-b border-border-light dark:border-border-dark"
+          >
+            <div class="min-w-0">
+              <slot name="title">
+                <h2
+                  class="text-lg font-bold text-text-h-light dark:text-text-h-dark truncate"
+                >
+                  {{ title }}
+                </h2>
+              </slot>
+            </div>
 
-    <!-- Body -->
-    <div class="overflow-y-auto flex-1 flex flex-col relative">
-      <slot></slot>
-    </div>
+            <button
+              @click="open = false"
+              class="p-2 -mr-2 cursor-pointer text-text-light dark:text-text-dark hover:text-text-h-light dark:hover:text-text-h-dark shrink-0"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
 
-    <!-- Footer -->
-    <div
-      v-if="$slots.footer"
-      class="px-5 py-4 border-t border-border-light dark:border-border-dark flex gap-3 shrink-0"
-    >
-      <slot name="footer"></slot>
+        <!-- Subheader -->
+        <slot name="subheader" />
+
+        <!-- Body -->
+        <div class="overflow-y-auto flex-1 flex flex-col relative">
+          <slot />
+        </div>
+
+        <!-- Footer -->
+        <div
+          v-if="$slots.footer"
+          class="px-5 py-4 border-t border-border-light dark:border-border-dark flex gap-3 shrink-0"
+        >
+          <slot name="footer" />
+        </div>
+      </div>
     </div>
   </Teleport>
 </template>
-
-<style>
-/* Override plainsheet's default content wrapper to use flexbox layout */
-.pbs-content-wrapper {
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-/* Override plainsheet's container to use full width on mobile */
-.pbs-container {
-  width: 100% !important;
-}
-
-/* Raise z-index above the FAB (z-40 = 40) */
-.pbs-root {
-  z-index: 50 !important;
-}
-.pbs-backdrop {
-  z-index: 49 !important;
-}
-</style>
