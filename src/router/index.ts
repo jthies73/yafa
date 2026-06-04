@@ -30,6 +30,12 @@ const router = createRouter({
       component: () => import("../components/PlanDetailsPage.vue"),
       props: true,
     },
+    {
+      path: "/routines/:id",
+      name: "routine-details",
+      component: () => import("../components/RoutineDetailsPage.vue"),
+      props: true,
+    },
   ],
 });
 

@@ -188,7 +188,7 @@ onMounted(() => {
                   @click.prevent="navigateTo('plans')"
                   :class="[
                     'flex items-center gap-3 font-medium text-lg transition-colors cursor-pointer group',
-                    ['plans', 'plan-details'].includes(route.name as string)
+                    ['plans', 'plan-details', 'routine-details'].includes(route.name as string)
                       ? 'text-accent'
                       : 'text-text-light dark:text-text-dark hover:text-accent',
                   ]"
@@ -205,7 +205,7 @@ onMounted(() => {
                     stroke-linejoin="round"
                     :class="[
                       'w-5 h-5 transition-colors',
-                      ['plans', 'plan-details'].includes(route.name as string)
+                      ['plans', 'plan-details', 'routine-details'].includes(route.name as string)
                         ? 'text-accent'
                         : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent',
                     ]"
