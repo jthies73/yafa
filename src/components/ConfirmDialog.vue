@@ -26,7 +26,6 @@ const emit = defineEmits<{
 
 function handleKeydown(e: KeyboardEvent) {
   if (!open.value) return;
-  // ESC to cancel
   if (e.key === "Escape") {
     e.preventDefault();
     open.value = false;

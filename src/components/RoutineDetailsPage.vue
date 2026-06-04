@@ -178,8 +178,21 @@ const handleSaveConfig = async (config: RoutineExerciseConfig) => {
 
 const removeExercise = async (idx: number) => {
   if (!routine.value) return;
-  const exercises = routine.value.exercises.filter((_, i) => i !== idx);
+  const exercises = routine.value.exercises
+    .filter((_, i) => i !== idx)
+    .map((ex) => ({
+      exerciseId: ex.exerciseId,
+      config: toPlainConfig(ex.config),
+    }));
   await db.routines.update(routine.value.id, { exercises });
+};
+
+const handleRemoveExercise = async () => {
+  if (editingIndex.value !== null) {
+    await removeExercise(editingIndex.value);
+    editingIndex.value = null;
+    showConfig.value = false;
+  }
 };
 
 // --- Display helpers ---
@@ -367,30 +380,6 @@ const getSummary = (config?: RoutineExerciseConfig) => {
             >
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
-
-            <!-- Delete button -->
-            <button
-              class="p-1.5 -mr-1 text-red-500/70 hover:text-red-500 dark:text-red-400/70 dark:hover:text-red-400 cursor-pointer transition-colors duration-150 shrink-0"
-              title="Remove exercise"
-              @click.stop="removeExercise(idx)"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                <path d="M10 11v6M14 11v6"></path>
-                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-              </svg>
-            </button>
           </div>
         </div>
       </div>
@@ -455,6 +444,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
     :is-editing="editingIndex !== null"
     :initial-config="initialConfig"
     @save="handleSaveConfig"
+    @remove="handleRemoveExercise"
   />
 
   <RoutineFormSheet

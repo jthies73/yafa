@@ -9,8 +9,6 @@ import {
   updatePlan,
   deletePlan,
   createRoutine,
-  updateRoutine,
-  deleteRoutine,
   type PlanInput,
   type RoutineInput,
 } from "../db/repository";
@@ -135,34 +133,18 @@ const handleSavePlan = async (input: PlanInput) => {
   showPlanForm.value = false;
 };
 
-// --- Routine create / edit ---
+// --- Routine create ---
 const showRoutineForm = ref(false);
-const editingRoutine = ref<Routine | null>(null);
-
-const routineFormInitial = computed(() =>
-  editingRoutine.value ? { name: editingRoutine.value.name } : undefined,
-);
 
 const handleAddRoutine = () => {
-  editingRoutine.value = null;
-  showRoutineForm.value = true;
-};
-
-const openEditRoutine = (routine: Routine) => {
-  editingRoutine.value = routine;
   showRoutineForm.value = true;
 };
 
 const handleSaveRoutine = async (input: RoutineInput) => {
-  if (editingRoutine.value) {
-    await updateRoutine(editingRoutine.value.id, input);
-    showRoutineForm.value = false;
-  } else {
-    const id = await createRoutine(input, props.id);
-    showRoutineForm.value = false;
-    // Open the new routine so the user can configure its exercises.
-    router.push({ name: "routine-details", params: { id } });
-  }
+  const id = await createRoutine(input, props.id);
+  showRoutineForm.value = false;
+  // Open the new routine so the user can configure its exercises.
+  router.push({ name: "routine-details", params: { id } });
 };
 
 // --- Shared delete confirmation (plan + routines) ---
@@ -197,14 +179,6 @@ const requestDeletePlan = () => {
       await deletePlan(props.id);
       router.push({ name: "plans" });
     },
-  );
-};
-
-const requestDeleteRoutine = (routine: Routine) => {
-  requestConfirm(
-    "Delete routine?",
-    `Delete "${routine.name}" and its exercise configuration? This cannot be undone.`,
-    () => deleteRoutine(routine.id),
   );
 };
 </script>
@@ -363,54 +337,6 @@ const requestDeleteRoutine = (routine: Routine) => {
               >
                 {{ routine.name }}
               </h3>
-              <div class="flex items-center gap-1 shrink-0">
-                <button
-                  class="p-1.5 rounded-md text-text-light dark:text-text-dark hover:text-accent cursor-pointer transition-colors duration-150"
-                  title="Rename routine"
-                  @click.stop="openEditRoutine(routine)"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M12 20h9"></path>
-                    <path
-                      d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
-                    ></path>
-                  </svg>
-                </button>
-                <button
-                  class="p-1.5 rounded-md text-text-light dark:text-text-dark hover:text-red-500 cursor-pointer transition-colors duration-150"
-                  title="Delete routine"
-                  @click.stop="requestDeleteRoutine(routine)"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path
-                      d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-                    ></path>
-                    <path d="M10 11v6M14 11v6"></path>
-                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-                  </svg>
-                </button>
-              </div>
             </div>
 
             <!-- Exercises List -->
@@ -514,8 +440,7 @@ const requestDeleteRoutine = (routine: Routine) => {
 
     <RoutineFormSheet
       v-model:open="showRoutineForm"
-      :is-editing="editingRoutine !== null"
-      :initial="routineFormInitial"
+      :is-editing="false"
       @save="handleSaveRoutine"
     />
 

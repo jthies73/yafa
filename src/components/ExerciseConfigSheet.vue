@@ -2,6 +2,9 @@
 import { ref, watch } from "vue";
 import type { RoutineExerciseConfig, ProgressionModelType } from "../db/types";
 import AppBottomSheet from "./AppBottomSheet.vue";
+import ConfirmDialog from "./ConfirmDialog.vue";
+
+const showConfirm = ref(false);
 
 const props = defineProps<{
   exerciseName: string;
@@ -13,6 +16,7 @@ const open = defineModel<boolean>("open", { required: true });
 
 const emit = defineEmits<{
   (e: "save", config: RoutineExerciseConfig): void;
+  (e: "remove"): void;
 }>();
 
 const configModel = ref<ProgressionModelType>("linear");
@@ -82,16 +86,28 @@ const save = () => {
 <template>
   <AppBottomSheet v-model:open="open">
     <template #title>
-      <p
-        class="text-xs font-semibold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50 mb-0.5"
-      >
-        {{ isEditing ? "Edit Exercise" : "Add Exercise" }}
-      </p>
-      <h2
-        class="text-lg font-bold text-text-h-light dark:text-text-h-dark truncate"
-      >
-        {{ exerciseName }}
-      </h2>
+      <div class="flex items-center justify-between gap-4">
+        <div class="min-w-0">
+          <p
+            class="text-xs font-semibold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50 mb-0.5"
+          >
+            {{ isEditing ? "Edit Exercise" : "Add Exercise" }}
+          </p>
+          <h2
+            class="text-lg font-bold text-text-h-light dark:text-text-h-dark truncate"
+          >
+            {{ exerciseName }}
+          </h2>
+        </div>
+        <button
+          v-if="isEditing"
+          type="button"
+          class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-500 hover:bg-red-500/20 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25 transition-colors duration-150 cursor-pointer shrink-0"
+          @click="showConfirm = true"
+        >
+          Remove
+        </button>
+      </div>
     </template>
 
     <div class="px-5 py-5 flex flex-col gap-6">
@@ -341,7 +357,6 @@ const save = () => {
           class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50 resize-none"
         ></textarea>
       </div>
-
       <!-- Bottom padding -->
       <div class="h-2"></div>
     </div>
@@ -361,4 +376,12 @@ const save = () => {
       </button>
     </template>
   </AppBottomSheet>
+
+  <ConfirmDialog
+    v-model:open="showConfirm"
+    title="Remove exercise?"
+    :message="`Remove '${exerciseName}' from this routine?`"
+    confirm-label="Remove"
+    @confirm="$emit('remove')"
+  />
 </template>

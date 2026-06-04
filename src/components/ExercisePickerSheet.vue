@@ -3,9 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { liveQuery } from "dexie";
 import { db } from "../db/db";
 import type { Exercise } from "../db/types";
-import { deleteExercise, countExerciseUsage } from "../db/repository";
 import AppBottomSheet from "./AppBottomSheet.vue";
-import ConfirmDialog from "./ConfirmDialog.vue";
 
 const open = defineModel<boolean>("open", { required: true });
 
@@ -53,32 +51,6 @@ const createNew = () => {
   emit("create");
 };
 
-// --- Delete from library ---
-const showConfirm = ref(false);
-const pendingDelete = ref<Exercise | null>(null);
-const pendingUsage = ref(0);
-
-const requestDelete = async (exercise: Exercise) => {
-  pendingDelete.value = exercise;
-  pendingUsage.value = await countExerciseUsage(exercise.id);
-  showConfirm.value = true;
-};
-
-const confirmMessage = computed(() => {
-  const e = pendingDelete.value;
-  if (!e) return "";
-  if (pendingUsage.value > 0) {
-    return `"${e.name}" is used in ${pendingUsage.value} routine slot${
-      pendingUsage.value === 1 ? "" : "s"
-    }. Deleting it will remove it from those routines. This cannot be undone.`;
-  }
-  return `Delete "${e.name}" from your exercise library? This cannot be undone.`;
-});
-
-const confirmDelete = async () => {
-  if (pendingDelete.value) await deleteExercise(pendingDelete.value.id);
-  pendingDelete.value = null;
-};
 </script>
 
 <template>
@@ -190,41 +162,9 @@ const confirmDelete = async () => {
       >
         {{ exercise.primaryMuscleGroup }}
       </span>
-
-      <!-- Delete from library -->
-      <button
-        class="-mr-1 shrink-0 cursor-pointer p-1.5 text-red-500/70 transition-colors duration-150 hover:text-red-500 dark:text-red-400/70 dark:hover:text-red-400"
-        title="Delete from library"
-        @click.stop="requestDelete(exercise)"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-          <path d="M10 11v6M14 11v6"></path>
-          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-        </svg>
-      </button>
     </div>
 
     <!-- Bottom padding for safe area -->
     <div class="h-6"></div>
-
-    <ConfirmDialog
-      v-model:open="showConfirm"
-      title="Delete exercise?"
-      :message="confirmMessage"
-      confirm-label="Delete"
-      @confirm="confirmDelete"
-    />
   </AppBottomSheet>
 </template>
