@@ -233,7 +233,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
           >
             <!-- Index -->
             <span
-              class="text-sm font-semibold text-text-light dark:text-text-dark opacity-35 w-6 text-right shrink-0 tabular-nums"
+              class="text-sm font-semibold text-text-light dark:text-text-dark opacity-35 w-6 text-center shrink-0 tabular-nums"
             >
               {{ idx + 1 }}.
             </span>
