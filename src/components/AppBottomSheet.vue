@@ -105,50 +105,47 @@ onUnmounted(() => {
   cleanupListeners();
 });
 
-// ── Drag ─────────────────────────────────────────────────────────────────────
+// ── Drag (Pointer Events) ─────────────────────────────────────────────────────
 
-function onDragStart(e: Event) {
-  // Let buttons and inputs handle their own events
+let activePointerId: number | null = null;
+
+function onDragStart(e: PointerEvent) {
+  // Let buttons and inputs handle their own events.
   if ((e.target as HTMLElement).closest("button, a, input, select, textarea"))
     return;
+  if (e.pointerType === "mouse" && e.button !== 0) return;
 
+  activePointerId = e.pointerId;
   isDragging.value = true;
-  const y = getEventY(e);
-  dragStartClientY = y;
+  dragStartClientY = e.clientY;
   dragStartTranslateY = translateY.value;
-  lastClientY = y;
+  lastClientY = e.clientY;
   lastEventTime = Date.now();
   releaseVelocity = 0;
 
-  if (e instanceof TouchEvent) {
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-    window.addEventListener("touchend", onDragEnd);
-  } else {
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onDragEnd);
-  }
+  window.addEventListener("pointermove", onPointerMove, { passive: false });
+  window.addEventListener("pointerup", onDragEnd);
+  window.addEventListener("pointercancel", onDragEnd);
 }
 
-function onTouchMove(e: TouchEvent) {
+function onPointerMove(e: PointerEvent) {
+  if (e.pointerId !== activePointerId) return;
   e.preventDefault();
-  applyDrag(e.touches[0].clientY);
-}
 
-function onMouseMove(e: MouseEvent) {
-  applyDrag(e.clientY);
-}
-
-function applyDrag(y: number) {
   const now = Date.now();
   const dt = now - lastEventTime;
-  if (dt > 0) releaseVelocity = (y - lastClientY) / dt;
-  lastClientY = y;
+  if (dt > 0) releaseVelocity = (e.clientY - lastClientY) / dt;
+  lastClientY = e.clientY;
   lastEventTime = now;
-  translateY.value = Math.max(0, dragStartTranslateY + (y - dragStartClientY));
+  translateY.value = Math.max(
+    0,
+    dragStartTranslateY + (e.clientY - dragStartClientY),
+  );
 }
 
 function onDragEnd() {
   isDragging.value = false;
+  activePointerId = null;
   cleanupListeners();
 
   const DISTANCE_THRESHOLD = getSheetHeight() * 0.35;
@@ -165,16 +162,9 @@ function onDragEnd() {
 }
 
 function cleanupListeners() {
-  window.removeEventListener("touchmove", onTouchMove);
-  window.removeEventListener("touchend", onDragEnd);
-  window.removeEventListener("mousemove", onMouseMove);
-  window.removeEventListener("mouseup", onDragEnd);
-}
-
-function getEventY(e: Event): number {
-  if (e instanceof TouchEvent) return e.touches[0]?.clientY ?? 0;
-  if (e instanceof MouseEvent) return e.clientY;
-  return 0;
+  window.removeEventListener("pointermove", onPointerMove);
+  window.removeEventListener("pointerup", onDragEnd);
+  window.removeEventListener("pointercancel", onDragEnd);
 }
 </script>
 
@@ -198,8 +188,7 @@ function getEventY(e: Event): number {
         <div
           :class="isDragging ? 'cursor-grabbing' : 'cursor-grab'"
           class="shrink-0 touch-none select-none"
-          @touchstart="onDragStart"
-          @mousedown="onDragStart"
+          @pointerdown="onDragStart"
         >
           <!-- Handle bar -->
           <div class="flex justify-center pt-3 pb-1">
