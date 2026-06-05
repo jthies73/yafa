@@ -1,5 +1,5 @@
 import { db } from "./db";
-import type { Exercise, Routine, Plan, Workout, AppState } from "./types";
+import type { Exercise, Routine, Plan, Workout } from "./types";
 import { DEFAULT_RPE_MATRIX } from "./rpeMatrix";
 
 const exercises: Exercise[] = [
@@ -204,14 +204,6 @@ const plan: Plan = {
   created_at: Date.now(),
 };
 
-const state: AppState & { id: string } = {
-  id: "settings",
-  activePage: "dashboard",
-  activeWorkoutId: null,
-  theme: "dark",
-  units: "metric",
-};
-
 const workouts: Workout[] = [
   {
     id: "workout-past-1",
@@ -319,13 +311,12 @@ export async function seedDatabase() {
   try {
     await db.transaction(
       "rw",
-      [db.exercises, db.routines, db.plans, db.workouts, db.appState],
+      [db.exercises, db.routines, db.plans, db.workouts],
       async () => {
         await db.exercises.bulkAdd(exercises);
         await db.routines.bulkAdd(routines);
         await db.plans.add(plan);
         await db.workouts.bulkAdd(workouts);
-        await db.appState.add(state);
       },
     );
     console.log("YAFA: Seeding completed successfully!");

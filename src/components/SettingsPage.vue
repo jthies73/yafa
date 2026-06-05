@@ -10,6 +10,9 @@ onMounted(() => {
   isDark.value =
     savedTheme === "dark" ||
     (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  weightUnit.value = localStorage.getItem("yafa:weightUnit") ?? "kg";
+  distanceUnit.value = localStorage.getItem("yafa:distanceUnit") ?? "km";
 });
 
 const toggleTheme = () => {
@@ -25,12 +28,12 @@ const toggleTheme = () => {
 
 const setWeightUnit = (unit: string) => {
   weightUnit.value = unit;
-  console.log(`Weight unit set to: ${unit}`);
+  localStorage.setItem("yafa:weightUnit", unit);
 };
 
 const setDistanceUnit = (unit: string) => {
   distanceUnit.value = unit;
-  console.log(`Distance unit set to: ${unit}`);
+  localStorage.setItem("yafa:distanceUnit", unit);
 };
 </script>
 

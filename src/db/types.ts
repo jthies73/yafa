@@ -107,9 +107,8 @@ export interface Workout {
 // Global State
 // ----------------------------------------------
 
-export interface AppState {
-  activePage: string;
-  activeWorkoutId: string | null;
-  theme: "dark" | "light" | "system";
-  units: "metric" | "imperial";
-}
+// App preferences are persisted in localStorage (not IndexedDB).
+// Keys are namespaced with "yafa:" to avoid collisions.
+//   yafa:activePage  — last visited fullPath, restored on boot
+//   yafa:units       — "metric" | "imperial"
+//   theme            — "dark" | "light" (set by AppHeader, no namespace for legacy compat)
