@@ -285,7 +285,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
       </button>
 
       <div v-if="routine" class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div class="min-w-0">
+        <div class="min-w-0 mb-3">
           <h1
             class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
           >

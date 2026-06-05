@@ -222,8 +222,8 @@ const requestDeletePlan = () => {
 
       <!-- Plan Header with Title and Action Buttons -->
       <div v-if="plan" class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-3 mb-3">
+        <div class="min-w-0 flex flex-col gap-3 mb-3">
+          <div class="flex flex-wrap items-center gap-3">
             <h1
               class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
             >
@@ -244,7 +244,7 @@ const requestDeletePlan = () => {
           </p>
           <button
             v-if="!plan.active"
-            class="mt-3 px-4 py-2 text-xs font-bold rounded-lg cursor-pointer transition-colors duration-150 tracking-wider uppercase border bg-accent hover:bg-accent/90 text-bg-dark border-transparent"
+            class="px-4 py-2 text-xs font-bold rounded-lg cursor-pointer transition-colors duration-150 tracking-wider uppercase border bg-accent hover:bg-accent/90 text-bg-dark border-transparent self-start"
             @click="setActiveState"
           >
             Set as Active Plan
