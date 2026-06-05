@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { liveQuery } from "dexie";
+import Sortable from "sortablejs";
 import { db } from "../db/db";
 import type { Routine, Exercise, RoutineExerciseConfig } from "../db/types";
 import {
@@ -54,7 +55,19 @@ onMounted(() => {
   });
 });
 
-onUnmounted(() => subscription?.unsubscribe());
+onUnmounted(() => {
+  subscription?.unsubscribe();
+  sortable?.destroy();
+});
+
+watch(
+  () => routine.value?.exercises.length,
+  async (len) => {
+    if (len === undefined) return;
+    await nextTick();
+    initSortable();
+  },
+);
 
 const goBack = () => router.back();
 
@@ -195,6 +208,35 @@ const handleRemoveExercise = async () => {
   }
 };
 
+// --- Sortable exercise list ---
+const exerciseListEl = ref<HTMLElement | null>(null);
+let sortable: Sortable | null = null;
+
+const initSortable = () => {
+  if (!exerciseListEl.value) return;
+  sortable?.destroy();
+  sortable = Sortable.create(exerciseListEl.value, {
+    animation: 150,
+    ghostClass: "opacity-30",
+    onEnd: async ({ oldIndex, newIndex }) => {
+      if (
+        oldIndex === undefined ||
+        newIndex === undefined ||
+        oldIndex === newIndex ||
+        !routine.value
+      )
+        return;
+      const exercises = routine.value.exercises.map((ex) => ({
+        exerciseId: ex.exerciseId,
+        config: toPlainConfig(ex.config),
+      }));
+      const [moved] = exercises.splice(oldIndex, 1);
+      exercises.splice(newIndex, 0, moved);
+      await db.routines.update(routine.value.id, { exercises });
+    },
+  });
+};
+
 // --- Display helpers ---
 const getProgressionLabel = (config?: RoutineExerciseConfig) => {
   if (!config) return "Not configured";
@@ -331,14 +373,27 @@ const getSummary = (config?: RoutineExerciseConfig) => {
 
         <div
           v-else
+          ref="exerciseListEl"
           class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl shadow-sm overflow-hidden"
         >
           <div
             v-for="(rEx, idx) in routine.exercises"
             :key="rEx.exerciseId + '-' + idx"
-            class="flex items-center gap-3 px-5 py-4 border-b border-border-light dark:border-border-dark last:border-0 cursor-pointer hover:bg-surface-light-hover dark:hover:bg-surface-dark-hover transition-colors duration-150"
+            class="flex items-center gap-3 px-5 py-4 border-b border-border-light dark:border-border-dark last:border-0 cursor-grab active:cursor-grabbing hover:bg-surface-light-hover dark:hover:bg-surface-dark-hover transition-colors duration-150"
             @click="editExercise(idx)"
           >
+            <!-- Drag handle -->
+            <span
+              class="drag-handle shrink-0 cursor-grab active:cursor-grabbing text-text-light dark:text-text-dark opacity-30 hover:opacity-60 transition-opacity duration-150"
+              @click.stop
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/>
+                <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
+                <circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/>
+              </svg>
+            </span>
+
             <!-- Index -->
             <span
               class="text-sm font-semibold text-text-light dark:text-text-dark opacity-35 w-6 text-center shrink-0 tabular-nums"
