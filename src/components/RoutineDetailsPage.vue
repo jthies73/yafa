@@ -2,9 +2,14 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { liveQuery } from "dexie";
-import Sortable from "sortablejs";
 import { db } from "../db/db";
-import type { Routine, Exercise, RoutineExerciseConfig } from "../db/types";
+import type {
+  Routine,
+  Exercise,
+  RoutineExercise,
+  RoutineExerciseConfig,
+} from "../db/types";
+import { useSortableList } from "../composables/useSortableList";
 import {
   updateRoutine,
   deleteRoutine,
@@ -57,16 +62,17 @@ onMounted(() => {
 
 onUnmounted(() => {
   subscription?.unsubscribe();
-  sortable?.destroy();
 });
 
+// Local mirror of the routine's exercises so a reorder is reflected instantly,
+// rather than waiting on the async Dexie round-trip (which would flicker).
+const orderedExercises = ref<RoutineExercise[]>([]);
 watch(
-  () => routine.value?.exercises.length,
-  async (len) => {
-    if (len === undefined) return;
-    await nextTick();
-    initSortable();
+  () => routine.value?.exercises,
+  (exs) => {
+    orderedExercises.value = exs ? exs.slice() : [];
   },
+  { immediate: true },
 );
 
 const goBack = () => router.back();
@@ -130,8 +136,8 @@ const configExerciseName = ref("");
 const saving = ref(false);
 
 const initialConfig = computed(() => {
-  if (editingIndex.value !== null && routine.value) {
-    return routine.value.exercises[editingIndex.value].config;
+  if (editingIndex.value !== null) {
+    return orderedExercises.value[editingIndex.value]?.config;
   }
   return undefined;
 });
@@ -146,7 +152,7 @@ const handleSelectExercise = async (exercise: Exercise) => {
 };
 
 const editExercise = (idx: number) => {
-  const rEx = routine.value!.exercises[idx];
+  const rEx = orderedExercises.value[idx];
   configExerciseId.value = rEx.exerciseId;
   configExerciseName.value =
     exercisesMap.value[rEx.exerciseId]?.name ?? "Exercise";
@@ -165,24 +171,28 @@ const toPlainConfig = (
   };
 };
 
+// Persist a list of exercises, stripping Dexie/Vue Proxies in the process.
+const persistExercises = async (list: RoutineExercise[]) => {
+  if (!routine.value) return;
+  const exercises = list.map((ex) => ({
+    exerciseId: ex.exerciseId,
+    config: toPlainConfig(ex.config),
+  }));
+  await db.routines.update(routine.value.id, { exercises });
+};
+
 const handleSaveConfig = async (config: RoutineExerciseConfig) => {
   if (!routine.value || saving.value) return;
   saving.value = true;
   try {
-    // Reconstruct exercises array, stripping Proxies from existing exercises
-    const exercises = routine.value.exercises.map((ex) => ({
-      exerciseId: ex.exerciseId,
-      config: toPlainConfig(ex.config),
-    }));
+    const exercises = orderedExercises.value.slice();
+    const entry = { exerciseId: configExerciseId.value, config };
     if (editingIndex.value === null) {
-      exercises.push({ exerciseId: configExerciseId.value, config });
+      exercises.push(entry);
     } else {
-      exercises[editingIndex.value] = {
-        exerciseId: configExerciseId.value,
-        config,
-      };
+      exercises[editingIndex.value] = entry;
     }
-    await db.routines.update(routine.value.id, { exercises });
+    await persistExercises(exercises);
     showConfig.value = false;
   } finally {
     saving.value = false;
@@ -190,14 +200,7 @@ const handleSaveConfig = async (config: RoutineExerciseConfig) => {
 };
 
 const removeExercise = async (idx: number) => {
-  if (!routine.value) return;
-  const exercises = routine.value.exercises
-    .filter((_, i) => i !== idx)
-    .map((ex) => ({
-      exerciseId: ex.exerciseId,
-      config: toPlainConfig(ex.config),
-    }));
-  await db.routines.update(routine.value.id, { exercises });
+  await persistExercises(orderedExercises.value.filter((_, i) => i !== idx));
 };
 
 const handleRemoveExercise = async () => {
@@ -208,41 +211,27 @@ const handleRemoveExercise = async () => {
   }
 };
 
-// --- Sortable exercise list ---
+// --- Drag-to-reorder exercise list ---
 const exerciseListEl = ref<HTMLElement | null>(null);
-let sortable: Sortable | null = null;
 
-const initSortable = () => {
-  if (!exerciseListEl.value) return;
-  sortable?.destroy();
-  sortable = Sortable.create(exerciseListEl.value, {
-    animation: 150,
-    ghostClass: "opacity-30",
-    onEnd: async ({ oldIndex, newIndex }) => {
-      if (
-        oldIndex === undefined ||
-        newIndex === undefined ||
-        oldIndex === newIndex ||
-        !routine.value
-      )
-        return;
-      const exercises = routine.value.exercises.map((ex) => ({
-        exerciseId: ex.exerciseId,
-        config: toPlainConfig(ex.config),
-      }));
-      const [moved] = exercises.splice(oldIndex, 1);
-      exercises.splice(newIndex, 0, moved);
-      await db.routines.update(routine.value.id, { exercises });
-    },
-  });
-};
+useSortableList(exerciseListEl, {
+  draggingClass: "shadow-lg",
+  onReorder: async (from, to) => {
+    const list = orderedExercises.value.slice();
+    const [moved] = list.splice(from, 1);
+    list.splice(to, 0, moved);
+    orderedExercises.value = list; // instant visual update
+    await persistExercises(list); // background sync (echoed via liveQuery)
+  },
+});
 
 // --- Display helpers ---
 const getProgressionLabel = (config?: RoutineExerciseConfig) => {
   if (!config) return "Not configured";
   if (config.progressionModel === "linear") return "Linear Progression";
   if (config.progressionModel === "double") return "Double Progression";
-  if (config.progressionModel === "topset_backoff") return "Top Set + Back-Off Progression";
+  if (config.progressionModel === "topset_backoff")
+    return "Top Set + Back-Off Progression";
   return "Custom";
 };
 
@@ -284,7 +273,10 @@ const getSummary = (config?: RoutineExerciseConfig) => {
         Back
       </button>
 
-      <div v-if="routine" class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <div
+        v-if="routine"
+        class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
+      >
         <div class="min-w-0 mb-3">
           <h1
             class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
@@ -365,7 +357,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
         </h2>
 
         <div
-          v-if="routine.exercises.length === 0"
+          v-if="orderedExercises.length === 0"
           class="text-sm italic text-text-light dark:text-text-dark opacity-60"
         >
           No exercises configured for this routine.
@@ -377,7 +369,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
           class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl shadow-sm overflow-hidden"
         >
           <div
-            v-for="(rEx, idx) in routine.exercises"
+            v-for="(rEx, idx) in orderedExercises"
             :key="rEx.exerciseId + '-' + idx"
             class="flex items-center gap-4 px-4 py-3 border-b border-border-light dark:border-border-dark last:border-0 cursor-grab active:cursor-grabbing hover:bg-surface-light-hover dark:hover:bg-surface-dark-hover transition-colors duration-150"
             @click="editExercise(idx)"
