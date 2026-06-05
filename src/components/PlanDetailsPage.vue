@@ -170,6 +170,18 @@ const onConfirm = () => {
   action?.();
 };
 
+const routineStats = (routine: Routine) => {
+  const exercises = routine.exercises.length;
+  const sets = routine.exercises.reduce((sum, ex) => {
+    if (!ex.config) return sum;
+    const p = ex.config.progressionParams as any;
+    if (ex.config.progressionModel === "topset_backoff")
+      return sum + 1 + (p.backOffSets ?? 0);
+    return sum + (p.targetSets ?? 0);
+  }, 0);
+  return { exercises, sets };
+};
+
 const requestDeletePlan = () => {
   if (!plan.value) return;
   requestConfirm(
@@ -339,6 +351,9 @@ const requestDeletePlan = () => {
               >
                 {{ routine.name }}
               </h3>
+              <span class="text-xs font-mono text-text-light dark:text-text-dark opacity-50 shrink-0">
+                {{ routineStats(routine).exercises }}ex · {{ routineStats(routine).sets }}sets
+              </span>
             </div>
 
             <!-- Exercises List -->

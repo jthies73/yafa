@@ -9,6 +9,18 @@ defineProps<{
 defineEmits<{
   (e: "click"): void;
 }>();
+
+const routineStats = (routine: Routine) => {
+  const exercises = routine.exercises.length;
+  const sets = routine.exercises.reduce((sum, ex) => {
+    if (!ex.config) return sum;
+    const p = ex.config.progressionParams as any;
+    if (ex.config.progressionModel === "topset_backoff")
+      return sum + 1 + (p.backOffSets ?? 0);
+    return sum + (p.targetSets ?? 0);
+  }, 0);
+  return { exercises, sets };
+};
 </script>
 
 <template>
@@ -50,10 +62,15 @@ defineEmits<{
         <li
           v-for="routine in routines"
           :key="routine.id"
-          class="flex items-center gap-2 text-sm text-text-h-light dark:text-text-h-dark"
+          class="flex items-center justify-between gap-2 text-sm"
         >
-          <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
-          {{ routine.name }}
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
+            <span class="text-text-h-light dark:text-text-h-dark truncate">{{ routine.name }}</span>
+          </div>
+          <span class="text-xs font-mono text-text-light dark:text-text-dark opacity-50 shrink-0">
+            {{ routineStats(routine).exercises }}ex · {{ routineStats(routine).sets }}sets
+          </span>
         </li>
         <li
           v-if="routines.length === 0"
