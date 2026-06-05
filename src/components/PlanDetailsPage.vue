@@ -184,7 +184,7 @@ const requestDeletePlan = () => {
 </script>
 
 <template>
-  <div class="p-6 relative min-h-full flex flex-col gap-6">
+  <div class="p-6 relative min-h-full flex flex-col gap-6 pb-24">
     <!-- Back Button & Page Header -->
     <div class="flex flex-col gap-4">
       <button
@@ -209,9 +209,9 @@ const requestDeletePlan = () => {
       </button>
 
       <!-- Plan Header with Title and Action Buttons -->
-      <div v-if="plan" class="flex items-start justify-between gap-4">
-        <div class="flex-grow min-w-0">
-          <div class="flex items-center gap-3 mb-3">
+      <div v-if="plan" class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-3 mb-3">
             <h1
               class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
             >
@@ -240,7 +240,7 @@ const requestDeletePlan = () => {
         </div>
 
         <!-- Action Buttons (Edit & Delete) -->
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-2 self-start md:shrink-0">
           <button
             class="p-2.5 rounded-lg border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:text-accent hover:bg-surface-light-hover dark:hover:bg-surface-dark-hover cursor-pointer transition-colors duration-150"
             title="Edit plan"

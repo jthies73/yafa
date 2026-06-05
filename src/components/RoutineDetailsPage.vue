@@ -284,15 +284,15 @@ const getSummary = (config?: RoutineExerciseConfig) => {
         Back
       </button>
 
-      <div v-if="routine" class="flex items-start justify-between gap-4">
-        <div class="flex-grow min-w-0">
+      <div v-if="routine" class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div class="min-w-0">
           <h1
             class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
           >
             {{ routine.name }}
           </h1>
         </div>
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-2 self-start md:shrink-0">
           <button
             class="p-2.5 rounded-lg border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:text-accent hover:bg-surface-light-hover dark:hover:bg-surface-dark-hover cursor-pointer transition-colors duration-150"
             title="Rename routine"
