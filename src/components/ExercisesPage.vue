@@ -7,12 +7,10 @@ import {
   createExercise,
   updateExercise,
   deleteExercise,
-  countExerciseUsage,
   type ExerciseInput,
 } from "../db/repository";
 import AppFab from "./AppFab.vue";
 import ExerciseFormSheet from "./ExerciseFormSheet.vue";
-import ConfirmDialog from "./ConfirmDialog.vue";
 
 const exercises = ref<Exercise[]>([]);
 const searchQuery = ref("");
@@ -86,31 +84,9 @@ const handleSave = async (input: ExerciseInput) => {
   showForm.value = false;
 };
 
-// --- Delete confirmation ---
-const showConfirm = ref(false);
-const pendingDelete = ref<Exercise | null>(null);
-const pendingUsage = ref(0);
-
-const requestDelete = async (exercise: Exercise) => {
-  pendingDelete.value = exercise;
-  pendingUsage.value = await countExerciseUsage(exercise.id);
-  showConfirm.value = true;
-};
-
-const confirmMessage = computed(() => {
-  const e = pendingDelete.value;
-  if (!e) return "";
-  if (pendingUsage.value > 0) {
-    return `"${e.name}" is used in ${pendingUsage.value} routine slot${
-      pendingUsage.value === 1 ? "" : "s"
-    }. Deleting it will remove it from those routines. This cannot be undone.`;
-  }
-  return `Delete "${e.name}" from your exercise library? This cannot be undone.`;
-});
-
-const confirmDelete = async () => {
-  if (pendingDelete.value) await deleteExercise(pendingDelete.value.id);
-  pendingDelete.value = null;
+const handleDelete = async () => {
+  if (editingExercise.value) await deleteExercise(editingExercise.value.id);
+  showForm.value = false;
 };
 </script>
 
@@ -258,30 +234,6 @@ const confirmDelete = async () => {
             >
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
-
-            <!-- Delete -->
-            <button
-              class="-mr-1 shrink-0 cursor-pointer p-1.5 text-text-light dark:text-text-dark transition-colors duration-150 hover:text-red-500"
-              title="Delete exercise"
-              @click.stop="requestDelete(exercise)"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                <path d="M10 11v6M14 11v6"></path>
-                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-              </svg>
-            </button>
           </div>
         </div>
       </section>
@@ -293,16 +245,10 @@ const confirmDelete = async () => {
     <ExerciseFormSheet
       v-model:open="showForm"
       :is-editing="editingExercise !== null"
+      :exercise-id="editingExercise?.id"
       :initial="formInitial"
       @save="handleSave"
-    />
-
-    <ConfirmDialog
-      v-model:open="showConfirm"
-      title="Delete exercise?"
-      :message="confirmMessage"
-      confirm-label="Delete"
-      @confirm="confirmDelete"
+      @delete="handleDelete"
     />
   </div>
 </template>
