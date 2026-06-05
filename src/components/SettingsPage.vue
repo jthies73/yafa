@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
+import RpeMatrixTable from "./RpeMatrixTable.vue";
 
 const isDark = ref(false);
 const weightUnit = ref("kg");
 const distanceUnit = ref("km");
+
+const rpeMatrix = DEFAULT_RPE_MATRIX;
 
 onMounted(() => {
   const savedTheme = localStorage.getItem("theme");
@@ -47,11 +51,11 @@ const setDistanceUnit = (unit: string) => {
         Settings
       </h1>
       <p class="text-sm text-text-light dark:text-text-dark opacity-70 mt-1">
-        Configure your preferences and view application info
+        Configure your preferences and autoregulation defaults
       </p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+    <div class="flex flex-col gap-6 max-w-4xl">
       <!-- Preferences Card -->
       <div
         class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-6 shadow-sm flex flex-col"
@@ -191,81 +195,43 @@ const setDistanceUnit = (unit: string) => {
         </div>
       </div>
 
-      <!-- Application Info Card -->
+      <!-- Global RPE Matrix Card -->
       <div
-        class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-6 shadow-sm flex flex-col justify-between"
+        class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-6 shadow-sm flex flex-col"
       >
-        <div>
-          <h2
-            class="text-lg font-bold text-text-h-light dark:text-text-h-dark mb-4 flex items-center gap-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="text-accent"
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div class="min-w-0">
+            <h2
+              class="text-lg font-bold text-text-h-light dark:text-text-h-dark flex items-center gap-2"
             >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="16" x2="12" y2="12" />
-              <line x1="12" y1="8" x2="12.01" y2="8" />
-            </svg>
-            System Information
-          </h2>
-
-          <div class="space-y-3.5">
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-text-light dark:text-text-dark opacity-60"
-                >App Name</span
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="text-accent"
               >
-              <span class="font-bold text-text-h-light dark:text-text-h-dark"
-                >Y A F A</span
-              >
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-text-light dark:text-text-dark opacity-60"
-                >Database status</span
-              >
-              <span
-                class="font-bold text-green-500 dark:text-green-400 flex items-center gap-1.5"
-              >
-                <span
-                  class="w-2 h-2 rounded-full bg-green-500 dark:bg-green-400"
-                ></span>
-                Connected (IndexedDB)
-              </span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-text-light dark:text-text-dark opacity-60"
-                >IndexedDB Wrapper</span
-              >
-              <span
-                class="font-semibold text-text-h-light dark:text-text-h-dark"
-                >Dexie.js v4.4.3</span
-              >
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-text-light dark:text-text-dark opacity-60"
-                >PWA Status</span
-              >
-              <span
-                class="font-semibold text-text-h-light dark:text-text-h-dark"
-                >Active (Offline Mode Ready)</span
-              >
-            </div>
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="3" y1="9" x2="21" y2="9" />
+                <line x1="9" y1="9" x2="9" y2="21" />
+              </svg>
+              Global RPE Matrix
+            </h2>
+            <p
+              class="text-xs text-text-light dark:text-text-dark opacity-60 mt-1"
+            >
+              Target % of 1RM per reps × RPE. Exercises without a custom override
+              inherit these values.
+            </p>
           </div>
         </div>
 
-        <div
-          class="pt-6 border-t border-border-light dark:border-border-dark mt-6 text-center text-xs text-text-light dark:text-text-dark opacity-50 font-mono"
-        >
-          Yafa fitness companion v0.0.0
-        </div>
+        <RpeMatrixTable :model-value="rpeMatrix" />
       </div>
     </div>
   </div>

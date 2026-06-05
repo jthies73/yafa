@@ -17,13 +17,14 @@ Unlike traditional fitness apps that lock users into rigid percentage-based prog
 - **Fatigue Management**: Structuring volume and progression to respect individual recovery capacities (e.g., sleep constraints, physiological stress).
 - **Flexible Calculations**: Dynamically generating sets, reps, and target weights based on user inputs, e1RM, and confgured progression models.
 
-### 🎛️ Cell-Based RPE Matrix Automation
+### 🎛️ Cell-Based RPE Matrix
 
-To provide granular control over autoregulation, the RPE-to-percentage engine uses a dynamic smoothing architecture:
+The RPE-to-percentage engine is a fully editable grid of reps (1–10) × RPE (10 → 6), where each cell holds a target % of 1RM:
 
-- **Granular Control**: Users can manually overwrite _any single cell_ within the global or exercise-specific RPE grid.
-- **Intelligent Smoothing**: Modifying a single cell triggers a smoothing algorithm (e.g., Linear Interpolation) to proportionally adjust surrounding RPE and rep values, maintaining a logical progression curve.
-- **Hierarchical Cascade**: Exercise-specific matrices automatically inherit from the Global Matrix unless explicitly overridden.
+- **Global Matrix**: A single global matrix is configured under **Settings** and persisted in the database (seeded once from the built-in evidence-based RTS defaults, then the source of truth). It can be reset to defaults at any time.
+- **Hierarchical Cascade**: Exercises inherit the global matrix by default. Toggling **"Overwrite RPE matrix"** in the exercise editor stores an exercise-specific grid; clearing the toggle reverts the exercise to inheriting global values.
+- **Granular Control**: When overriding, any single cell of the exercise-specific grid can be edited independently.
+- **Intelligent Smoothing** _(roadmap)_: A future smoothing pass (e.g., linear interpolation) will proportionally adjust surrounding cells when one is edited to maintain a logical progression curve.
 
 ---
 

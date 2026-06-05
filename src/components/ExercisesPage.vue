@@ -62,6 +62,7 @@ const formInitial = computed<ExerciseInput | undefined>(() => {
     secondaryMuscleGroups: e.secondaryMuscleGroups,
     notes: e.notes,
     bodyweightFactor: e.bodyweightFactor,
+    rpeMatrix: e.rpeMatrix,
   };
 });
 

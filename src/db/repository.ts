@@ -1,6 +1,6 @@
 import { db } from "./db";
 import type { Exercise, Plan, Routine } from "./types";
-import { DEFAULT_RPE_MATRIX } from "./rpeMatrix";
+import type { RpeMatrix } from "./types"; // used by ExerciseInput
 
 // ----------------------------------------------
 // Centralised create / update / delete operations.
@@ -32,6 +32,7 @@ export interface ExerciseInput {
   secondaryMuscleGroups?: string[];
   notes?: string;
   bodyweightFactor: number;
+  rpeMatrix?: RpeMatrix; // Present ⇒ custom override; absent ⇒ inherits the global matrix.
 }
 
 // ---- Plans ----
@@ -181,7 +182,8 @@ export async function createExercise(input: ExerciseInput): Promise<string> {
     secondaryMuscleGroups: secondary.length ? secondary : undefined,
     notes: input.notes?.trim() || undefined,
     bodyweightFactor: input.bodyweightFactor,
-    rpeMatrix: DEFAULT_RPE_MATRIX,
+    // Absent unless the user opted into a custom matrix; otherwise inherits global.
+    rpeMatrix: input.rpeMatrix,
     created_at: Date.now(),
   };
 
@@ -197,13 +199,15 @@ export async function updateExercise(
     .map((s) => s.trim())
     .filter(Boolean);
 
-  // Passing `undefined` removes the optional key in Dexie.
+  // Passing `undefined` removes the optional key in Dexie — so clearing the
+  // override reverts the exercise to inheriting the global matrix.
   await db.exercises.update(id, {
     name: input.name.trim(),
     primaryMuscleGroup: input.primaryMuscleGroup.trim(),
     secondaryMuscleGroups: secondary.length ? secondary : undefined,
     notes: input.notes?.trim() || undefined,
     bodyweightFactor: input.bodyweightFactor,
+    rpeMatrix: input.rpeMatrix,
   });
 }
 

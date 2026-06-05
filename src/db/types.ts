@@ -30,6 +30,9 @@ export type ProgressionParams =
 
 export type ProgressionModelType = "linear" | "double" | "topset_backoff";
 
+// Record<reps, Record<rpe, percentage_of_1rm>> — percentages stored as decimals (0..1).
+export type RpeMatrix = Record<number, Record<number, number>>;
+
 export interface Exercise {
   id: string;
   name: string;
@@ -37,7 +40,7 @@ export interface Exercise {
   secondaryMuscleGroups?: string[];
   notes?: string;
   bodyweightFactor: number; // Decimal representing % of bodyweight moved (e.g. 1.0 for pullups, 0.65 for pushups, 0.0 for barbell/dumbbell lifts)
-  rpeMatrix?: Record<number, Record<number, number>>; // Record<reps, Record<rpe, percentage_of_1rm>>
+  rpeMatrix?: RpeMatrix; // Present ⇒ custom override; absent ⇒ inherits the global matrix.
   created_at: number;
 }
 
