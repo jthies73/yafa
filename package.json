@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build:development": "vue-tsc -b && vite build --mode development",
+    "build:production": "vue-tsc -b && vite build --mode production",
+    "build:staging": "vue-tsc -b && vite build --mode staging",
     "format": "prettier . --write",
     "lint": "eslint .",
     "type-check": "vue-tsc --build --noEmit",

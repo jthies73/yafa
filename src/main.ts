@@ -3,6 +3,7 @@ import "./style.css";
 import App from "./App.vue";
 import { seedDatabase } from "./db/seed";
 import router from "./router";
+import { initializeFeatures, useFeatureFlags } from "./config/features";
 
 const ACTIVE_PAGE_KEY = "yafa:activePage";
 
@@ -18,8 +19,12 @@ document.addEventListener("focusin", (e) => {
 });
 
 async function bootstrap() {
+  initializeFeatures();
   try {
-    await seedDatabase();
+    const features = useFeatureFlags();
+    if (features.seedDatabase) {
+      await seedDatabase();
+    }
 
     // Restore last active route from localStorage.
     const savedPage = localStorage.getItem(ACTIVE_PAGE_KEY);
