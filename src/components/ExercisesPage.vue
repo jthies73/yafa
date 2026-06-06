@@ -14,7 +14,7 @@ import ExerciseFormSheet from "./ExerciseFormSheet.vue";
 
 const exercises = ref<Exercise[]>([]);
 const searchQuery = ref("");
-let subscription: any;
+let subscription: { unsubscribe(): void } | undefined;
 
 onMounted(() => {
   subscription = liveQuery(() =>

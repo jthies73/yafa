@@ -181,8 +181,8 @@ onUnmounted(() => {
   >
     <!-- Logo on the left -->
     <a
-      @click.prevent="navigateTo('dashboard')"
       class="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-accent rounded cursor-pointer"
+      @click.prevent="navigateTo('dashboard')"
     >
       <svg
         viewBox="0 0 108 30"
@@ -210,8 +210,8 @@ onUnmounted(() => {
     <!-- Burger Menu -->
     <button
       type="button"
-      @click="openSidebar"
       class="p-2 -mr-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
+      @click="openSidebar"
     >
       <!-- Burger Icon -->
       <svg
@@ -267,8 +267,8 @@ onUnmounted(() => {
         </h2>
         <button
           type="button"
-          @click="closeSidebar"
           class="text-text-light dark:text-text-dark p-2 -mr-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
+          @click="closeSidebar"
         >
           <!-- Close Icon -->
           <svg
@@ -293,13 +293,13 @@ onUnmounted(() => {
         <!-- Execute Routine / Execute with Calculator / Analytics -->
         <a
           href="#"
-          @click.prevent="navigateTo('dashboard')"
           :class="[
             'flex items-center gap-3 font-medium text-lg transition-colors cursor-pointer group',
             route.name === 'dashboard'
               ? 'text-accent'
               : 'text-text-light dark:text-text-dark hover:text-accent',
           ]"
+          @click.prevent="navigateTo('dashboard')"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -329,7 +329,6 @@ onUnmounted(() => {
         <!-- Configure / Activate Plans & Routines -->
         <a
           href="#"
-          @click.prevent="navigateTo('plans')"
           :class="[
             'flex items-center gap-3 font-medium text-lg transition-colors cursor-pointer group',
             ['plans', 'plan-details', 'routine-details'].includes(
@@ -338,6 +337,7 @@ onUnmounted(() => {
               ? 'text-accent'
               : 'text-text-light dark:text-text-dark hover:text-accent',
           ]"
+          @click.prevent="navigateTo('plans')"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -370,13 +370,13 @@ onUnmounted(() => {
         <!-- Analytics -->
         <a
           href="#"
-          @click.prevent="navigateTo('analytics')"
           :class="[
             'flex items-center gap-3 font-medium text-lg transition-colors cursor-pointer group',
             route.name === 'analytics'
               ? 'text-accent'
               : 'text-text-light dark:text-text-dark hover:text-accent',
           ]"
+          @click.prevent="navigateTo('analytics')"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -403,13 +403,13 @@ onUnmounted(() => {
         <!-- Configure Exercises -->
         <a
           href="#"
-          @click.prevent="navigateTo('exercises')"
           :class="[
             'flex items-center gap-3 font-medium text-lg transition-colors cursor-pointer group',
             route.name === 'exercises'
               ? 'text-accent'
               : 'text-text-light dark:text-text-dark hover:text-accent',
           ]"
+          @click.prevent="navigateTo('exercises')"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -440,13 +440,13 @@ onUnmounted(() => {
         <!-- App Settings -->
         <a
           href="#"
-          @click.prevent="navigateTo('settings')"
           :class="[
             'flex items-center gap-3 font-medium text-lg transition-colors cursor-pointer group',
             route.name === 'settings'
               ? 'text-accent'
               : 'text-text-light dark:text-text-dark hover:text-accent',
           ]"
+          @click.prevent="navigateTo('settings')"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -483,8 +483,8 @@ onUnmounted(() => {
         >Theme</span
       >
       <button
-        @click="toggleTheme"
         class="p-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent flex items-center justify-center cursor-pointer"
+        @click="toggleTheme"
       >
         <!-- Sun icon (shows in dark mode) -->
         <svg

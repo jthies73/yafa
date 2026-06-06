@@ -3,7 +3,15 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { liveQuery } from "dexie";
 import { db } from "../db/db";
-import type { Plan, Routine, Exercise } from "../db/types";
+import type {
+  Plan,
+  Routine,
+  Exercise,
+  RoutineExerciseConfig,
+  LinearProgressionParams,
+  DoubleProgressionParams,
+  TopSetProgressionParams,
+} from "../db/types";
 import {
   setPlanActive,
   updatePlan,
@@ -28,7 +36,7 @@ const routines = ref<Routine[]>([]);
 const exercisesMap = ref<Record<string, Exercise>>({});
 const loading = ref(true);
 
-let subscription: any;
+let subscription: { unsubscribe(): void } | undefined;
 
 onMounted(() => {
   subscription = liveQuery(async () => {
@@ -84,29 +92,29 @@ const setActiveState = async () => {
   await setPlanActive(props.id, true);
 };
 
-const getProgressionType = (config?: any) => {
+const getProgressionType = (config?: RoutineExerciseConfig) => {
   if (!config) return "—";
-  const model = config.progressionModel;
-  if (model === "linear") return "Linear Progression";
-  if (model === "double") return "Double Progression";
-  if (model === "topset_backoff") return "Top Set + Back-Off Progression";
+  if (config.progressionModel === "linear") return "Linear Progression";
+  if (config.progressionModel === "double") return "Double Progression";
+  if (config.progressionModel === "topset_backoff") return "Top Set + Back-Off Progression";
   return "Custom Progression";
 };
 
-const getSetsAndReps = (config?: any) => {
+const getSetsAndReps = (config?: RoutineExerciseConfig) => {
   if (!config) return "—";
-  const model = config.progressionModel;
-  const params = config.progressionParams;
+  const { progressionModel: model, progressionParams: params } = config;
   if (!params) return "—";
-
   if (model === "linear") {
-    return `${params.targetSets} × ${params.targetReps}`;
+    const p = params as LinearProgressionParams;
+    return `${p.targetSets} × ${p.targetReps}`;
   }
   if (model === "double") {
-    return `${params.targetSets} × ${params.minReps}-${params.maxReps}`;
+    const p = params as DoubleProgressionParams;
+    return `${p.targetSets} × ${p.minReps}-${p.maxReps}`;
   }
   if (model === "topset_backoff") {
-    return `1 × ${params.topSetTargetReps} + ${params.backOffSets} back-offs`;
+    const p = params as TopSetProgressionParams;
+    return `1 × ${p.topSetTargetReps} + ${p.backOffSets} back-offs`;
   }
   return "Custom";
 };
@@ -174,10 +182,10 @@ const routineStats = (routine: Routine) => {
   const exercises = routine.exercises.length;
   const sets = routine.exercises.reduce((sum, ex) => {
     if (!ex.config) return sum;
-    const p = ex.config.progressionParams as any;
+    const p = ex.config.progressionParams;
     if (ex.config.progressionModel === "topset_backoff")
-      return sum + 1 + (p.backOffSets ?? 0);
-    return sum + (p.targetSets ?? 0);
+      return sum + 1 + ((p as TopSetProgressionParams).backOffSets ?? 0);
+    return sum + ((p as LinearProgressionParams | DoubleProgressionParams).targetSets ?? 0);
   }, 0);
   return { exercises, sets };
 };

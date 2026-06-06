@@ -16,6 +16,8 @@ export default tseslint.config(
   },
   {
     rules: {
+      // TypeScript's type checker covers this more accurately than ESLint
+      "no-undef": "off",
       // Single-word component names (Dashboard, App, etc.) are fine in this project
       "vue/multi-word-component-names": "off",
       // Existing codebase uses `any` in several places; treat as warning not error

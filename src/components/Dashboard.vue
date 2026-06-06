@@ -10,7 +10,7 @@ const router = useRouter();
 const activePlan = ref<Plan | null>(null);
 const planRoutines = ref<Routine[]>([]);
 const loading = ref(true);
-let subscription: any;
+let subscription: { unsubscribe(): void } | undefined;
 
 onMounted(() => {
   subscription = liveQuery(async () => {

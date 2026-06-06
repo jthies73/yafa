@@ -11,7 +11,7 @@ const route = useRoute();
 const routineId = computed(() => route.query.routineId as string | undefined);
 const routine = ref<Routine | null>(null);
 const loading = ref(true);
-let subscription: any;
+let subscription: { unsubscribe(): void } | undefined;
 
 onMounted(() => {
   if (!routineId.value) {

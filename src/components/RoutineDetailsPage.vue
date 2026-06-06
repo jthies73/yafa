@@ -8,6 +8,7 @@ import type {
   Exercise,
   RoutineExercise,
   RoutineExerciseConfig,
+  ProgressionParams,
 } from "../db/types";
 import { useSortableList } from "../composables/useSortableList";
 import {
@@ -31,7 +32,7 @@ const router = useRouter();
 const routine = ref<Routine | null>(null);
 const exercisesMap = ref<Record<string, Exercise>>({});
 const loading = ref(true);
-let subscription: any;
+let subscription: { unsubscribe(): void } | undefined;
 
 onMounted(() => {
   subscription = liveQuery(async () => {
@@ -166,7 +167,7 @@ const toPlainConfig = (
   if (!cfg) return undefined;
   return {
     progressionModel: cfg.progressionModel,
-    progressionParams: { ...cfg.progressionParams } as any,
+    progressionParams: { ...cfg.progressionParams } as unknown as ProgressionParams,
     ...(cfg.notes ? { notes: cfg.notes } : {}),
   };
 };

@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import type { Plan, Routine } from "../db/types";
+import type {
+  Plan,
+  Routine,
+  LinearProgressionParams,
+  DoubleProgressionParams,
+  TopSetProgressionParams,
+} from "../db/types";
 
 defineProps<{
   plan: Plan;
@@ -14,10 +20,10 @@ const routineStats = (routine: Routine) => {
   const exercises = routine.exercises.length;
   const sets = routine.exercises.reduce((sum, ex) => {
     if (!ex.config) return sum;
-    const p = ex.config.progressionParams as any;
+    const p = ex.config.progressionParams;
     if (ex.config.progressionModel === "topset_backoff")
-      return sum + 1 + (p.backOffSets ?? 0);
-    return sum + (p.targetSets ?? 0);
+      return sum + 1 + ((p as TopSetProgressionParams).backOffSets ?? 0);
+    return sum + ((p as LinearProgressionParams | DoubleProgressionParams).targetSets ?? 0);
   }, 0);
   return { exercises, sets };
 };

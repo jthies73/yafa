@@ -14,7 +14,7 @@ const emit = defineEmits<{
 
 const allExercises = ref<Exercise[]>([]);
 const searchQuery = ref("");
-let subscription: any;
+let subscription: { unsubscribe(): void } | undefined;
 
 // Live subscription keeps the list in sync as exercises are created or deleted.
 onMounted(() => {

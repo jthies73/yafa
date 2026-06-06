@@ -14,7 +14,7 @@ const plans = ref<Plan[]>([]);
 const routinesMap = ref<Record<string, Routine>>({});
 const showForm = ref(false);
 
-let subscription: any;
+let subscription: { unsubscribe(): void } | undefined;
 
 onMounted(() => {
   subscription = liveQuery(async () => {
