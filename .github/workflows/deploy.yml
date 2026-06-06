@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  pull_request:
 
 jobs:
   deploy:
@@ -25,6 +26,7 @@ jobs:
         run: yarn build
 
       - name: Set up SSH key
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa_deploy
@@ -32,6 +34,7 @@ jobs:
           ssh-keyscan -H ${{ secrets.VPS_IP }} >> ~/.ssh/known_hosts
 
       - name: Sync dist to VPS
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/id_rsa_deploy -o StrictHostKeyChecking=no" \
