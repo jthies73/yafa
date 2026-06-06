@@ -225,8 +225,8 @@ const setDistanceUnit = (unit: string) => {
             <p
               class="text-xs text-text-light dark:text-text-dark opacity-60 mt-1"
             >
-              Target % of 1RM per reps × RPE. Exercises without a custom override
-              inherit these values.
+              Target % of 1RM per reps × RPE. Exercises without a custom
+              override inherit these values.
             </p>
           </div>
         </div>

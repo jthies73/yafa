@@ -87,9 +87,7 @@ const customMatrix = ref<RpeMatrix | null>(null);
 
 // The table shows the editable custom copy when overriding, else the live global.
 const displayMatrix = computed<RpeMatrix>(() =>
-  overrideRpe.value && customMatrix.value
-    ? customMatrix.value
-    : globalMatrix,
+  overrideRpe.value && customMatrix.value ? customMatrix.value : globalMatrix,
 );
 
 // Enabling the override seeds the editable copy from the current global values;
@@ -335,7 +333,9 @@ const save = () => {
             >
               Overwrite RPE matrix
             </span>
-            <p class="mt-0.5 text-xs text-text-light dark:text-text-dark opacity-50">
+            <p
+              class="mt-0.5 text-xs text-text-light dark:text-text-dark opacity-50"
+            >
               {{
                 overrideRpe
                   ? "Custom % of 1RM for this exercise."
@@ -345,7 +345,9 @@ const save = () => {
           </div>
           <span
             class="relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200"
-            :class="overrideRpe ? 'bg-accent' : 'bg-border-light dark:bg-border-dark'"
+            :class="
+              overrideRpe ? 'bg-accent' : 'bg-border-light dark:bg-border-dark'
+            "
           >
             <span
               class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200"
