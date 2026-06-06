@@ -2,8 +2,8 @@
 import { ref, computed, watch, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 
-const props = defineProps<{ isDark: boolean }>();
-const emit = defineEmits<{ (e: "toggle-theme"): void }>();
+defineProps<{ isDark: boolean }>();
+defineEmits<{ (e: "toggle-theme"): void }>();
 
 const router = useRouter();
 const route = useRoute();
@@ -80,7 +80,10 @@ const onOverlayPointerDown = (e: PointerEvent) => {
 };
 
 const onOverlayClick = () => {
-  if (suppressNextClick) { suppressNextClick = false; return; }
+  if (suppressNextClick) {
+    suppressNextClick = false;
+    return;
+  }
   closeSidebar();
 };
 
@@ -90,9 +93,13 @@ const onMove = (e: PointerEvent) => {
   const dy = e.clientY - startY;
 
   if (intent === "none") {
-    if (Math.abs(dx) < INTENT_THRESHOLD && Math.abs(dy) < INTENT_THRESHOLD) return;
+    if (Math.abs(dx) < INTENT_THRESHOLD && Math.abs(dy) < INTENT_THRESHOLD)
+      return;
     intent = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
-    if (intent === "vertical") { teardown(); return; }
+    if (intent === "vertical") {
+      teardown();
+      return;
+    }
     isDragging.value = true;
   }
 
@@ -128,8 +135,13 @@ const teardown = () => {
 
 const sidebarStyle = computed(() => {
   if (isDragging.value)
-    return { transform: `translateX(${dragOffset.value}px)`, transition: "none" };
-  return { transform: sidebarOpen.value ? "translateX(0)" : "translateX(100%)" };
+    return {
+      transform: `translateX(${dragOffset.value}px)`,
+      transition: "none",
+    };
+  return {
+    transform: sidebarOpen.value ? "translateX(0)" : "translateX(100%)",
+  };
 });
 
 const overlayStyle = computed(() => {
@@ -174,14 +186,27 @@ const isActive = (names: readonly string[] | string) => {
     <div class="flex flex-col gap-6">
       <!-- Header row -->
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-bold tracking-wider text-accent uppercase">Menu</h2>
+        <h2 class="text-lg font-bold tracking-wider text-accent uppercase">
+          Menu
+        </h2>
         <button
           type="button"
           class="text-text-light dark:text-text-dark p-2 -mr-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
           @click="closeSidebar"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
           </svg>
           <span class="sr-only">Close menu</span>
         </button>
@@ -192,7 +217,11 @@ const isActive = (names: readonly string[] | string) => {
         <a
           v-for="item in [
             { name: 'dashboard', label: 'Dashboard', match: ['dashboard'] },
-            { name: 'plans', label: 'Plans', match: ['plans', 'plan-details', 'routine-details'] },
+            {
+              name: 'plans',
+              label: 'Plans',
+              match: ['plans', 'plan-details', 'routine-details'],
+            },
             { name: 'analytics', label: 'Analytics', match: ['analytics'] },
             { name: 'exercises', label: 'Exercises', match: ['exercises'] },
             { name: 'settings', label: 'Settings', match: ['settings'] },
@@ -200,28 +229,131 @@ const isActive = (names: readonly string[] | string) => {
           :key="item.name"
           href="#"
           class="flex items-center gap-3 font-medium text-lg transition-colors cursor-pointer group"
-          :class="isActive(item.match) ? 'text-accent' : 'text-text-light dark:text-text-dark hover:text-accent'"
+          :class="
+            isActive(item.match)
+              ? 'text-accent'
+              : 'text-text-light dark:text-text-dark hover:text-accent'
+          "
           @click.prevent="navigateTo(item.name)"
         >
           <!-- Dashboard icon -->
-          <svg v-if="item.name === 'dashboard'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 transition-colors" :class="isActive(item.match) ? 'text-accent' : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent'">
-            <rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" />
+          <svg
+            v-if="item.name === 'dashboard'"
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-5 h-5 transition-colors"
+            :class="
+              isActive(item.match)
+                ? 'text-accent'
+                : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent'
+            "
+          >
+            <rect width="7" height="9" x="3" y="3" rx="1" />
+            <rect width="7" height="5" x="14" y="3" rx="1" />
+            <rect width="7" height="9" x="14" y="12" rx="1" />
+            <rect width="7" height="5" x="3" y="16" rx="1" />
           </svg>
           <!-- Plans icon -->
-          <svg v-else-if="item.name === 'plans'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 transition-colors" :class="isActive(item.match) ? 'text-accent' : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent'">
-            <rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /><path d="m9 16 2 2 4-4" />
+          <svg
+            v-else-if="item.name === 'plans'"
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-5 h-5 transition-colors"
+            :class="
+              isActive(item.match)
+                ? 'text-accent'
+                : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent'
+            "
+          >
+            <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+            <line x1="16" x2="16" y1="2" y2="6" />
+            <line x1="8" x2="8" y1="2" y2="6" />
+            <line x1="3" x2="21" y1="10" y2="10" />
+            <path d="m9 16 2 2 4-4" />
           </svg>
           <!-- Analytics icon -->
-          <svg v-else-if="item.name === 'analytics'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 transition-colors" :class="isActive(item.match) ? 'text-accent' : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent'">
+          <svg
+            v-else-if="item.name === 'analytics'"
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-5 h-5 transition-colors"
+            :class="
+              isActive(item.match)
+                ? 'text-accent'
+                : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent'
+            "
+          >
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
           </svg>
           <!-- Exercises icon -->
-          <svg v-else-if="item.name === 'exercises'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 transition-colors" :class="isActive(item.match) ? 'text-accent' : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent'">
-            <path d="M18 8h2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2" /><path d="M6 8H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2" /><rect x="6" y="5" width="2" height="14" rx="1" /><rect x="16" y="5" width="2" height="14" rx="1" /><line x1="8" x2="16" y1="12" y2="12" />
+          <svg
+            v-else-if="item.name === 'exercises'"
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-5 h-5 transition-colors"
+            :class="
+              isActive(item.match)
+                ? 'text-accent'
+                : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent'
+            "
+          >
+            <path d="M18 8h2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2" />
+            <path d="M6 8H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2" />
+            <rect x="6" y="5" width="2" height="14" rx="1" />
+            <rect x="16" y="5" width="2" height="14" rx="1" />
+            <line x1="8" x2="16" y1="12" y2="12" />
           </svg>
           <!-- Settings icon -->
-          <svg v-else-if="item.name === 'settings'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 transition-colors" :class="isActive(item.match) ? 'text-accent' : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent'">
-            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" />
+          <svg
+            v-else-if="item.name === 'settings'"
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-5 h-5 transition-colors"
+            :class="
+              isActive(item.match)
+                ? 'text-accent'
+                : 'text-text-light/70 dark:text-text-dark/70 group-hover:text-accent'
+            "
+          >
+            <path
+              d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+            />
+            <circle cx="12" cy="12" r="3" />
           </svg>
           <span>{{ item.label }}</span>
         </a>
@@ -229,18 +361,54 @@ const isActive = (names: readonly string[] | string) => {
     </div>
 
     <!-- Theme toggle -->
-    <div class="pt-6 border-t border-border-light dark:border-border-dark flex items-center justify-between mt-auto">
-      <span class="text-sm font-medium text-text-light dark:text-text-dark">Theme</span>
+    <div
+      class="pt-6 border-t border-border-light dark:border-border-dark flex items-center justify-between mt-auto"
+    >
+      <span class="text-sm font-medium text-text-light dark:text-text-dark"
+        >Theme</span
+      >
       <button
         class="p-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent flex items-center justify-center cursor-pointer"
         @click="$emit('toggle-theme')"
       >
         <!-- Sun (shown in dark mode) -->
-        <svg v-if="isDark" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400">
-          <circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
+        <svg
+          v-if="isDark"
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="text-yellow-400"
+        >
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2" />
+          <path d="M12 20v2" />
+          <path d="m4.93 4.93 1.41 1.41" />
+          <path d="m17.66 17.66 1.41 1.41" />
+          <path d="M2 12h2" />
+          <path d="M20 12h2" />
+          <path d="m6.34 17.66-1.41 1.41" />
+          <path d="m19.07 4.93-1.41 1.41" />
         </svg>
         <!-- Moon (shown in light mode) -->
-        <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600">
+        <svg
+          v-else
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="text-indigo-600"
+        >
           <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
         </svg>
         <span class="sr-only">Toggle theme</span>

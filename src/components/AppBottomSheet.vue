@@ -43,7 +43,7 @@ const backdropStyle = computed(() => {
   return {
     opacity: minimized.value ? 0 : 0.6 * Math.max(0, Math.min(1, ratio)),
     transition: isDragging.value ? "none" : `opacity ${transition.value}`,
-    pointerEvents: (minimized.value ? "none" : "auto") as any,
+    pointerEvents: (minimized.value ? "none" : "auto") as "none" | "auto",
   };
 });
 

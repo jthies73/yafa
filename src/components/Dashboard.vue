@@ -62,7 +62,7 @@ const startEmptyWorkout = () => {
 };
 
 const timerString = ref("00:00");
-let intervalId: any = null;
+let intervalId: ReturnType<typeof setInterval> | null = null;
 
 const updateTimer = () => {
   if (!activeWorkout.value) {
@@ -95,7 +95,6 @@ watch(
   },
   { immediate: true },
 );
-
 </script>
 
 <template>

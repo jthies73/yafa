@@ -2,7 +2,7 @@ import { ref, watch, onUnmounted } from "vue";
 
 export function useWorkoutTimer(getStartTime: () => number | undefined) {
   const timerString = ref("00:00");
-  let intervalId: any = null;
+  let intervalId: ReturnType<typeof setInterval> | null = null;
 
   const updateTimer = () => {
     const startTime = getStartTime();

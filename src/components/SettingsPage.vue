@@ -31,7 +31,6 @@ const setWeightUnit = (unit: string) => {
   weightUnit.value = unit;
   localStorage.setItem("yafa:weightUnit", unit);
 };
-
 </script>
 
 <template>
@@ -144,7 +143,6 @@ const setWeightUnit = (unit: string) => {
             </button>
           </div>
         </div>
-
       </div>
 
       <!-- Global RPE Matrix Card -->
