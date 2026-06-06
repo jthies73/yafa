@@ -4,7 +4,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   server: {
     port: 5173,
     strictPort: true,
@@ -12,6 +12,19 @@ export default defineConfig({
   plugins: [
     vue(),
     tailwindcss(),
+    {
+      name: "html-transform",
+      transformIndexHtml(html) {
+        if (mode !== "production") {
+          console.log("Removing robots meta tag for mode:", mode);
+          return html.replace(
+            '<meta name="robots" content="index, follow" />',
+            '<meta name="robots" content="noindex, nofollow" />'
+          );
+        }
+        return html;
+      },
+    },
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
@@ -76,4 +89,4 @@ export default defineConfig({
       },
     }),
   ],
-});
+}));
