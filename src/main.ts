@@ -6,6 +6,16 @@ import router from "./router";
 
 const ACTIVE_PAGE_KEY = "yafa:activePage";
 
+document.addEventListener("focusin", (e) => {
+  const target = e.target as HTMLElement;
+  if (
+    (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) &&
+    !target.hasAttribute("data-no-select")
+  ) {
+    target.select();
+  }
+});
+
 async function bootstrap() {
   try {
     await seedDatabase();
