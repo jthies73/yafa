@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { useFeatureFlags } from "../../config/features";
 
 // Routing logic
 const router = useRouter();
 const route = useRoute();
+
+const features = useFeatureFlags();
+const isStaging = computed(() => features.environment === "staging");
+const isDevelopment = computed(() => features.environment === "development");
 
 const navigateTo = (routeName: string) => {
   router.push({ name: routeName });
@@ -205,6 +210,18 @@ onUnmounted(() => {
           :fill="isDark ? '#e5e7eb' : '#373737'"
         />
       </svg>
+      <span
+        v-if="isStaging"
+        class="text-[10px] font-bold ml-5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 select-none uppercase tracking-wider"
+      >
+        Staging
+      </span>
+      <span
+        v-if="isDevelopment"
+        class="text-[10px] font-bold ml-5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 select-none uppercase tracking-wider"
+      >
+        Development
+      </span>
     </a>
 
     <!-- Burger Menu -->
