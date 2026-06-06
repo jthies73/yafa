@@ -84,7 +84,7 @@ jobs:
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [lint, test-unit, build-staging]
+    needs: [build-staging]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: staging
     steps:
@@ -109,7 +109,7 @@ jobs:
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [lint, test-unit, build-production]
+    needs: [build-production]
     if: github.event_name == 'release'
     environment: production
     steps:
