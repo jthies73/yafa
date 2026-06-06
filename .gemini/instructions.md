@@ -47,3 +47,4 @@ This file contains base instructions and technical guidelines for Google Gemini 
 - **Code Splitting**: Keep components focused, reusable, and single-purpose.
 - **TypeScript Best Practices**: Always use strict typing, interface definitions, and reactive primitives (`ref`, `computed`).
 - **Code Formatting**: Ensure all code is cleanly formatted using Prettier (`yarn format`) before finalizing changes.
+- **Refactoring & Simplification**: When explicitly prompted, proactively refactor, modularize, and simplify any code created or modified during the current session. Remove unnecessary or redundant code, extract complex logic into reusable composables or smaller components, and focus strictly on an elegant, concise, and highly maintainable code structure. Always prioritize simplicity and clarity over complex abstractions.

@@ -36,3 +36,4 @@
 - Keep components focused, reusable, and single-purpose
 - Use strict TypeScript: interface definitions, `ref`, `computed`, and proper typing throughout
 - Format code with Prettier before finalizing: `yarn format`
+- **Refactoring & Simplification**: When explicitly prompted, proactively refactor, modularize, and simplify any code created or modified during the current session. Remove unnecessary or redundant code, extract complex logic into reusable composables or smaller components, and focus strictly on an elegant, concise, and highly maintainable code structure. Always prioritize simplicity and clarity over complex abstractions.
