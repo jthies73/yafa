@@ -403,7 +403,9 @@ const isActive = (names: readonly string[] | string) => {
             <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
             <line x1="6" x2="14" y1="2" y2="2" />
           </svg>
-          <span class="text-sm font-semibold tracking-wide">Buy me a coffee</span>
+          <span class="text-sm font-semibold tracking-wide"
+            >Buy me a coffee</span
+          >
         </div>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -424,7 +426,8 @@ const isActive = (names: readonly string[] | string) => {
 
       <!-- Theme toggle -->
       <div class="flex items-center justify-between px-1">
-        <span class="text-sm font-medium text-text-light/80 dark:text-text-dark/80"
+        <span
+          class="text-sm font-medium text-text-light/80 dark:text-text-dark/80"
           >Theme</span
         >
         <button
