@@ -156,12 +156,7 @@ const onSelectRpe = (rpe: string) => {
   const weightValid = !isNaN(weightVal) && weightVal > 0;
   const rpeValid = rpe !== "";
 
-  if (
-    t.setIndex >= card.completed &&
-    repsValid &&
-    weightValid &&
-    rpeValid
-  ) {
+  if (t.setIndex >= card.completed && repsValid && weightValid && rpeValid) {
     onComplete(t.cardIndex, t.setIndex);
   }
 };

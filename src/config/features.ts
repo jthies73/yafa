@@ -9,6 +9,7 @@ export interface FeatureFlags {
   seedDatabase: boolean;
   fastStartAnimation: boolean;
   showBuyMeACoffee: boolean;
+  useCustomNumpadOnDesktop: boolean;
 }
 
 function parseEnvBoolean(
@@ -31,6 +32,10 @@ export function getFeatureFlags(): FeatureFlags {
       false,
     ),
     showBuyMeACoffee: import.meta.env.VITE_SHOW_BUY_ME_A_COFFEE || false,
+    useCustomNumpadOnDesktop: parseEnvBoolean(
+      import.meta.env.VITE_USE_CUSTOM_NUMPAD_ON_DESKTOP,
+      false,
+    ),
   };
 }
 
