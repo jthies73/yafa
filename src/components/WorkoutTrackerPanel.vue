@@ -58,7 +58,9 @@ const onConfirmDelete = () => {
   pendingDelete = null;
 };
 
-const cardRefs = ref<Record<number, InstanceType<typeof WorkoutTrackerCard> | null>>({});
+const cardRefs = ref<
+  Record<number, InstanceType<typeof WorkoutTrackerCard> | null>
+>({});
 
 const setCardRef = (index: number) => (el: unknown) => {
   cardRefs.value[index] = el as InstanceType<typeof WorkoutTrackerCard> | null;
