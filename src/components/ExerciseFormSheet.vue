@@ -70,9 +70,12 @@ const MUSCLE_GROUPS = [
 const name = ref("");
 const primaryMuscleGroup = ref("");
 const secondaryTags = ref<string[]>([]);
-const tagDraft = ref("");
 const bodyweightFactor = ref(0);
 const notes = ref("");
+
+const selectingMode = ref<"primary" | "secondary" | null>(null);
+const scrollContainer = ref<HTMLElement | null>(null);
+const currentPage = ref<1 | 2>(1);
 
 watch(
   open,
@@ -81,9 +84,13 @@ watch(
     name.value = props.initial?.name ?? "";
     primaryMuscleGroup.value = props.initial?.primaryMuscleGroup ?? "";
     secondaryTags.value = [...(props.initial?.secondaryMuscleGroups ?? [])];
-    tagDraft.value = "";
     bodyweightFactor.value = props.initial?.bodyweightFactor ?? 0;
     notes.value = props.initial?.notes ?? "";
+    currentPage.value = 1;
+    selectingMode.value = null;
+    if (scrollContainer.value) {
+      scrollContainer.value.scrollTo({ left: 0 });
+    }
   },
   { immediate: true },
 );
@@ -93,27 +100,61 @@ const canSave = computed(
     name.value.trim().length > 0 && primaryMuscleGroup.value.trim().length > 0,
 );
 
-const addTag = () => {
-  const value = tagDraft.value.trim();
-  if (!value) return;
-  if (
-    !secondaryTags.value.some((t) => t.toLowerCase() === value.toLowerCase())
-  ) {
-    secondaryTags.value.push(value);
+const removeTag = (tag: string) => {
+  secondaryTags.value = secondaryTags.value.filter((t) => t !== tag);
+};
+
+const openMusclePicker = (mode: "primary" | "secondary") => {
+  selectingMode.value = mode;
+  currentPage.value = 2;
+  if (scrollContainer.value) {
+    scrollContainer.value.scrollTo({
+      left: scrollContainer.value.clientWidth,
+      behavior: "smooth",
+    });
+    scrollContainer.value.parentElement?.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
-  tagDraft.value = "";
 };
 
-const removeTag = (index: number) => {
-  secondaryTags.value.splice(index, 1);
+const goToPage1 = () => {
+  currentPage.value = 1;
+  if (scrollContainer.value) {
+    scrollContainer.value.scrollTo({
+      left: 0,
+      behavior: "smooth",
+    });
+    scrollContainer.value.parentElement?.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
 };
 
-const onTagKeydown = (e: KeyboardEvent) => {
-  if (e.key === "Enter" || e.key === ",") {
-    e.preventDefault();
-    addTag();
-  } else if (e.key === "Backspace" && tagDraft.value.length === 0) {
-    secondaryTags.value.pop();
+const isSelected = (group: string) => {
+  if (selectingMode.value === "primary") {
+    return primaryMuscleGroup.value === group;
+  } else {
+    return secondaryTags.value.includes(group);
+  }
+};
+
+const toggleMuscle = (group: string) => {
+  if (selectingMode.value === "primary") {
+    if (primaryMuscleGroup.value === group) {
+      primaryMuscleGroup.value = "";
+    } else {
+      primaryMuscleGroup.value = group;
+      setTimeout(() => goToPage1(), 150);
+    }
+  } else {
+    if (secondaryTags.value.includes(group)) {
+      secondaryTags.value = secondaryTags.value.filter((t) => t !== group);
+    } else {
+      secondaryTags.value.push(group);
+    }
   }
 };
 
@@ -122,8 +163,6 @@ const close = () => {
 };
 
 const save = () => {
-  // Commit any partially-typed secondary tag before saving.
-  addTag();
   if (!canSave.value) return;
   emit("save", {
     name: name.value,
@@ -154,158 +193,282 @@ const save = () => {
         </button>
       </div>
     </template>
-    <div class="flex flex-col gap-6 px-5 py-5">
-      <!-- Name -->
-      <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-        >
-          Exercise Name
-        </label>
-        <input
-          v-model="name"
-          v-keynav
-          type="text"
-          placeholder="e.g. Barbell Back Squat"
-          class="rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
-        />
-      </div>
-
-      <!-- Primary muscle group -->
-      <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-        >
-          Primary Muscle Group
-        </label>
-        <input
-          v-model="primaryMuscleGroup"
-          v-keynav
-          type="text"
-          list="muscle-group-options"
-          placeholder="e.g. Quads"
-          class="rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
-        />
-        <datalist id="muscle-group-options">
-          <option v-for="g in MUSCLE_GROUPS" :key="g" :value="g" />
-        </datalist>
-      </div>
-
-      <!-- Secondary muscle groups (tag input) -->
-      <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-        >
-          Secondary Muscle Groups
-          <span class="ml-1 font-normal normal-case opacity-60"
-            >(optional)</span
+    <div
+      ref="scrollContainer"
+      class="flex w-full overflow-x-hidden items-start scroll-smooth relative"
+    >
+      <!-- Page 1 -->
+      <div class="w-full shrink-0 flex flex-col gap-6 px-5 py-5 pb-8">
+        <!-- Name -->
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
           >
-        </label>
-        <div
-          class="flex flex-wrap items-center gap-2 rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-2.5 py-2 focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/40"
-        >
-          <span
-            v-for="(tag, idx) in secondaryTags"
-            :key="tag"
-            class="inline-flex items-center gap-1 rounded-md bg-accent/15 py-1 pl-2.5 pr-1 text-xs font-semibold text-accent"
-          >
-            {{ tag }}
-            <button
-              type="button"
-              class="flex h-4 w-4 items-center justify-center rounded-sm text-accent/80 transition-colors duration-150 hover:bg-accent/20 hover:text-accent cursor-pointer"
-              aria-label="Remove muscle group"
-              @click="removeTag(idx)"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </span>
+            Exercise Name
+          </label>
           <input
-            v-model="tagDraft"
+            v-model="name"
+            v-keynav
             type="text"
-            list="muscle-group-options"
-            :placeholder="secondaryTags.length ? '' : 'Add a muscle group…'"
-            class="min-w-[7rem] flex-1 bg-transparent py-1 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:outline-none"
-            @keydown="onTagKeydown"
-            @change="addTag"
-            @blur="addTag"
+            placeholder="e.g. Barbell Back Squat"
+            class="rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
         </div>
-        <p class="text-xs text-text-light dark:text-text-dark opacity-50">
-          Press Enter or comma to add.
-        </p>
-      </div>
 
-      <!-- Bodyweight factor -->
-      <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-        >
-          Bodyweight Factor
-        </label>
-        <input
-          v-model.number="bodyweightFactor"
-          v-numpad
-          v-keynav
-          type="number"
-          min="0"
-          max="2"
-          step="0.05"
-          class="rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 font-mono text-sm text-text-h-light dark:text-text-h-dark focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
-        />
-        <p class="text-xs text-text-light dark:text-text-dark opacity-50">
-          Share of bodyweight moved — 1.0 pull-ups, 0.65 push-ups, 0 for
-          barbell/dumbbell lifts.
-        </p>
-      </div>
-
-      <!-- Notes -->
-      <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-        >
-          Notes
-          <span class="ml-1 font-normal normal-case opacity-60"
-            >(optional)</span
+        <!-- Primary muscle group -->
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
           >
-        </label>
-        <textarea
-          v-model="notes"
-          rows="3"
-          placeholder="Form cues, setup notes, variations…"
-          class="resize-none rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
-        ></textarea>
+            Primary Muscle Group
+          </label>
+          <button
+            type="button"
+            class="flex items-center justify-between w-full text-left rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 text-sm focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+            @click="openMusclePicker('primary')"
+          >
+            <span
+              v-if="primaryMuscleGroup"
+              class="inline-flex items-center gap-1 rounded-md bg-accent/15 py-1 px-2.5 text-xs font-semibold text-accent"
+            >
+              {{ primaryMuscleGroup }}
+            </span>
+            <span v-else class="text-text-light/40 dark:text-text-dark/40">
+              Select primary muscle group...
+            </span>
+            <svg
+              class="w-4 h-4 opacity-50"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Secondary muscle groups -->
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+          >
+            Secondary Muscle Groups
+            <span class="ml-1 font-normal normal-case opacity-60"
+              >(optional)</span
+            >
+          </label>
+          <div
+            role="button"
+            tabindex="0"
+            class="flex items-center justify-between gap-2 rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2 cursor-pointer focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/40 min-h-[46px] transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+            @click="openMusclePicker('secondary')"
+            @keydown.enter="openMusclePicker('secondary')"
+          >
+            <div class="flex flex-wrap items-center gap-2 flex-1">
+              <span
+                v-for="tag in secondaryTags"
+                :key="tag"
+                class="inline-flex items-center gap-1 rounded-md bg-accent/15 py-1 pl-2.5 pr-1 text-xs font-semibold text-accent"
+              >
+                {{ tag }}
+                <button
+                  type="button"
+                  class="flex h-4 w-4 items-center justify-center rounded-sm text-accent/80 transition-colors duration-150 hover:bg-accent/20 hover:text-accent cursor-pointer"
+                  aria-label="Remove muscle group"
+                  @click.stop="removeTag(tag)"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </span>
+              <span
+                v-if="!secondaryTags.length"
+                class="text-sm text-text-light/40 dark:text-text-dark/40"
+              >
+                Add secondary muscle groups...
+              </span>
+            </div>
+            <svg
+              class="w-4 h-4 opacity-50 shrink-0"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Bodyweight factor -->
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+          >
+            Bodyweight Factor
+          </label>
+          <input
+            v-model.number="bodyweightFactor"
+            v-numpad
+            v-keynav
+            type="number"
+            min="0"
+            max="2"
+            step="0.05"
+            class="rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 font-mono text-sm text-text-h-light dark:text-text-h-dark focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
+          />
+          <p class="text-xs text-text-light dark:text-text-dark opacity-50">
+            Share of bodyweight moved — 1.0 pull-ups, 0.65 push-ups, 0 for
+            barbell/dumbbell lifts.
+          </p>
+        </div>
+
+        <!-- Notes -->
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+          >
+            Notes
+            <span class="ml-1 font-normal normal-case opacity-60"
+              >(optional)</span
+            >
+          </label>
+          <textarea
+            v-model="notes"
+            rows="3"
+            placeholder="Form cues, setup notes, variations…"
+            class="resize-none rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
+          ></textarea>
+        </div>
       </div>
 
-      <div class="h-2"></div>
+      <!-- Page 2: Muscle Picker -->
+      <div class="w-full shrink-0 flex flex-col gap-4 px-5 py-5 pb-8">
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            class="p-1 -ml-1 text-text-light dark:text-text-dark opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+            aria-label="Back to main form"
+            @click="goToPage1"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <h3 class="font-bold text-lg text-text-h-light dark:text-text-h-dark">
+            {{
+              selectingMode === "primary"
+                ? "Primary Muscle Group"
+                : "Secondary Muscle Groups"
+            }}
+          </h3>
+        </div>
+
+        <div class="flex flex-col gap-2 mt-2">
+          <label
+            v-for="group in MUSCLE_GROUPS"
+            :key="group"
+            class="flex items-center justify-between p-3.5 rounded-xl border border-border-light dark:border-border-dark cursor-pointer transition-colors"
+            :class="
+              isSelected(group)
+                ? 'bg-accent/10 border-accent/30'
+                : 'hover:bg-surface-light dark:hover:bg-surface-dark'
+            "
+          >
+            <span
+              class="text-sm font-semibold"
+              :class="
+                isSelected(group)
+                  ? 'text-accent'
+                  : 'text-text-h-light dark:text-text-h-dark'
+              "
+            >
+              {{ group }}
+            </span>
+            <svg
+              v-if="isSelected(group)"
+              class="w-5 h-5 text-accent"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="3"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            <input
+              type="checkbox"
+              class="sr-only"
+              :checked="isSelected(group)"
+              @change="toggleMuscle(group)"
+            />
+          </label>
+        </div>
+      </div>
     </div>
 
     <template #footer>
-      <button
-        class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-3 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer"
-        @click="close"
-      >
-        Cancel
-      </button>
-      <button
-        class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
-        :disabled="!canSave"
-        @click="save"
-      >
-        {{ isEditing ? "Save Changes" : "Create Exercise" }}
-      </button>
+      <template v-if="currentPage === 1">
+        <button
+          class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-3 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer"
+          @click="close"
+        >
+          Cancel
+        </button>
+        <button
+          class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+          :disabled="!canSave"
+          @click="save"
+        >
+          {{ isEditing ? "Save Changes" : "Create Exercise" }}
+        </button>
+      </template>
+      <template v-else>
+        <button
+          class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent/90 cursor-pointer"
+          @click="goToPage1"
+        >
+          Done
+        </button>
+      </template>
     </template>
   </AppBottomSheet>
 
