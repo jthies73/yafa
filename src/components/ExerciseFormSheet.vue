@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import type { ExerciseInput } from "../db/repository";
 import { countExerciseUsage } from "../db/repository";
 import AppBottomSheet from "./AppBottomSheet.vue";
@@ -59,36 +59,31 @@ const {
 
 // --- Picker UI State ---
 const selectingMode = ref<"primary" | "secondary" | null>(null);
-const scrollContainer = ref<HTMLElement | null>(null);
+const wrapper = ref<HTMLElement | null>(null);
 const currentPage = ref<1 | 2>(1);
+
+watch(open, (isOpen) => {
+  if (isOpen) {
+    currentPage.value = 1;
+    selectingMode.value = null;
+  }
+});
 
 const openMusclePicker = (mode: "primary" | "secondary") => {
   selectingMode.value = mode;
   currentPage.value = 2;
-  if (scrollContainer.value) {
-    scrollContainer.value.scrollTo({
-      left: scrollContainer.value.clientWidth,
-      behavior: "smooth",
-    });
-    scrollContainer.value.parentElement?.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }
+  wrapper.value?.closest('.overflow-y-auto')?.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
 };
 
 const goToPage1 = () => {
   currentPage.value = 1;
-  if (scrollContainer.value) {
-    scrollContainer.value.scrollTo({
-      left: 0,
-      behavior: "smooth",
-    });
-    scrollContainer.value.parentElement?.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }
+  wrapper.value?.closest('.overflow-y-auto')?.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
 };
 
 const handleMuscleToggle = (group: string) => {
@@ -138,12 +133,13 @@ const save = () => {
       </div>
     </template>
 
-    <div
-      ref="scrollContainer"
-      class="flex w-full overflow-x-hidden items-start scroll-smooth relative"
-    >
-      <!-- Page 1: Main Form Fields -->
-      <div class="w-full shrink-0 flex flex-col gap-6 px-5 py-5 pb-8">
+    <div ref="wrapper" class="w-full overflow-hidden relative">
+      <div
+        class="flex w-[200%] items-start transition-transform duration-300 ease-in-out"
+        :style="{ transform: `translateX(${currentPage === 1 ? '0' : '-50%'})` }"
+      >
+        <!-- Page 1: Main Form Fields -->
+        <div class="w-1/2 shrink-0 flex flex-col gap-6 px-5 py-5 pb-8">
         <!-- Name -->
         <div class="flex flex-col gap-1.5">
           <label
@@ -310,14 +306,17 @@ const save = () => {
         </div>
       </div>
 
-      <!-- Page 2: Muscle Picker Component -->
-      <ExerciseMusclePicker
-        :mode="selectingMode"
-        :primary-selected="primaryMuscleGroup"
-        :secondary-selected="secondaryTags"
-        @toggle="handleMuscleToggle"
-        @back="goToPage1"
-      />
+        <!-- Page 2: Muscle Picker Component -->
+        <div class="w-1/2 shrink-0">
+          <ExerciseMusclePicker
+            :mode="selectingMode"
+            :primary-selected="primaryMuscleGroup"
+            :secondary-selected="secondaryTags"
+            @toggle="handleMuscleToggle"
+            @back="goToPage1"
+          />
+        </div>
+      </div>
     </div>
 
     <template #footer>
