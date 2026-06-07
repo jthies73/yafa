@@ -84,8 +84,14 @@ watch(
   open,
   (isOpen) => {
     document.body.style.overflow = isOpen && !minimized.value ? "hidden" : "";
-    if (isOpen) animateIn();
-    else animateOut();
+    if (isOpen) {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      animateIn();
+    } else {
+      animateOut();
+    }
   },
   { immediate: true },
 );

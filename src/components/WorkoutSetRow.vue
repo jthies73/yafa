@@ -15,10 +15,12 @@ defineProps<{
 const emit = defineEmits<{
   (e: "toggle"): void;
   (e: "complete"): void;
+  (e: "edit-rpe"): void;
 }>();
 
 const reps = defineModel<string>("reps", { default: "" });
 const weight = defineModel<string>("weight", { default: "" });
+const rpe = defineModel<string>("rpe", { default: "" });
 
 const repsInput = ref<HTMLInputElement | null>(null);
 const weightInput = ref<HTMLInputElement | null>(null);
@@ -30,12 +32,17 @@ defineExpose({ focusReps });
 
 const repsValid = computed(() => parseInt(reps.value, 10) >= 1);
 const weightValid = computed(() => parseFloat(weight.value) > 0);
-const canComplete = computed(() => repsValid.value && weightValid.value);
+const rpeValid = computed(() => rpe.value !== "");
+const canComplete = computed(
+  () => repsValid.value && weightValid.value && rpeValid.value,
+);
 
 const repsError = ref(false);
 const weightError = ref(false);
+const rpeError = ref(false);
 let repsTimer = 0;
 let weightTimer = 0;
+let rpeTimer = 0;
 
 function flashErrors() {
   if (!repsValid.value) {
@@ -52,8 +59,16 @@ function flashErrors() {
       weightError.value = false;
     }, 600);
   }
+  if (!rpeValid.value) {
+    clearTimeout(rpeTimer);
+    rpeError.value = true;
+    rpeTimer = window.setTimeout(() => {
+      rpeError.value = false;
+    }, 600);
+  }
   if (!repsValid.value) repsInput.value?.focus();
-  else weightInput.value?.focus();
+  else if (!weightValid.value) weightInput.value?.focus();
+  else if (!rpeValid.value) emit("edit-rpe");
 }
 
 function tryComplete() {
@@ -131,6 +146,25 @@ function onWeightKeydown(e: KeyboardEvent) {
       @keydown="onWeightKeydown"
       @blur="weight = sanitizeWeight(weight)"
     />
+
+    <span class="text-xs text-text-light dark:text-text-dark opacity-30"
+      >@</span
+    >
+
+    <!-- RPE -->
+    <button
+      type="button"
+      class="w-14 shrink-0 bg-surface-light dark:bg-surface-dark border rounded-lg px-1.5 py-2 text-sm font-mono text-center text-text-h-light dark:text-text-h-dark hover:border-accent/50 cursor-pointer transition-colors duration-150"
+      :class="
+        rpeError
+          ? 'border-red-500 dark:border-red-400 focus:border-red-500 focus:ring-red-500/20'
+          : 'border-border-light dark:border-border-dark'
+      "
+      title="Set RPE"
+      @click="$emit('edit-rpe')"
+    >
+      <span :class="{ 'opacity-40': !rpe }">{{ rpe || "–" }}</span>
+    </button>
 
     <!-- Checkmark -->
     <div class="w-9 shrink-0 flex justify-center">
