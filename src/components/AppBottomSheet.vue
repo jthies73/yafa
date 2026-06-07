@@ -68,14 +68,6 @@ async function animateIn() {
   requestAnimationFrame(() =>
     requestAnimationFrame(() => {
       translateY.value = 0;
-      // Delay focus until the slide-in animation has finished so mobile
-      // browsers don't swallow the focus call on a transitioning element.
-      setTimeout(() => {
-        const firstEditable = sheetEl.value?.querySelector(
-          "input, textarea, select",
-        ) as HTMLElement;
-        firstEditable?.focus();
-      }, duration.value);
     }),
   );
 }
@@ -102,6 +94,9 @@ watch(
   () => minimized.value,
   async (isMini) => {
     document.body.style.overflow = open.value && !isMini ? "hidden" : "";
+    // Minimizing keeps the sheet mounted, so any focused field would otherwise
+    // hold the native keyboard / custom keypad open — blur it to close them.
+    if (isMini) (document.activeElement as HTMLElement | null)?.blur();
     await nextTick();
     if (open.value) {
       translateY.value = isMini ? getDockTranslateY() : 0;
