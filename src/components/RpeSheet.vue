@@ -129,7 +129,6 @@ const pick = (rpe: number) => {
   emit("select", String(rpe));
   open.value = false;
 };
-
 </script>
 
 <template>
