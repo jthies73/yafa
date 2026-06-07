@@ -130,10 +130,6 @@ const pick = (rpe: number) => {
   open.value = false;
 };
 
-const clear = () => {
-  emit("select", "");
-  open.value = false;
-};
 </script>
 
 <template>

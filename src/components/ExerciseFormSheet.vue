@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import type { ExerciseInput } from "../db/repository";
 import { countExerciseUsage } from "../db/repository";
 import AppBottomSheet from "./AppBottomSheet.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
+import ExerciseMusclePicker from "./ExerciseMusclePicker.vue";
+import { useExerciseForm } from "../composables/useExerciseForm";
 
 const props = defineProps<{
   isEditing: boolean;
@@ -42,67 +44,23 @@ const confirmDelete = () => {
   emit("delete");
 };
 
-// Common muscle groups surfaced as datalist suggestions (free text still allowed).
-const MUSCLE_GROUPS = [
-  "Chest",
-  "Upper Chest",
-  "Back",
-  "Lats",
-  "Upper Back",
-  "Lower Back",
-  "Traps",
-  "Shoulders",
-  "Front Delts",
-  "Side Delts",
-  "Rear Delts",
-  "Biceps",
-  "Triceps",
-  "Forearms",
-  "Quads",
-  "Hamstrings",
-  "Glutes",
-  "Calves",
-  "Core",
-  "Abs",
-  "Obliques",
-];
+// --- Form State ---
+const initialProp = computed(() => props.initial);
+const {
+  name,
+  primaryMuscleGroup,
+  secondaryTags,
+  bodyweightFactor,
+  notes,
+  canSave,
+  removeTag,
+  getFormData,
+} = useExerciseForm(initialProp, open);
 
-const name = ref("");
-const primaryMuscleGroup = ref("");
-const secondaryTags = ref<string[]>([]);
-const bodyweightFactor = ref(0);
-const notes = ref("");
-
+// --- Picker UI State ---
 const selectingMode = ref<"primary" | "secondary" | null>(null);
 const scrollContainer = ref<HTMLElement | null>(null);
 const currentPage = ref<1 | 2>(1);
-
-watch(
-  open,
-  (isOpen) => {
-    if (!isOpen) return;
-    name.value = props.initial?.name ?? "";
-    primaryMuscleGroup.value = props.initial?.primaryMuscleGroup ?? "";
-    secondaryTags.value = [...(props.initial?.secondaryMuscleGroups ?? [])];
-    bodyweightFactor.value = props.initial?.bodyweightFactor ?? 0;
-    notes.value = props.initial?.notes ?? "";
-    currentPage.value = 1;
-    selectingMode.value = null;
-    if (scrollContainer.value) {
-      scrollContainer.value.scrollTo({ left: 0 });
-    }
-  },
-  { immediate: true },
-);
-
-const canSave = computed(
-  () =>
-    name.value.trim().length > 0 && primaryMuscleGroup.value.trim().length > 0,
-);
-
-const removeTag = (tag: string) => {
-  secondaryTags.value = secondaryTags.value.filter((t) => t !== tag);
-};
 
 const openMusclePicker = (mode: "primary" | "secondary") => {
   selectingMode.value = mode;
@@ -133,15 +91,7 @@ const goToPage1 = () => {
   }
 };
 
-const isSelected = (group: string) => {
-  if (selectingMode.value === "primary") {
-    return primaryMuscleGroup.value === group;
-  } else {
-    return secondaryTags.value.includes(group);
-  }
-};
-
-const toggleMuscle = (group: string) => {
+const handleMuscleToggle = (group: string) => {
   if (selectingMode.value === "primary") {
     if (primaryMuscleGroup.value === group) {
       primaryMuscleGroup.value = "";
@@ -164,13 +114,7 @@ const close = () => {
 
 const save = () => {
   if (!canSave.value) return;
-  emit("save", {
-    name: name.value,
-    primaryMuscleGroup: primaryMuscleGroup.value,
-    secondaryMuscleGroups: secondaryTags.value,
-    notes: notes.value,
-    bodyweightFactor: Number(bodyweightFactor.value) || 0,
-  });
+  emit("save", getFormData());
 };
 </script>
 
@@ -193,11 +137,12 @@ const save = () => {
         </button>
       </div>
     </template>
+    
     <div
       ref="scrollContainer"
       class="flex w-full overflow-x-hidden items-start scroll-smooth relative"
     >
-      <!-- Page 1 -->
+      <!-- Page 1: Main Form Fields -->
       <div class="w-full shrink-0 flex flex-col gap-6 px-5 py-5 pb-8">
         <!-- Name -->
         <div class="flex flex-col gap-1.5">
@@ -365,84 +310,14 @@ const save = () => {
         </div>
       </div>
 
-      <!-- Page 2: Muscle Picker -->
-      <div class="w-full shrink-0 flex flex-col gap-4 px-5 py-5 pb-8">
-        <div class="flex items-center gap-3">
-          <button
-            type="button"
-            class="p-1 -ml-1 text-text-light dark:text-text-dark opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-            aria-label="Back to main form"
-            @click="goToPage1"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-          <h3 class="font-bold text-lg text-text-h-light dark:text-text-h-dark">
-            {{
-              selectingMode === "primary"
-                ? "Primary Muscle Group"
-                : "Secondary Muscle Groups"
-            }}
-          </h3>
-        </div>
-
-        <div class="flex flex-col gap-2 mt-2">
-          <label
-            v-for="group in MUSCLE_GROUPS"
-            :key="group"
-            class="flex items-center justify-between p-3.5 rounded-xl border border-border-light dark:border-border-dark cursor-pointer transition-colors"
-            :class="
-              isSelected(group)
-                ? 'bg-accent/10 border-accent/30'
-                : 'hover:bg-surface-light dark:hover:bg-surface-dark'
-            "
-          >
-            <span
-              class="text-sm font-semibold"
-              :class="
-                isSelected(group)
-                  ? 'text-accent'
-                  : 'text-text-h-light dark:text-text-h-dark'
-              "
-            >
-              {{ group }}
-            </span>
-            <svg
-              v-if="isSelected(group)"
-              class="w-5 h-5 text-accent"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="3"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            <input
-              type="checkbox"
-              class="sr-only"
-              :checked="isSelected(group)"
-              @change="toggleMuscle(group)"
-            />
-          </label>
-        </div>
-      </div>
+      <!-- Page 2: Muscle Picker Component -->
+      <ExerciseMusclePicker
+        :mode="selectingMode"
+        :primary-selected="primaryMuscleGroup"
+        :secondary-selected="secondaryTags"
+        @toggle="handleMuscleToggle"
+        @back="goToPage1"
+      />
     </div>
 
     <template #footer>
