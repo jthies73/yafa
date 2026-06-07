@@ -176,13 +176,13 @@ const clear = () => {
       </div>
 
       <!-- Clear selection -->
-      <button
+      <!-- <button
         type="button"
         class="w-full px-4 py-3 rounded-xl border border-dashed border-border-light dark:border-border-dark text-center text-sm font-semibold text-text-light dark:text-text-dark opacity-60 transition-all duration-150 hover:opacity-100 hover:border-accent hover:text-accent cursor-pointer"
         @click="clear"
       >
         Clear RPE
-      </button>
+      </button> -->
     </div>
 
     <!-- Bottom padding for safe area -->
