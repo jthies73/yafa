@@ -26,7 +26,7 @@ const navigateTo = (routeName: string) => {
   // when pushing the new history state, which causes it to appear open during swipe-back.
   setTimeout(() => {
     router.push({ name: routeName });
-  }, 300);
+  }, 100);
 };
 
 defineExpose({ open: () => (sidebarOpen.value = true) });
