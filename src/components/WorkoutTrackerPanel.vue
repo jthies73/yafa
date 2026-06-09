@@ -25,10 +25,15 @@ const {
 // ── Reorder exercises (drag by the card handle) ───────────────────────────────
 const cardsListEl = ref<HTMLElement | null>(null);
 
+// While a card is being dragged, fold every card down to its compact header so
+// only a small card travels with the pointer; it unfolds again on release.
+const dragging = ref(false);
+
 useSortableList(cardsListEl, {
   handle: ".drag-handle",
   draggingClass: "shadow-lg",
   onReorder: reorderCards,
+  onCollapse: (collapsed) => (dragging.value = collapsed),
 });
 
 // ── Delete confirmation (shared by set + exercise removal) ────────────────────
@@ -141,6 +146,7 @@ const onSelectRpe = (rpe: string) => {
         :ref="setCardRef(cardIndex)"
         :card="card"
         :exercise-name="exerciseName(card.exerciseId)"
+        :collapsed="dragging"
         @request-delete-exercise="requestDeleteExercise(cardIndex)"
         @request-delete-set="requestDeleteSet(cardIndex, $event)"
         @edit-rpe="editRpe(cardIndex, $event)"

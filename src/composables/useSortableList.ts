@@ -16,6 +16,17 @@ export interface SortableListOptions {
    * is draggable from anywhere and the whole container is made non-scrollable.
    */
   handle?: string;
+  /**
+   * Toggle a "collapsed" state on the rows for the duration of a drag (e.g. to
+   * fold away each card's detail so only a compact header is dragged). Called
+   * with `true` on press and `false` on release/cancel. When provided, the lift
+   * is deferred until `collapseMs` has elapsed so the row geometry is measured
+   * in its collapsed state — otherwise the cached tops/heights go stale the
+   * moment the cards shrink.
+   */
+  onCollapse?: (collapsed: boolean) => void;
+  /** Duration of the collapse animation; the lift waits this long before measuring. */
+  collapseMs?: number;
 }
 
 /**
@@ -39,6 +50,8 @@ export function useSortableList(
   const animationMs = options.animationMs ?? 150;
   const threshold = options.threshold ?? 8;
   const draggingClass = options.draggingClass ?? "";
+  const onCollapse = options.onCollapse;
+  const collapseMs = options.collapseMs ?? 150;
 
   // --- Gesture state ---
   let pointerId: number | null = null;
@@ -46,6 +59,12 @@ export function useSortableList(
   let startY = 0;
   let dragging = false;
   let suppressNextClick = false;
+
+  // --- Collapse-before-lift state (only used when `onCollapse` is set) ---
+  let wantsDrag = false;
+  let collapseSettled = true;
+  let collapseTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastClientY = 0;
 
   // --- Drag geometry, captured once at drag start ---
   let items: HTMLElement[] = [];
@@ -79,7 +98,27 @@ export function useSortableList(
     pointerId = e.pointerId;
     startX = e.clientX;
     startY = e.clientY;
+    lastClientY = e.clientY;
     dragging = false;
+    wantsDrag = false;
+
+    // Fold the rows away on press, then defer the lift until they've settled so
+    // beginDrag() measures the collapsed geometry (see `onCollapse` docs).
+    if (onCollapse) {
+      collapseSettled = false;
+      onCollapse(true);
+      collapseTimer = setTimeout(() => {
+        collapseTimer = null;
+        collapseSettled = true;
+        // The finger may already be past threshold and now held still — lift now.
+        if (wantsDrag && !dragging) {
+          beginDrag();
+          track(lastClientY - startY);
+        }
+      }, collapseMs);
+    } else {
+      collapseSettled = true;
+    }
 
     window.addEventListener("pointermove", onPointerMove, { passive: false });
     window.addEventListener("pointerup", onPointerUp);
@@ -106,15 +145,24 @@ export function useSortableList(
 
   const onPointerMove = (e: PointerEvent) => {
     if (e.pointerId !== pointerId) return;
+    lastClientY = e.clientY;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
 
     if (!dragging) {
       if (Math.hypot(dx, dy) <= threshold) return;
+      wantsDrag = true;
+      e.preventDefault(); // claim the gesture from native scrolling
+      if (!collapseSettled) return; // hold off until the rows have folded away
       beginDrag();
     }
 
     e.preventDefault();
+    track(dy);
+  };
+
+  const track = (dy: number) => {
+    if (!dragging) return;
 
     // The lifted row tracks the pointer vertically.
     if (draggedEl) draggedEl.style.transform = `translateY(${dy}px)`;
@@ -164,6 +212,16 @@ export function useSortableList(
     window.removeEventListener("pointermove", onPointerMove);
     window.removeEventListener("pointerup", onPointerUp);
     window.removeEventListener("pointercancel", onPointerUp);
+
+    if (collapseTimer !== null) {
+      clearTimeout(collapseTimer);
+      collapseTimer = null;
+    }
+    // Unfold the rows back into view (covers both a real drop and a stray tap
+    // on the handle that never crossed the threshold).
+    if (onCollapse) onCollapse(false);
+    wantsDrag = false;
+    collapseSettled = true;
 
     for (const el of items) {
       el.style.transform = "";

@@ -7,6 +7,8 @@ import WorkoutSetRow from "./WorkoutSetRow.vue";
 const props = defineProps<{
   card: ExerciseCard;
   exerciseName: string;
+  /** Fold the sets section away (used while the card is being dragged). */
+  collapsed?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -98,51 +100,60 @@ defineExpose({
       </button>
     </div>
 
-    <!-- Sets -->
-    <div class="flex flex-col gap-2">
-      <!-- Column labels -->
-      <div class="flex items-center gap-2.5 px-0.5">
-        <span class="w-5 shrink-0" />
-        <span
-          class="flex-1 text-center text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-40"
-          >Reps</span
-        >
-        <span class="text-xs opacity-0">×</span>
-        <span
-          class="flex-1 text-center text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-40"
-          >Weight</span
-        >
-        <span class="text-xs opacity-0">@</span>
-        <span
-          class="w-14 shrink-0 text-center text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-40"
-          >RPE</span
-        >
-        <span class="w-9 shrink-0" />
+    <!-- Sets (folds away while dragging) -->
+    <div
+      class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+      :class="
+        collapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
+      "
+    >
+      <div class="min-h-0 overflow-hidden">
+        <div class="flex flex-col gap-2">
+          <!-- Column labels -->
+          <div class="flex items-center gap-2.5 px-0.5">
+            <span class="w-5 shrink-0" />
+            <span
+              class="flex-1 text-center text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-40"
+              >Reps</span
+            >
+            <span class="text-xs opacity-0">×</span>
+            <span
+              class="flex-1 text-center text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-40"
+              >Weight</span
+            >
+            <span class="text-xs opacity-0">@</span>
+            <span
+              class="w-14 shrink-0 text-center text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-40"
+              >RPE</span
+            >
+            <span class="w-9 shrink-0" />
+          </div>
+
+          <WorkoutSetRow
+            v-for="(set, setIndex) in card.sets"
+            :key="setIndex"
+            :ref="setRowRef(setIndex)"
+            v-model:reps="set.reps"
+            v-model:weight="set.weight"
+            v-model:rpe="set.rpe"
+            :index="setIndex + 1"
+            :state="setState(setIndex)"
+            @toggle="emit('toggle-set', setIndex)"
+            @complete="emit('complete', setIndex)"
+            @edit-rpe="emit('edit-rpe', setIndex)"
+            @delete="emit('request-delete-set', setIndex)"
+          />
+
+          <!-- Add set -->
+          <button
+            type="button"
+            class="mt-1 w-full rounded-lg border border-dashed border-border-light dark:border-border-dark py-2 text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50 transition-colors duration-150 hover:opacity-100 hover:border-accent/50 hover:text-accent cursor-pointer"
+            @click="emit('add-set')"
+          >
+            + Add set
+          </button>
+        </div>
       </div>
-
-      <WorkoutSetRow
-        v-for="(set, setIndex) in card.sets"
-        :key="setIndex"
-        :ref="setRowRef(setIndex)"
-        v-model:reps="set.reps"
-        v-model:weight="set.weight"
-        v-model:rpe="set.rpe"
-        :index="setIndex + 1"
-        :state="setState(setIndex)"
-        @toggle="emit('toggle-set', setIndex)"
-        @complete="emit('complete', setIndex)"
-        @edit-rpe="emit('edit-rpe', setIndex)"
-        @delete="emit('request-delete-set', setIndex)"
-      />
-
-      <!-- Add set -->
-      <button
-        type="button"
-        class="mt-1 w-full rounded-lg border border-dashed border-border-light dark:border-border-dark py-2 text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50 transition-colors duration-150 hover:opacity-100 hover:border-accent/50 hover:text-accent cursor-pointer"
-        @click="emit('add-set')"
-      >
-        + Add set
-      </button>
     </div>
   </div>
 </template>
