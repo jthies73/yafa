@@ -47,7 +47,6 @@ export default defineConfig(({ mode }) => ({
         // Don't let a new worker take over until the user asks for it.
         skipWaiting: false,
         clientsClaim: false,
-
       },
       manifest: {
         name: "Y A F A",
