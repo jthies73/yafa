@@ -116,7 +116,7 @@ function onWeightKeydown(e: KeyboardEvent) {
       v-model="reps"
       v-numpad="'integer'"
       type="text"
-      placeholder="reps"
+      placeholder="-"
       class="min-w-0 flex-1 bg-surface-light dark:bg-surface-dark border rounded-lg px-2.5 py-2 text-sm font-mono text-center text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:outline-none focus:ring-2 transition-colors duration-150"
       :class="
         repsError
@@ -137,7 +137,7 @@ function onWeightKeydown(e: KeyboardEvent) {
       v-model="weight"
       v-numpad="'decimal'"
       type="text"
-      placeholder="kg"
+      placeholder="-"
       class="min-w-0 flex-1 bg-surface-light dark:bg-surface-dark border rounded-lg px-2.5 py-2 text-sm font-mono text-center text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:outline-none focus:ring-2 transition-colors duration-150"
       :class="
         weightError
