@@ -76,7 +76,7 @@ const close = () => {
 </script>
 
 <template>
-  <AppBottomSheet v-model:open="open" title="Import / Export">
+  <AppBottomSheet v-model:open="open" title="Import / Export" z-index="z-[55]">
     <div class="flex flex-col gap-6 px-5 py-5">
       <!-- Description -->
       <p class="text-sm text-text-light dark:text-text-dark opacity-70">

@@ -9,6 +9,8 @@ const props = defineProps<{
   // persistent minimized header instead of dismissing it (e.g. a running
   // workout). When false the sheet drags down to close.
   minimizable?: boolean;
+  /** Tailwind z-index class, defaults to "z-50" */
+  zIndex?: string;
 }>();
 
 const open = defineModel<boolean>("open", { required: true });
@@ -146,8 +148,8 @@ onUnmounted(() => {
   <Teleport to="body">
     <div
       v-if="visible"
-      class="fixed inset-0 z-50 animate-fade-in"
-      :class="{ 'pointer-events-none': minimized }"
+      class="fixed inset-0 animate-fade-in"
+      :class="[zIndex || 'z-50', { 'pointer-events-none': minimized }]"
     >
       <!-- Backdrop -->
       <div
