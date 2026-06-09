@@ -17,10 +17,13 @@ const closeSidebar = () => (sidebarOpen.value = false);
 
 const navigateTo = (routeName: string) => {
   router.push({ name: routeName });
-  closeSidebar();
 };
 
 defineExpose({ open: () => (sidebarOpen.value = true) });
+
+// Close the sidebar on any route change — including native back/forward
+// (popstate) navigations that don't go through navigateTo.
+watch(() => route.fullPath, closeSidebar);
 
 watch(sidebarOpen, (open) => {
   document.body.style.overflow = open ? "hidden" : "";
