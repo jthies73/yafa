@@ -102,7 +102,7 @@ defineExpose({
 
     <!-- Sets (folds away while dragging) -->
     <div
-      class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+      class="grid transition-[grid-template-rows,opacity] duration-150 ease-out"
       :class="
         collapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
       "

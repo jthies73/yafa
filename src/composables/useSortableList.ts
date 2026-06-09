@@ -27,6 +27,16 @@ export interface SortableListOptions {
   onCollapse?: (collapsed: boolean) => void;
   /** Duration of the collapse animation; the lift waits this long before measuring. */
   collapseMs?: number;
+  /**
+   * Auto-scroll the nearest scrollable ancestor while the pointer hovers near
+   * its top/bottom edge, so a row can be dragged past the visible area. On by
+   * default; set to `false` to disable.
+   */
+  autoScroll?: boolean;
+  /** Distance (px) from a scroll edge at which auto-scroll kicks in. */
+  scrollEdge?: number;
+  /** Maximum auto-scroll speed in px per animation frame. */
+  scrollSpeed?: number;
 }
 
 /**
@@ -52,6 +62,9 @@ export function useSortableList(
   const draggingClass = options.draggingClass ?? "";
   const onCollapse = options.onCollapse;
   const collapseMs = options.collapseMs ?? 150;
+  const autoScroll = options.autoScroll ?? true;
+  const scrollEdge = options.scrollEdge ?? 56;
+  const scrollSpeed = options.scrollSpeed ?? 14;
 
   // --- Gesture state ---
   let pointerId: number | null = null;
@@ -73,6 +86,92 @@ export function useSortableList(
   let fromIndex = -1;
   let toIndex = -1;
   let draggedEl: HTMLElement | null = null;
+  // The dragged row's viewport top at press time. If the rows fold away before
+  // the lift (see `onCollapse`), the row shifts upward as the rows above it
+  // shrink; this lets us re-anchor it under the cursor instead of leaving it
+  // floating where it used to be.
+  let pressElemTop = 0;
+  let anchorAdjust = 0;
+
+  // --- Auto-scroll state ---
+  let scrollParent: HTMLElement | null = null;
+  let startScroll = 0;
+  let scrollRAF: number | null = null;
+
+  // The page scrolls under the drag, so the captured geometry (viewport-relative
+  // tops) stays valid only if we add back how far we've scrolled since the lift.
+  // A "root" scroller (the document, or a body that scrolls because <html> is
+  // overflow:hidden) fills the viewport, so its scroll bounds are the viewport —
+  // but its scroll position is always read/written through `.scrollTop`, which
+  // works for <body>, <html>, and any overflow container alike (unlike
+  // `window.scrollBy`, which is a no-op when <html> itself can't scroll).
+  const isRootScroller = (el: HTMLElement) =>
+    el === document.scrollingElement ||
+    el === document.documentElement ||
+    el === document.body;
+
+  const currentScroll = () => (scrollParent ? scrollParent.scrollTop : 0);
+
+  const scrollBounds = () => {
+    if (!scrollParent) return { top: 0, bottom: 0 };
+    if (isRootScroller(scrollParent))
+      return { top: 0, bottom: window.innerHeight };
+    const r = scrollParent.getBoundingClientRect();
+    return { top: r.top, bottom: r.bottom };
+  };
+
+  const applyScroll = (delta: number) => {
+    if (scrollParent) scrollParent.scrollTop += delta;
+  };
+
+  // First scrollable ancestor (vertical), falling back to the document scroller.
+  const findScrollParent = (el: HTMLElement | null): HTMLElement => {
+    let node = el?.parentElement ?? null;
+    while (node) {
+      const oy = getComputedStyle(node).overflowY;
+      if (
+        (oy === "auto" || oy === "scroll") &&
+        node.scrollHeight > node.clientHeight
+      )
+        return node;
+      node = node.parentElement;
+    }
+    return (
+      (document.scrollingElement as HTMLElement) ?? document.documentElement
+    );
+  };
+
+  // px/frame, ramping up the deeper the pointer pushes into the edge zone.
+  const edgeVelocity = (): number => {
+    if (!autoScroll) return 0;
+    const { top, bottom } = scrollBounds();
+    if (lastClientY < top + scrollEdge)
+      return -Math.ceil(
+        ((top + scrollEdge - lastClientY) / scrollEdge) * scrollSpeed,
+      );
+    if (lastClientY > bottom - scrollEdge)
+      return Math.ceil(
+        ((lastClientY - (bottom - scrollEdge)) / scrollEdge) * scrollSpeed,
+      );
+    return 0;
+  };
+
+  const tickAutoScroll = () => {
+    scrollRAF = null;
+    if (!dragging) return;
+    const v = edgeVelocity();
+    if (v === 0) return;
+    const before = currentScroll();
+    applyScroll(v);
+    if (currentScroll() === before) return; // hit the scroll boundary — stop
+    track(lastClientY - startY); // re-glue the row + re-evaluate the target slot
+    scrollRAF = requestAnimationFrame(tickAutoScroll);
+  };
+
+  const maybeAutoScroll = () => {
+    if (scrollRAF === null && edgeVelocity() !== 0)
+      scrollRAF = requestAnimationFrame(tickAutoScroll);
+  };
 
   const children = (): HTMLElement[] =>
     container.value
@@ -95,6 +194,7 @@ export function useSortableList(
 
     fromIndex = kids.indexOf(item);
     draggedEl = item;
+    pressElemTop = item.getBoundingClientRect().top; // before any collapse
     pointerId = e.pointerId;
     startX = e.clientX;
     startY = e.clientY;
@@ -134,6 +234,13 @@ export function useSortableList(
     heights = rects.map((r) => r.height);
     toIndex = fromIndex;
 
+    scrollParent = findScrollParent(container.value);
+    startScroll = currentScroll();
+
+    // How far the row drifted up while folding away — added to every translate so
+    // the row jumps back under the cursor as the drag starts.
+    anchorAdjust = pressElemTop - tops[fromIndex];
+
     if (draggedEl) {
       draggedEl.style.position = "relative";
       draggedEl.style.zIndex = "20";
@@ -159,16 +266,22 @@ export function useSortableList(
 
     e.preventDefault();
     track(dy);
+    maybeAutoScroll();
   };
 
   const track = (dy: number) => {
     if (!dragging) return;
 
+    // Add back the scroll travelled since the lift so the row stays glued to the
+    // finger (and slot detection stays correct) even as the page auto-scrolls,
+    // plus the fold-away drift so a collapsed row sits under the cursor.
+    const eff = dy + (currentScroll() - startScroll) + anchorAdjust;
+
     // The lifted row tracks the pointer vertically.
-    if (draggedEl) draggedEl.style.transform = `translateY(${dy}px)`;
+    if (draggedEl) draggedEl.style.transform = `translateY(${eff}px)`;
 
     // Find which slot the dragged row's center now overlaps.
-    const draggedCenter = tops[fromIndex] + heights[fromIndex] / 2 + dy;
+    const draggedCenter = tops[fromIndex] + heights[fromIndex] / 2 + eff;
     let to = fromIndex;
     for (let i = 0; i < items.length; i++) {
       if (i === fromIndex) continue;
@@ -217,6 +330,13 @@ export function useSortableList(
       clearTimeout(collapseTimer);
       collapseTimer = null;
     }
+    if (scrollRAF !== null) {
+      cancelAnimationFrame(scrollRAF);
+      scrollRAF = null;
+    }
+    scrollParent = null;
+    startScroll = 0;
+    anchorAdjust = 0;
     // Unfold the rows back into view (covers both a real drop and a stray tap
     // on the handle that never crossed the threshold).
     if (onCollapse) onCollapse(false);
