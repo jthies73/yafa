@@ -399,6 +399,10 @@ const isActive = (names: readonly string[] | string) => {
           <span>{{ item.label }}</span>
         </a>
 
+        <div
+          class="h-px w-full bg-border-light dark:bg-border-dark my-1 opacity-60 rounded-full"
+        ></div>
+
         <!-- Update (action styled as a nav item) -->
         <button
           type="button"
