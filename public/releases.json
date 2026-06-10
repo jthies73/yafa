@@ -1,6 +1,10 @@
 {
-  "latest": "0.1.1",
+  "latest": "0.1.2",
   "releases": [
+    {
+      "version": "0.1.2",
+      "notes": "- Test update mechanism."
+    },
     {
       "version": "0.1.1",
       "notes": "- Streamlined app updates and data migrations using Dexie.\n- Added comprehensive progression model rulesets."
