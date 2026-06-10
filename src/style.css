@@ -21,6 +21,18 @@
   --color-surface-dark: #1d1e24;
   --color-surface-dark-hover: #252730;
   --color-border-dark: #2e303a;
+
+  /* Periodization focus colors — data-driven SVG fills + legend swatches.
+     Distinct hues, legible on both themes; accent turquoise is reserved for
+     the intensity line so it never collides with a focus bar. */
+  --color-focus-hypertrophy: #6366f1; /* indigo — high volume */
+  --color-focus-strength: #f59e0b; /* amber — strength block */
+  --color-focus-peaking: #ef4444; /* red — peak intensity */
+  --color-focus-deload: #94a3b8; /* slate — muted recovery */
+
+  /* Mesocycle chart: intensity uses the accent; volume uses a neutral tone so
+     the two trend lines read as primary (intensity) vs secondary (volume). */
+  --color-chart-volume: #64748b;
 }
 
 @layer base {

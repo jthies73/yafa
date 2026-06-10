@@ -68,6 +68,19 @@ export interface Routine {
   created_at: number;
 }
 
+export type PeriodizationFocus =
+  | "hypertrophy"
+  | "strength"
+  | "peaking"
+  | "deload";
+
+// An object (not a bare PeriodizationFocus string) so future iterations can
+// attach per-week tuning (intensity/volume overrides, planned RPE caps, notes)
+// without a breaking shape change or a data migration.
+export interface MesocycleWeek {
+  focus: PeriodizationFocus;
+}
+
 export interface Plan {
   id: string;
   name: string;
@@ -75,6 +88,7 @@ export interface Plan {
   routineIds: string[];
   active: boolean;
   created_at: number;
+  mesocycle?: MesocycleWeek[]; // absent ⇒ no periodization configured
 }
 
 // ----------------------------------------------

@@ -1,5 +1,5 @@
 import { db } from "./db";
-import type { Exercise, Plan, Routine } from "./types";
+import type { Exercise, Plan, Routine, MesocycleWeek } from "./types";
 import type { RpeMatrix } from "./types"; // used by ExerciseInput
 
 // ----------------------------------------------
@@ -66,6 +66,23 @@ export async function updatePlan(id: string, input: PlanInput): Promise<void> {
   await db.plans.update(id, {
     name: input.name.trim(),
     description: input.description?.trim() || undefined,
+  });
+}
+
+/**
+ * Persists a plan's mesocycle (periodization weeks). Kept separate from
+ * `updatePlan` so the name/description form contract stays untouched. An empty
+ * list clears the field entirely, reverting the plan to "no periodization".
+ */
+export async function setPlanMesocycle(
+  id: string,
+  weeks: MesocycleWeek[],
+): Promise<void> {
+  // Strip Vue/Dexie proxies to plain objects before persisting (same reason as
+  // toPlainConfig for routine exercises).
+  const mesocycle: MesocycleWeek[] = weeks.map((w) => ({ focus: w.focus }));
+  await db.plans.update(id, {
+    mesocycle: mesocycle.length ? mesocycle : undefined,
   });
 }
 

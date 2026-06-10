@@ -191,6 +191,14 @@ const plan: Plan = {
   routineIds: ["upper-day", "lower-day"],
   active: true,
   created_at: Date.now(),
+  mesocycle: [
+    { focus: "hypertrophy" },
+    { focus: "hypertrophy" },
+    { focus: "strength" },
+    { focus: "strength" },
+    { focus: "peaking" },
+    { focus: "deload" },
+  ],
 };
 
 const workouts: Workout[] = [

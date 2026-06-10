@@ -11,18 +11,23 @@ import type {
   LinearProgressionParams,
   DoubleProgressionParams,
   TopSetProgressionParams,
+  MesocycleWeek,
 } from "../db/types";
 import {
   setPlanActive,
   updatePlan,
   deletePlan,
   createRoutine,
+  setPlanMesocycle,
   type PlanInput,
   type RoutineInput,
 } from "../db/repository";
+import { FOCUS_META, FOCUS_ORDER } from "../config/periodization";
 import AppFab from "./AppFab.vue";
 import PlanFormSheet from "./PlanFormSheet.vue";
 import RoutineFormSheet from "./RoutineFormSheet.vue";
+import MesocycleChart from "./MesocycleChart.vue";
+import MesocycleSheet from "./MesocycleSheet.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
 
 const props = defineProps<{
@@ -141,6 +146,32 @@ const handleSavePlan = async (input: PlanInput) => {
   await updatePlan(props.id, input);
   showPlanForm.value = false;
 };
+
+// --- Periodization (mesocycle) ---
+const showMesocycleSheet = ref(false);
+
+const mesocycleInitial = computed(() => plan.value?.mesocycle ?? []);
+
+const openEditMesocycle = () => {
+  showMesocycleSheet.value = true;
+};
+
+const handleSaveMesocycle = async (weeks: MesocycleWeek[]) => {
+  await setPlanMesocycle(props.id, weeks);
+  showMesocycleSheet.value = false;
+};
+
+// "2 Hypertrophy · 2 Strength · 1 Peaking · 1 Deload" in canonical focus order.
+const mesocycleBreakdown = computed(() => {
+  const weeks = plan.value?.mesocycle ?? [];
+  return FOCUS_ORDER.map((focus) => ({
+    focus,
+    count: weeks.filter((w) => w.focus === focus).length,
+  }))
+    .filter((g) => g.count > 0)
+    .map((g) => `${g.count} ${FOCUS_META[g.focus].label}`)
+    .join(" · ");
+});
 
 // --- Routine create ---
 const showRoutineForm = ref(false);
@@ -332,6 +363,57 @@ const requestDeletePlan = () => {
 
     <!-- Details View -->
     <div v-else-if="plan" class="flex flex-col gap-6">
+      <!-- Periodization -->
+      <div class="border-t border-border-light dark:border-border-dark pt-6">
+        <h2
+          class="text-xl font-bold text-text-h-light dark:text-text-h-dark mb-4"
+        >
+          Periodization
+        </h2>
+
+        <!-- Populated — the whole card opens the editor -->
+        <div
+          v-if="plan.mesocycle?.length"
+          class="group bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl shadow-sm p-5 flex flex-col gap-4 cursor-pointer transition-colors duration-150 hover:bg-surface-light-hover dark:hover:bg-surface-dark-hover"
+          @click="openEditMesocycle"
+        >
+          <MesocycleChart :weeks="plan.mesocycle" />
+          <div
+            class="border-t border-border-light dark:border-border-dark pt-3 flex items-end justify-between gap-3"
+          >
+            <div class="min-w-0">
+              <div
+                class="text-sm font-bold text-text-h-light dark:text-text-h-dark"
+              >
+                {{ plan.mesocycle.length }}-week mesocycle
+              </div>
+              <div
+                class="text-xs text-text-light dark:text-text-dark opacity-60 truncate"
+              >
+                {{ mesocycleBreakdown }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty — the whole card opens the editor -->
+        <div
+          v-else
+          class="group bg-surface-light dark:bg-surface-dark border border-dashed border-border-light dark:border-border-dark rounded-xl p-6 flex flex-col items-center gap-3 text-center cursor-pointer transition-colors duration-150 hover:border-accent/50 hover:bg-surface-light-hover dark:hover:bg-surface-dark-hover"
+          @click="openEditMesocycle"
+        >
+          <p class="text-sm text-text-light dark:text-text-dark opacity-60">
+            Plan a mesocycle to shape volume and intensity across training
+            weeks.
+          </p>
+          <span
+            class="px-4 py-2 text-xs font-bold rounded-lg transition-colors duration-150 tracking-wider uppercase bg-accent text-bg-dark group-hover:bg-accent/90"
+          >
+            Set up periodization
+          </span>
+        </div>
+      </div>
+
       <div class="border-t border-border-light dark:border-border-dark pt-6">
         <h2
           class="text-xl font-bold text-text-h-light dark:text-text-h-dark mb-4"
@@ -477,6 +559,13 @@ const requestDeletePlan = () => {
       v-model:open="showRoutineForm"
       :is-editing="false"
       @save="handleSaveRoutine"
+    />
+
+    <MesocycleSheet
+      v-model:open="showMesocycleSheet"
+      :is-editing="!!plan?.mesocycle?.length"
+      :initial="mesocycleInitial"
+      @save="handleSaveMesocycle"
     />
 
     <ConfirmDialog
