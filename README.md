@@ -52,3 +52,13 @@ YAFA V1 implements core progression engines designed for varying fatigue profile
 - **Logic**: A heavy top set near maximal RPE is followed by back-off sets at a lower percentage to accumulate clean volume.
 - **Config Parameters**: `top_set_target_reps`, `top_set_target_rpe`, `back_off_sets`, `percentage_drop`, `weight_increment`.
 - **Execution Rule**: Increase top set load by `weight_increment` if performance targets are met at or below target RPE; dynamically recalculate back-off loads.
+
+### 🛑 Fatigue Management & Automated Resets
+
+To distinguish between an isolated bad training day and a true performance plateau, YAFA utilizes a 3-session trend threshold. 
+
+A single session is flagged as a progression failure if either of the following physiological limits are breached:
+1. **Target Failure:** `(actual_reps < target_reps && actual_rpe > target_rpe)`
+2. **Systemic Cost Too High:** `(actual_rpe - 1 > target_rpe)`
+
+If an exercise triggers this flag for 3 consecutive sessions, YAFA prompts the user to initiate a reset. This allows the system to recalculate the e1RM based on recent performance or apply a structural load reduction to dissipate fatigue before resuming the progression model.
