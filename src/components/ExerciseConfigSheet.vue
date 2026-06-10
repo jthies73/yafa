@@ -34,7 +34,7 @@ const PROGRESSION_MODELS: { value: ProgressionModelType; label: string }[] = [
 ];
 
 const DEFAULT_PARAMS: Record<ProgressionModelType, Record<string, number>> = {
-  linear: { targetSets: 3, targetReps: 5, weightIncrement: 2.5 },
+  linear: { targetSets: 3, targetReps: 5, targetRpe: 8, weightIncrement: 2.5 },
   double: { targetSets: 3, minReps: 6, maxReps: 10, weightIncrement: 2.5 },
   topset_backoff: {
     topSetTargetReps: 3,
@@ -145,7 +145,7 @@ const save = () => {
 
       <!-- Linear params -->
       <div v-if="configModel === 'linear'" class="flex flex-col gap-4">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-3 gap-4">
           <div class="flex flex-col gap-1.5">
             <label
               class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
@@ -177,6 +177,23 @@ const save = () => {
               min="1"
               max="100"
               step="1"
+              class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2.5 text-sm font-mono text-text-h-light dark:text-text-h-dark focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50"
+            />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label
+              class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+            >
+              Target RPE
+            </label>
+            <input
+              v-model.number="configParams.targetRpe"
+              v-numpad
+              v-keynav
+              type="number"
+              min="5"
+              max="10"
+              step="0.5"
               class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2.5 text-sm font-mono text-text-h-light dark:text-text-h-dark focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50"
             />
           </div>

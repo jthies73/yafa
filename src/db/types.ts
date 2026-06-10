@@ -5,6 +5,7 @@
 export interface LinearProgressionParams {
   targetSets: number;
   targetReps: number;
+  targetRpe?: number;
   weightIncrement: number;
 }
 
