@@ -162,7 +162,7 @@ onUnmounted(() => {
       <div
         ref="sheetEl"
         :style="sheetStyle"
-        class="absolute bottom-0 left-0 right-0 flex flex-col w-full rounded-t-2xl bg-bg-light dark:bg-bg-dark shadow-2xl"
+        class="absolute bottom-0 left-0 right-0 flex flex-col w-full rounded-t-2xl bg-bg-light dark:bg-bg-dark shadow-2xl select-none"
         :class="[
           minimized && minimizable
             ? 'pointer-events-none'

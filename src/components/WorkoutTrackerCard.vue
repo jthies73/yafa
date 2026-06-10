@@ -46,7 +46,7 @@ defineExpose({
 
 <template>
   <div
-    class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-4 shadow-sm flex flex-col gap-3"
+    class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-4 shadow-sm flex flex-col gap-3 select-none"
   >
     <!-- Card header -->
     <div class="mb-3 flex items-center gap-2.5">
