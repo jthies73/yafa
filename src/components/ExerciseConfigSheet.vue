@@ -5,6 +5,7 @@ import type {
   ProgressionModelType,
   ProgressionParams,
 } from "../db/types";
+import { LOCKABLE_FIELDS } from "../config/periodization";
 import AppBottomSheet from "./AppBottomSheet.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
 import LockToggle from "./LockToggle.vue";
@@ -30,19 +31,15 @@ const configParams = ref<Record<string, number>>({});
 const configNotes = ref("");
 const lockedFields = ref<Set<string>>(new Set());
 
-// Param keys that periodization can modify — and therefore that the user may lock —
-// per progression model. Keys not listed here are never affected by periodization.
-const LOCKABLE_FIELDS: Record<ProgressionModelType, string[]> = {
-  linear: ["targetSets", "targetReps", "targetRpe"],
-  double: ["targetSets"],
-  topset_backoff: ["topSetTargetReps", "backOffSets", "topSetTargetRpe"],
-};
-
 const isLocked = (field: string) => lockedFields.value.has(field);
 
 const toggleLock = (field: string) => {
   const next = new Set(lockedFields.value);
-  next.has(field) ? next.delete(field) : next.add(field);
+  if (next.has(field)) {
+    next.delete(field);
+  } else {
+    next.add(field);
+  }
   lockedFields.value = next;
 };
 

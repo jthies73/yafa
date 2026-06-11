@@ -125,6 +125,51 @@ export interface Workout {
 }
 
 // ----------------------------------------------
+// Progression Engine State
+// ----------------------------------------------
+
+export type ResetKind = "intensity" | "volume";
+
+// Corrective layer applied on top of a prescription after a reset. Its
+// strength tapers linearly to zero over `decaySessions` post-reset sessions
+// (effective = initialMagnitude × (1 − sessionsElapsed / decaySessions)),
+// after which it is dropped from the queue.
+export interface ResetModifier {
+  kind: ResetKind;
+  initialMagnitude: number; // fraction removed at full strength (0.1 ⇒ −10%)
+  decaySessions: number;
+  sessionsElapsed: number;
+}
+
+/**
+ * Persistent per-exercise engine state. The engine tracks TWO distinct e1RM
+ * concepts — they must never be conflated:
+ *
+ * - `workingE1rm` is the planning scalar: every weight prescription is derived
+ *   from it via the RPE matrix. It moves deliberately — up by the configured
+ *   `weightIncrement` on a successful session, down (lastingly) by an
+ *   intensity reset. It is the single source of truth for prescriptions.
+ * - `observedE1rms` holds the implied e1RMs of the last 10 qualifying sets
+ *   (reps ≤ 10 AND RPE ≥ 8); their mean is the "observed e1RM". It is a
+ *   DIAGNOSTIC only: it detects divergence from `workingE1rm` and serves as
+ *   the re-baseline target when an intensity reset recalculates from recent
+ *   performance. It never drives daily prescriptions directly.
+ */
+export interface ProgressionState {
+  exerciseId: string;
+  workingE1rm: number | null; // null until seeded from the first logged session
+  observedE1rms: number[];
+  failureStreak: number; // linear + top-set: consecutive failed sessions
+  regressionStreak: number; // double: consecutive rep regressions at same weight
+  plateauStreak: number; // double: consecutive identical-rep sessions at same weight
+  currentTargetReps?: number; // double: rep goal advancing from minReps to maxReps
+  lastSessionReps?: number; // double: previous session's total reps (comparison basis)
+  lastSessionWeight?: number; // double: the weight those reps were achieved at
+  resetModifiers: ResetModifier[];
+  updated_at: number;
+}
+
+// ----------------------------------------------
 // Global State
 // ----------------------------------------------
 

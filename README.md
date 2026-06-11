@@ -37,13 +37,14 @@ YAFA's workout engine is highly modular, separating concerns into independently 
 To decouple physiological variance from prescribed weights, YAFA tracks two distinct estimated one-rep max (e1RM) values per exercise:
 
 - **`working_e1rm`**: A persistent planning scalar. Every weight prescription is computed from this. It increases by `weight_increment` on a successful session and is reduced by an intensity reset. It is the absolute source of truth for daily prescriptions.
-- **`observed_e1rm`**: A rolling average of implied e1RMs from the last 10 qualifying sets (reps ≤ 10 AND RPE ≥ 8). This is a **diagnostic only**—used to detect divergence from `working_e1rm` and as a re-baseline target during an intensity reset. It is *never* used directly for daily prescriptions.
+- **`observed_e1rm`**: A rolling average of implied e1RMs from the last 10 qualifying sets (reps ≤ 10 AND RPE ≥ 8). This is a **diagnostic only**—used to detect divergence from `working_e1rm` and as a re-baseline target during an intensity reset. It is _never_ used directly for daily prescriptions.
 
 ### Matrix-Derived Weights & Updates
 
 Weight is always calculated as: `weight = working_e1rm × rpe_matrix[reps][rpe]` (rounded to loadable increments). `weight_increment` is the amount added to `working_e1rm` on a successful session, not a direct load delta.
 
 The RPE matrix maps `(reps, rpe)` to a percentage of e1RM (axes: reps 1–10, RPE 6.0–10.0 in 0.5 steps). Post-session, the matrix is updated dynamically for qualifying sets:
+
 1. Recomputes `observed_e1rm`.
 2. Nudges the cell toward reality: `observed_pct = set_weight / observed_e1rm`, updating the cell using a slow-moving EMA (Exponential Moving Average).
 3. Smooths across neighboring cells within ±1.0 RPE of the touched cell.
@@ -51,6 +52,7 @@ The RPE matrix maps `(reps, rpe)` to a percentage of e1RM (axes: reps 1–10, RP
 ### Per-Session Prescription Pipeline
 
 For each exercise in a workout, prescriptions are calculated dynamically:
+
 1. **Resolve base targets** from the progression model.
 2. **Apply Mesocycle Modifiers** (multiplicative). Deload weeks are simply treated as normal weeks with modifiers that make the goal easy. Modifiers are only applied to fields not locked in the `ExerciseConfigSheet`.
 3. **Apply Active Reset Modifiers** (decaying fatigue modifiers) multiplicatively.
