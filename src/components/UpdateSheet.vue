@@ -8,7 +8,6 @@ const open = defineModel<boolean>("open", { required: true });
 const {
   currentVersion,
   latestVersion,
-  releases,
   status,
   errorMessage,
   check,
