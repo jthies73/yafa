@@ -31,7 +31,7 @@ const props = withDefaults(
     showLegend?: boolean;
     caption?: string;
   }>(),
-  { showLegend: true },
+  { showLegend: true, caption: "" },
 );
 
 const count = computed(() => props.weeks.length);
