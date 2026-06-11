@@ -1,0 +1,161 @@
+import { db } from "../db/db";
+import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
+import type {
+  Exercise,
+  ProgressionState,
+  RpeMatrix,
+  Set as LoggedSet,
+  Workout,
+} from "../db/types";
+import { QUALIFYING_MAX_REPS } from "./config";
+import { applyMatrixUpdates, impliedE1rm, isQualifyingSet } from "./matrix";
+import { resolveMesocycleWeek } from "./mesocycle";
+import { advanceProgression } from "./progression";
+import { prescribeExercise, type ExercisePrescription } from "./prescription";
+import { tickModifiers } from "./resets";
+
+// ----------------------------------------------
+// Engine service: the only layer that touches Dexie. Loads state, runs the
+// pure subsystems (matrix, progression, resets, prescription), persists the
+// results.
+// ----------------------------------------------
+
+export function freshProgressionState(exerciseId: string): ProgressionState {
+  return {
+    exerciseId,
+    workingE1rm: null,
+    observedE1rms: [],
+    failureStreak: 0,
+    regressionStreak: 0,
+    plateauStreak: 0,
+    resetModifiers: [],
+    updated_at: Date.now(),
+  };
+}
+
+const effectiveMatrix = (exercise: Exercise): RpeMatrix =>
+  exercise.rpeMatrix ?? DEFAULT_RPE_MATRIX;
+
+/**
+ * Cold-start seed for the working e1RM, derived from the first logged session:
+ * the heaviest honest set (reps on the matrix grid, RPE supplied) is the best
+ * single estimate of current capacity, so take the max implied e1RM rather
+ * than an average that easy warm-up sets would drag down.
+ */
+function seedWorkingE1rm(matrix: RpeMatrix, sets: LoggedSet[]): number | null {
+  const candidates = sets.filter(
+    (s) =>
+      s.actualWeight > 0 &&
+      s.actualReps >= 1 &&
+      s.actualReps <= QUALIFYING_MAX_REPS &&
+      s.actualRpe !== undefined,
+  );
+  if (!candidates.length) return null;
+  const best = Math.max(
+    ...candidates.map((s) =>
+      impliedE1rm(matrix, s.actualWeight, s.actualReps, s.actualRpe!),
+    ),
+  );
+  return Math.round(best * 10) / 10;
+}
+
+/**
+ * Calculates the prescription for every configured exercise of a routine.
+ * Read-only: prescribing a workout never mutates engine state.
+ */
+export async function prescribeWorkout(
+  routineId: string,
+  at: number = Date.now(),
+): Promise<ExercisePrescription[]> {
+  const routine = await db.routines.get(routineId);
+  if (!routine) return [];
+
+  // The mesocycle week comes from the plan this routine belongs to — the
+  // active plan wins when a routine is shared across plans.
+  const plans = await db.plans.toArray();
+  const owners = plans.filter((p) => p.routineIds.includes(routineId));
+  const plan = owners.find((p) => p.active) ?? owners[0];
+  const week = resolveMesocycleWeek(plan, at);
+
+  const prescriptions: ExercisePrescription[] = [];
+  for (const routineExercise of routine.exercises) {
+    // Without a progression config there is no model to prescribe from.
+    if (!routineExercise.config) continue;
+    const [exercise, state] = await Promise.all([
+      db.exercises.get(routineExercise.exerciseId),
+      db.progressionStates.get(routineExercise.exerciseId),
+    ]);
+    if (!exercise) continue;
+    prescriptions.push(
+      prescribeExercise({
+        exerciseId: routineExercise.exerciseId,
+        config: routineExercise.config,
+        state,
+        matrix: effectiveMatrix(exercise),
+        week,
+      }),
+    );
+  }
+  return prescriptions;
+}
+
+/**
+ * Post-session pass, run once when a workout is finished: rolls the matrix /
+ * observed-e1RM learning, seeds or advances the working e1RM, updates streaks,
+ * and fires resets. Idempotence is the caller's responsibility — run it
+ * exactly once per saved workout.
+ */
+export async function applyWorkoutResults(workout: Workout): Promise<void> {
+  const routine = await db.routines.get(workout.routineId);
+
+  await db.transaction("rw", [db.exercises, db.progressionStates], async () => {
+    for (const workoutExercise of workout.exercises) {
+      const sets = [...workoutExercise.sets].sort(
+        (a, b) => a.timestamp - b.timestamp,
+      );
+      if (!sets.length) continue;
+
+      const exercise = await db.exercises.get(workoutExercise.exerciseId);
+      if (!exercise) continue;
+      // Duplicate slots of the same movement share the first slot's config.
+      const config = routine?.exercises.find(
+        (e) => e.exerciseId === workoutExercise.exerciseId,
+      )?.config;
+
+      const state =
+        (await db.progressionStates.get(workoutExercise.exerciseId)) ??
+        freshProgressionState(workoutExercise.exerciseId);
+
+      // The modifiers that shaped this session's prescription are now one
+      // session older; tick BEFORE evaluating so a reset fired below starts
+      // at full strength for the NEXT session.
+      let next: ProgressionState = {
+        ...state,
+        resetModifiers: tickModifiers(state.resetModifiers),
+      };
+
+      let matrix = effectiveMatrix(exercise);
+      if (sets.some(isQualifyingSet)) {
+        const update = applyMatrixUpdates(matrix, next.observedE1rms, sets);
+        matrix = update.matrix;
+        next.observedE1rms = update.observedE1rms;
+        // Learning is per-exercise by definition, so the first update
+        // materializes the inherited global matrix as an exercise override.
+        await db.exercises.update(workoutExercise.exerciseId, {
+          rpeMatrix: matrix,
+        });
+      }
+
+      if (next.workingE1rm === null) {
+        // First logged session is calibration only: it seeds the working e1RM
+        // but is not judged against targets it was never prescribed from.
+        next.workingE1rm = seedWorkingE1rm(matrix, sets);
+      } else if (config) {
+        next = advanceProgression(config, next, sets);
+      }
+
+      next.updated_at = Date.now();
+      await db.progressionStates.put(next);
+    }
+  });
+}

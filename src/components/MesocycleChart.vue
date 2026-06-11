@@ -41,15 +41,16 @@ const count = computed(() => props.weeks.length);
 const cssValue = (token: string, fallback: string) => {
   if (typeof window === "undefined") return fallback;
   return (
-    getComputedStyle(document.documentElement)
-      .getPropertyValue(token)
-      .trim() || fallback
+    getComputedStyle(document.documentElement).getPropertyValue(token).trim() ||
+    fallback
   );
 };
 const intensityColor = computed(() => cssValue("--color-accent", "#1fc7b9"));
 const volumeColor = computed(() => cssValue("--color-chart-volume", "#64748b"));
 
-const volumes = computed(() => props.weeks.map((w) => FOCUS_META[w.focus].volume));
+const volumes = computed(() =>
+  props.weeks.map((w) => FOCUS_META[w.focus].volume),
+);
 const intensities = computed(() =>
   props.weeks.map((w) => FOCUS_META[w.focus].intensity),
 );

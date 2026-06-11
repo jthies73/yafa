@@ -49,16 +49,17 @@ export function useAppUpdate() {
     errorMessage.value = null;
     try {
       const res = await fetch(`/releases.json`, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Could not load releases (HTTP ${res.status})`);
-      
+      if (!res.ok)
+        throw new Error(`Could not load releases (HTTP ${res.status})`);
+
       const data = (await res.json()) as ReleaseManifest;
       latestVersion.value = data.latest;
       releases.value = (data.releases ?? []).filter(
-        (r) => compareVersions(r.version, currentVersion.value) > 0
+        (r) => compareVersions(r.version, currentVersion.value) > 0,
       );
 
       const isNewer = compareVersions(data.latest, currentVersion.value) > 0;
-      
+
       // An update is available if the server manifest is newer OR if the service worker has already downloaded a new bundle.
       status.value = isNewer || needRefresh.value ? "available" : "up-to-date";
     } catch (err) {

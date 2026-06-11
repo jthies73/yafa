@@ -1,6 +1,12 @@
 import { db } from "./db";
 import { APP_VERSION } from "../config/version";
-import type { Exercise, Routine, Plan, Workout } from "./types";
+import type {
+  Exercise,
+  Routine,
+  Plan,
+  Workout,
+  ProgressionState,
+} from "./types";
 
 /**
  * Full snapshot of the local database. Because YAFA is offline-only, this file
@@ -16,22 +22,26 @@ export interface BackupFile {
     routines: Routine[];
     plans: Plan[];
     workouts: Workout[];
+    // Optional so backups created before the progression engine still import.
+    progressionStates?: ProgressionState[];
   };
 }
 
 /** Read every table into a serializable backup object. */
 export async function exportData(): Promise<BackupFile> {
-  const [exercises, routines, plans, workouts] = await Promise.all([
-    db.exercises.toArray(),
-    db.routines.toArray(),
-    db.plans.toArray(),
-    db.workouts.toArray(),
-  ]);
+  const [exercises, routines, plans, workouts, progressionStates] =
+    await Promise.all([
+      db.exercises.toArray(),
+      db.routines.toArray(),
+      db.plans.toArray(),
+      db.workouts.toArray(),
+      db.progressionStates.toArray(),
+    ]);
   return {
     app: "yafa",
     version: APP_VERSION,
     exportedAt: new Date().toISOString(),
-    data: { exercises, routines, plans, workouts },
+    data: { exercises, routines, plans, workouts, progressionStates },
   };
 }
 
@@ -46,21 +56,20 @@ export async function importData(backup: BackupFile): Promise<void> {
   const { data } = backup;
   await db.transaction(
     "rw",
-    db.exercises,
-    db.routines,
-    db.plans,
-    db.workouts,
+    [db.exercises, db.routines, db.plans, db.workouts, db.progressionStates],
     async () => {
       await Promise.all([
         db.exercises.clear(),
         db.routines.clear(),
         db.plans.clear(),
         db.workouts.clear(),
+        db.progressionStates.clear(),
       ]);
       await db.exercises.bulkAdd(data.exercises ?? []);
       await db.routines.bulkAdd(data.routines ?? []);
       await db.plans.bulkAdd(data.plans ?? []);
       await db.workouts.bulkAdd(data.workouts ?? []);
+      await db.progressionStates.bulkAdd(data.progressionStates ?? []);
     },
   );
 }

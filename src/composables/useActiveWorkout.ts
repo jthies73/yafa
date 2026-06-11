@@ -1,6 +1,7 @@
 import { ref, computed } from "vue";
 import { db } from "../db/db";
 import type { Workout, Routine, Exercise } from "../db/types";
+import { applyWorkoutResults } from "../engine/service";
 
 const activeWorkout = ref<Workout | null>(null);
 const routine = ref<Routine | null>(null);
@@ -49,7 +50,11 @@ export function useActiveWorkout() {
 
   const finishWorkout = async () => {
     if (!activeWorkout.value) return;
-    await db.workouts.add({ ...activeWorkout.value, endTime: Date.now() });
+    const completed: Workout = { ...activeWorkout.value, endTime: Date.now() };
+    await db.workouts.add(completed);
+    // Post-session engine pass: matrix learning, e1RM/streak bookkeeping,
+    // reset modifier decay. No-ops for exercises without logged sets.
+    await applyWorkoutResults(completed);
     reset();
   };
 
