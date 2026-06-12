@@ -13,7 +13,7 @@ const rpeMatrix = DEFAULT_RPE_MATRIX;
 const { label: weightUnit, setUnit } = useWeightUnit();
 
 onMounted(() => {
-  const savedTheme = localStorage.getItem("theme");
+  const savedTheme = localStorage.getItem("yafa:theme");
   isDark.value =
     savedTheme === "dark" ||
     (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -23,10 +23,10 @@ const toggleTheme = () => {
   isDark.value = !isDark.value;
   if (isDark.value) {
     document.documentElement.classList.add("dark");
-    localStorage.setItem("theme", "dark");
+    localStorage.setItem("yafa:theme", "dark");
   } else {
     document.documentElement.classList.remove("dark");
-    localStorage.setItem("theme", "light");
+    localStorage.setItem("yafa:theme", "light");
   }
 };
 

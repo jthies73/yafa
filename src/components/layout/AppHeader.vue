@@ -16,15 +16,15 @@ const toggleTheme = () => {
   isDark.value = !isDark.value;
   if (isDark.value) {
     document.documentElement.classList.add("dark");
-    localStorage.setItem("theme", "dark");
+    localStorage.setItem("yafa:theme", "dark");
   } else {
     document.documentElement.classList.remove("dark");
-    localStorage.setItem("theme", "light");
+    localStorage.setItem("yafa:theme", "light");
   }
 };
 
 onMounted(() => {
-  const saved = localStorage.getItem("theme");
+  const saved = localStorage.getItem("yafa:theme");
   isDark.value =
     saved === "dark" ||
     (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches);
