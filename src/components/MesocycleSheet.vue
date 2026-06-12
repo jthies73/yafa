@@ -225,7 +225,7 @@ const save = () => {
         Cancel
       </button>
       <button
-        class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent/90 cursor-pointer"
+        class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent-hover cursor-pointer"
         @click="save"
       >
         Save Changes

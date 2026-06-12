@@ -345,7 +345,7 @@ const e1rmLine = (e: ExercisePreview): string => {
         Cancel
       </button>
       <button
-        class="flex-1 py-3 text-sm font-bold rounded-lg cursor-pointer transition-colors duration-150 bg-accent hover:bg-accent/90 text-bg-dark"
+        class="flex-1 py-3 text-sm font-bold rounded-lg cursor-pointer transition-colors duration-150 bg-accent hover:bg-accent-hover text-bg-dark"
         @click="start"
       >
         Start Workout

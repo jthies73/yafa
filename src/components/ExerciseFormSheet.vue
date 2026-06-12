@@ -330,7 +330,7 @@ const save = () => {
           Cancel
         </button>
         <button
-          class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+          class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
           :disabled="!canSave"
           @click="save"
         >
@@ -339,7 +339,7 @@ const save = () => {
       </template>
       <template v-else>
         <button
-          class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent/90 cursor-pointer"
+          class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent-hover cursor-pointer"
           @click="goToPage1"
         >
           Done

@@ -187,7 +187,7 @@ function onWeightKeydown(e: KeyboardEvent) {
       <button
         v-if="state === 'current'"
         type="button"
-        class="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-bg-dark hover:bg-accent/90 transition-colors duration-150 cursor-pointer"
+        class="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-bg-dark hover:bg-accent-hover transition-colors duration-150 cursor-pointer"
         title="Mark set complete"
         @click="tryToggle"
       >

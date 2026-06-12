@@ -149,7 +149,7 @@ watch(
           ></span>
         </div>
         <button
-          class="w-full py-3 bg-accent hover:bg-accent/90 text-bg-dark font-bold rounded-xl cursor-pointer transition-colors duration-150 text-sm tracking-wide uppercase"
+          class="w-full py-3 bg-accent hover:bg-accent-hover text-bg-dark font-bold rounded-xl cursor-pointer transition-colors duration-150 text-sm tracking-wide uppercase"
           @click="maximize"
         >
           Resume Workout

@@ -290,7 +290,7 @@ const requestDeletePlan = () => {
           </p>
           <button
             v-if="!plan.active"
-            class="px-4 py-2 text-xs font-bold rounded-lg cursor-pointer transition-colors duration-150 tracking-wider uppercase border bg-accent hover:bg-accent/90 text-bg-dark border-transparent self-start"
+            class="px-4 py-2 text-xs font-bold rounded-lg cursor-pointer transition-colors duration-150 tracking-wider uppercase border bg-accent hover:bg-accent-hover text-bg-dark border-transparent self-start"
             @click="setActiveState"
           >
             Set as Active Plan
@@ -407,7 +407,7 @@ const requestDeletePlan = () => {
             weeks.
           </p>
           <span
-            class="px-4 py-2 text-xs font-bold rounded-lg transition-colors duration-150 tracking-wider uppercase bg-accent text-bg-dark group-hover:bg-accent/90"
+            class="px-4 py-2 text-xs font-bold rounded-lg transition-colors duration-150 tracking-wider uppercase bg-accent text-bg-dark group-hover:bg-accent-hover"
           >
             Set up periodization
           </span>
@@ -538,7 +538,7 @@ const requestDeletePlan = () => {
         The requested training plan could not be located in the database.
       </p>
       <button
-        class="px-4 py-2 bg-accent hover:bg-accent/90 text-bg-dark text-xs font-bold rounded-lg cursor-pointer transition-colors duration-150 tracking-wider uppercase"
+        class="px-4 py-2 bg-accent hover:bg-accent-hover text-bg-dark text-xs font-bold rounded-lg cursor-pointer transition-colors duration-150 tracking-wider uppercase"
         @click="goBack"
       >
         Go to Plans

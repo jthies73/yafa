@@ -102,7 +102,7 @@ const confirm = () => {
               :class="
                 danger
                   ? 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500'
-                  : 'bg-accent text-bg-dark hover:bg-accent/90 focus:ring-accent'
+                  : 'bg-accent text-bg-dark hover:bg-accent-hover focus:ring-accent'
               "
               @click="confirm"
             >
