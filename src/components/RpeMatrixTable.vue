@@ -4,10 +4,12 @@ import type { RpeMatrix } from "../db/types";
 const props = defineProps<{
   modelValue: RpeMatrix;
   editable?: boolean;
+  /** Reference matrix; cells deviating from it get a highlighted tint. */
+  baseline?: RpeMatrix;
 }>();
 
 const emit = defineEmits<{
-  (e: "update:modelValue", value: RpeMatrix): void;
+  (e: "cell-edit", reps: number, rpe: number, value: number): void;
 }>();
 
 const RPE_COLS = [10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6];
@@ -16,22 +18,33 @@ const REP_ROWS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const pct = (v: number | undefined) =>
   v == null ? "" : String(Math.round(v * 1000) / 10);
 
-const tint = (v: number | undefined) => {
-  if (v == null) return "";
-  const t = Math.max(0, Math.min(1, (v - 0.5) / 0.5));
-  return `background-color:rgba(31,199,185,${(t * 0.18).toFixed(3)})`;
+// Below 0.05% the displayed (0.1%-rounded) value is identical — not a deviation.
+const deviates = (reps: number, rpe: number) => {
+  if (!props.baseline) return false;
+  const value = props.modelValue[reps]?.[rpe];
+  const base = props.baseline[reps]?.[rpe];
+  if (value == null || base == null) return value !== base;
+  return Math.abs(value - base) > 0.0005;
 };
 
-const onInput = (reps: number, rpe: number, raw: string) => {
+const tint = (reps: number, rpe: number) => {
+  const v = props.modelValue[reps]?.[rpe];
+  if (v == null) return "";
+  const t = Math.max(0, Math.min(1, (v - 0.5) / 0.5));
+  // Deviating cells (learned or hand-edited) get a brighter, slightly shifted
+  // teal so personalization is visible at a glance without shouting.
+  return deviates(reps, rpe)
+    ? `background-color:rgba(45,212,191,${(t * 0.18 + 0.14).toFixed(3)})`
+    : `background-color:rgba(31,199,185,${(t * 0.18).toFixed(3)})`;
+};
+
+// Committed on change (blur/Enter), not per keystroke — intermediate typing
+// states must never reach the parent, which may smooth neighbors on each edit.
+const onCellChange = (reps: number, rpe: number, raw: string) => {
   const n = parseInt(raw, 10);
-  emit("update:modelValue", {
-    ...props.modelValue,
-    [reps]: {
-      ...props.modelValue[reps],
-      // Whole percentages only — the matrix does not accept fractional %.
-      [rpe]: Number.isNaN(n) ? 0 : Math.max(0, Math.min(100, n)) / 100,
-    },
-  });
+  // Whole percentages only — the matrix does not accept fractional %.
+  const value = Number.isNaN(n) ? 0 : Math.max(0, Math.min(100, n)) / 100;
+  emit("cell-edit", reps, rpe, value);
 };
 </script>
 
@@ -78,7 +91,7 @@ const onInput = (reps: number, rpe: number, raw: string) => {
               v-for="rpe in RPE_COLS"
               :key="rpe"
               class="h-8 p-0"
-              :style="tint(modelValue[reps]?.[rpe])"
+              :style="tint(reps, rpe)"
             >
               <input
                 v-if="editable"
@@ -89,8 +102,12 @@ const onInput = (reps: number, rpe: number, raw: string) => {
                 step="1"
                 :value="pct(modelValue[reps]?.[rpe])"
                 class="h-full w-full bg-transparent text-center text-text-h-light dark:text-text-h-dark caret-accent focus:bg-accent/10 focus:outline-none"
-                @input="
-                  onInput(reps, rpe, ($event.target as HTMLInputElement).value)
+                @change="
+                  onCellChange(
+                    reps,
+                    rpe,
+                    ($event.target as HTMLInputElement).value,
+                  )
                 "
               />
               <span

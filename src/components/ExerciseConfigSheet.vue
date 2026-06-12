@@ -4,17 +4,24 @@ import type {
   RoutineExerciseConfig,
   ProgressionModelType,
   ProgressionParams,
+  RpeMatrix,
 } from "../db/types";
+import { db } from "../db/db";
+import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
 import { LOCKABLE_FIELDS } from "../config/periodization";
+import { setMatrixCell } from "../engine/matrix";
 import AppBottomSheet from "./AppBottomSheet.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
 import LockToggle from "./LockToggle.vue";
+import RpeMatrixTable from "./RpeMatrixTable.vue";
 
 const showConfirm = ref(false);
+const showResetConfirm = ref(false);
 
 const props = defineProps<{
   exerciseName: string;
   isEditing: boolean;
+  exerciseId?: string;
   initialConfig?: RoutineExerciseConfig;
   periodizationEnabled?: boolean;
 }>();
@@ -30,6 +37,25 @@ const configModel = ref<ProgressionModelType>("linear");
 const configParams = ref<Record<string, number>>({});
 const configNotes = ref("");
 const lockedFields = ref<Set<string>>(new Set());
+
+// The exercise's live RPE matrix (override or inherited global). It belongs to
+// the Exercise entity, not the routine slot, so it is loaded and persisted
+// here directly rather than travelling through the config save event.
+const matrix = ref<RpeMatrix | null>(null);
+const matrixDirty = ref(false);
+const baseline = DEFAULT_RPE_MATRIX;
+
+const resetMatrix = () => {
+  matrix.value = JSON.parse(JSON.stringify(DEFAULT_RPE_MATRIX));
+  matrixDirty.value = true;
+};
+
+const onMatrixCellEdit = (reps: number, rpe: number, value: number) => {
+  if (!matrix.value) return;
+  // Same neighbor smoothing as post-session learning, anchored to the edit.
+  matrix.value = setMatrixCell(matrix.value, reps, rpe, value);
+  matrixDirty.value = true;
+};
 
 const isLocked = (field: string) => lockedFields.value.has(field);
 
@@ -64,7 +90,7 @@ const DEFAULT_PARAMS: Record<ProgressionModelType, Record<string, number>> = {
 // Reset form state every time the sheet opens, based on current props
 watch(
   open,
-  (isOpen) => {
+  async (isOpen) => {
     if (!isOpen) return;
     if (props.initialConfig) {
       configModel.value = props.initialConfig.progressionModel;
@@ -82,6 +108,17 @@ watch(
       configNotes.value = "";
       lockedFields.value = new Set();
     }
+
+    matrix.value = null;
+    matrixDirty.value = false;
+    if (props.exerciseId) {
+      const exercise = await db.exercises.get(props.exerciseId);
+      // Plain deep copy: edits must not mutate the live record, and Dexie's
+      // structured clone rejects reactive proxies on save.
+      matrix.value = JSON.parse(
+        JSON.stringify(exercise?.rpeMatrix ?? DEFAULT_RPE_MATRIX),
+      );
+    }
   },
   { immediate: true },
 );
@@ -97,7 +134,14 @@ const close = () => {
   open.value = false;
 };
 
-const save = () => {
+const save = async () => {
+  // Matrix edits become the exercise's per-exercise override (same
+  // materialization as engine learning) — independent of the routine config.
+  if (props.exerciseId && matrix.value && matrixDirty.value) {
+    await db.exercises.update(props.exerciseId, {
+      rpeMatrix: JSON.parse(JSON.stringify(matrix.value)),
+    });
+  }
   // Only persist locks for fields that are lockable under the current model.
   const applicableLocks = LOCKABLE_FIELDS[configModel.value].filter((f) =>
     lockedFields.value.has(f),
@@ -505,6 +549,36 @@ const save = () => {
           class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50 resize-none"
         ></textarea>
       </div>
+
+      <!-- RPE Matrix -->
+      <div v-if="matrix" class="flex flex-col gap-1.5">
+        <div class="flex items-center justify-between gap-2">
+          <label
+            class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+          >
+            RPE Matrix
+            <span class="normal-case font-normal opacity-60 ml-1"
+              >(% of e1RM)</span
+            >
+          </label>
+          <button
+            type="button"
+            class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:bg-border-light dark:hover:bg-border-dark transition-colors duration-150 cursor-pointer shrink-0"
+            @click="showResetConfirm = true"
+          >
+            Reset
+          </button>
+        </div>
+        <RpeMatrixTable
+          :model-value="matrix"
+          :baseline="baseline"
+          editable
+          @cell-edit="onMatrixCellEdit"
+        />
+        <p class="text-xs text-text-light dark:text-text-dark opacity-60">
+          Highlighted cells deviate from the global matrix.
+        </p>
+      </div>
       <!-- Bottom padding -->
       <div class="h-2"></div>
     </div>
@@ -531,5 +605,13 @@ const save = () => {
     :message="`Remove '${exerciseName}' from this routine?`"
     confirm-label="Remove"
     @confirm="$emit('remove')"
+  />
+
+  <ConfirmDialog
+    v-model:open="showResetConfirm"
+    title="Reset matrix?"
+    message="This will restore all cells to the global default values. Any learned or hand-edited calibration for this exercise will be lost."
+    confirm-label="Reset"
+    @confirm="resetMatrix"
   />
 </template>

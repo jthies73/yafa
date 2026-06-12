@@ -5,6 +5,7 @@ import {
   applyMatrixUpdates,
   clampLookupReps,
   roundToLoadable,
+  setMatrixCell,
   snapRpe,
 } from "../matrix";
 
@@ -41,6 +42,22 @@ describe("grid clamping", () => {
   it("rounds weights to loadable increments", () => {
     expect(roundToLoadable(82.4)).toBe(82.5);
     expect(roundToLoadable(73.7)).toBe(72.5);
+  });
+});
+
+describe("setMatrixCell (direct edit)", () => {
+  it("writes the cell exactly and smooths ±1.0 RPE neighbors by the kernel", () => {
+    // [5][9] = 0.82 → 0.85: delta +0.03; ±0.5 get +0.015, ±1.0 get +0.0075.
+    const next = setMatrixCell(DEFAULT_RPE_MATRIX, 5, 9, 0.85);
+    expect(next[5][9]).toBe(0.85);
+    expect(next[5][8.5]).toBeCloseTo(0.81 + 0.015, 9);
+    expect(next[5][9.5]).toBeCloseTo(0.84 + 0.015, 9);
+    expect(next[5][8]).toBeCloseTo(0.79 + 0.0075, 9);
+    expect(next[5][10]).toBeCloseTo(0.86 + 0.0075, 9);
+    // Beyond the kernel and other rows: untouched. Input not mutated.
+    expect(next[5][7.5]).toBe(DEFAULT_RPE_MATRIX[5][7.5]);
+    expect(next[4][9]).toBe(DEFAULT_RPE_MATRIX[4][9]);
+    expect(DEFAULT_RPE_MATRIX[5][9]).toBe(0.82);
   });
 });
 
