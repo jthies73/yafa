@@ -97,6 +97,45 @@ const cloneMatrix = (matrix: RpeMatrix): RpeMatrix => {
   return out;
 };
 
+/** Bleed a kernel-weighted fraction of a cell's delta into its ±1.0 RPE row neighbors. */
+const smoothNeighbors = (
+  matrix: RpeMatrix,
+  reps: number,
+  rpe: number,
+  delta: number,
+): void => {
+  for (const { offset, factor } of MATRIX_SMOOTHING_KERNEL) {
+    for (const direction of [-1, 1]) {
+      const neighborRpe = rpe + direction * offset;
+      if (neighborRpe >= RPE_MIN && neighborRpe <= RPE_MAX) {
+        matrix[reps][neighborRpe] += delta * factor;
+      }
+    }
+  }
+};
+
+/**
+ * Direct (user-edit) cell write with the same neighbor smoothing the
+ * post-session learning applies: the edited cell takes exactly the given
+ * value, and the cells within ±1.0 RPE absorb a kernel-weighted fraction of
+ * the change — so a manual edit bends the curve locally instead of leaving a
+ * step in it. Pure: returns a fresh matrix.
+ */
+export function setMatrixCell(
+  matrix: RpeMatrix,
+  reps: number,
+  rpe: number,
+  value: number,
+): RpeMatrix {
+  const next = cloneMatrix(matrix);
+  const row = clampLookupReps(reps);
+  const col = snapRpe(rpe);
+  const delta = value - next[row][col];
+  next[row][col] = value;
+  smoothNeighbors(next, row, col, delta);
+  return next;
+}
+
 /**
  * Post-session matrix learning. For each qualifying set, in lift order:
  * 1. roll its implied e1RM into the observed window,
@@ -132,15 +171,7 @@ export function applyMatrixUpdates(
     const observedPct = set.actualWeight / obs;
     const delta = MATRIX_EMA_ALPHA * (observedPct - next[reps][rpe]);
     next[reps][rpe] += delta;
-
-    for (const { offset, factor } of MATRIX_SMOOTHING_KERNEL) {
-      for (const direction of [-1, 1]) {
-        const neighborRpe = rpe + direction * offset;
-        if (neighborRpe >= RPE_MIN && neighborRpe <= RPE_MAX) {
-          next[reps][neighborRpe] += delta * factor;
-        }
-      }
-    }
+    smoothNeighbors(next, reps, rpe, delta);
   }
 
   return { matrix: next, observedE1rms: observed };

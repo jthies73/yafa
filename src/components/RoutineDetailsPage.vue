@@ -509,6 +509,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
   <ExerciseConfigSheet
     v-model:open="showConfig"
     :exercise-name="configExerciseName"
+    :exercise-id="configExerciseId"
     :is-editing="editingIndex !== null"
     :initial-config="initialConfig"
     :periodization-enabled="periodizationEnabled"
