@@ -125,7 +125,7 @@ onUnmounted(() => {
         class="flex items-center justify-center rounded-lg text-xl font-mono font-semibold cursor-pointer transition-colors duration-150 disabled:opacity-30 disabled:cursor-default"
         :class="
           k.act === 'enter'
-            ? 'bg-accent text-bg-dark hover:bg-accent/90'
+            ? 'bg-accent text-bg-dark hover:bg-accent-hover'
             : 'bg-surface-light dark:bg-surface-dark text-text-h-light dark:text-text-h-dark border border-border-light dark:border-border-dark enabled:hover:bg-surface-light-hover dark:enabled:hover:bg-surface-dark-hover'
         "
         @pointerdown.prevent

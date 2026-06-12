@@ -483,7 +483,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
         The requested routine could not be located in the database.
       </p>
       <button
-        class="px-4 py-2 bg-accent hover:bg-accent/90 text-bg-dark text-xs font-bold rounded-lg cursor-pointer transition-colors duration-150 tracking-wider uppercase"
+        class="px-4 py-2 bg-accent hover:bg-accent-hover text-bg-dark text-xs font-bold rounded-lg cursor-pointer transition-colors duration-150 tracking-wider uppercase"
         @click="goBack"
       >
         Go Back

@@ -14,7 +14,7 @@ const { activeWorkout } = useActiveWorkout();
 
 <template>
   <button
-    class="fixed right-6 bg-accent hover:bg-accent/90 text-bg-dark font-bold px-5 py-3 rounded-full shadow-lg shadow-accent/10 flex items-center gap-2 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent z-40 cursor-pointer tracking-wide"
+    class="fixed right-6 bg-accent hover:bg-accent-hover text-bg-dark font-bold px-5 py-3 rounded-full shadow-lg shadow-accent/10 flex items-center gap-2 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent z-40 cursor-pointer tracking-wide"
     :class="activeWorkout ? 'bottom-28' : 'bottom-6'"
     :aria-label="label"
     @click="$emit('click')"
