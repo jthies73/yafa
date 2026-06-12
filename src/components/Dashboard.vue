@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { liveQuery } from "dexie";
 import { db } from "../db/db";
 import type { Plan, Routine } from "../db/types";
@@ -24,6 +25,7 @@ const dismissPermanent = () => {
   sessionDismissed.value = true;
 };
 
+const { locale } = useI18n();
 const router = useRouter();
 const {
   activeWorkout,
@@ -64,7 +66,7 @@ onUnmounted(() => {
 });
 
 const today = computed(() =>
-  new Date().toLocaleDateString("en-US", {
+  new Date().toLocaleDateString(locale.value, {
     weekday: "long",
     month: "short",
     day: "numeric",
@@ -137,32 +139,32 @@ watch(
         <span
           class="shrink-0 px-2.5 py-1 rounded-md bg-accent/15 text-accent text-xs font-bold uppercase tracking-wider"
         >
-          Install
+          {{ $t("dashboard.install_badge") }}
         </span>
         <p
           class="text-sm font-semibold text-text-h-light dark:text-text-h-dark leading-snug pt-0.5"
         >
-          Install YAFA for offline access and faster logging.
+          {{ $t("dashboard.install_prompt") }}
         </p>
       </div>
       <button
         class="w-full py-2 rounded-lg bg-accent hover:bg-accent-hover text-bg-dark text-sm font-bold cursor-pointer transition-colors duration-150"
         @click="router.push({ name: 'install' })"
       >
-        View Install Guide
+        {{ $t("dashboard.view_install_guide") }}
       </button>
       <div class="flex items-center gap-2">
         <button
           class="flex-1 py-1.5 rounded-lg text-sm font-medium text-text-light dark:text-text-dark border border-border-light dark:border-border-dark hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer transition-colors duration-150"
           @click="dismissSession"
         >
-          Remind me later
+          {{ $t("dashboard.remind_me_later") }}
         </button>
         <button
           class="flex-1 py-1.5 rounded-lg text-sm font-medium text-text-light dark:text-text-dark border border-border-light dark:border-border-dark hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer transition-colors duration-150"
           @click="dismissPermanent"
         >
-          Do not ask again
+          {{ $t("dashboard.do_not_ask_again") }}
         </button>
       </div>
     </div>
@@ -172,7 +174,7 @@ watch(
       <h1
         class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
       >
-        Dashboard
+        {{ $t("dashboard.title") }}
       </h1>
       <div
         class="text-sm font-semibold py-1.5 px-3 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg text-text-h-light dark:text-text-h-dark shrink-0"
@@ -188,16 +190,22 @@ watch(
       <div v-if="activeWorkout" class="flex flex-col gap-4">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <h2 class="text-lg font-bold text-accent">Workout in Progress</h2>
+            <h2 class="text-lg font-bold text-accent">
+              {{ $t("dashboard.workout_in_progress") }}
+            </h2>
             <p
               class="text-sm font-bold text-text-h-light dark:text-text-h-dark mt-1"
             >
-              Active Session: {{ activeRoutine?.name || "Empty Workout" }}
+              {{
+                $t("dashboard.active_session", {
+                  name: activeRoutine?.name || $t("dashboard.empty_workout"),
+                })
+              }}
             </p>
             <p
               class="text-xs text-text-light dark:text-text-dark opacity-55 mt-0.5 font-mono"
             >
-              Running time: {{ timerString }}
+              {{ $t("dashboard.running_time", { time: timerString }) }}
             </p>
           </div>
           <span
@@ -208,7 +216,7 @@ watch(
           class="w-full py-3 bg-accent hover:bg-accent-hover text-bg-dark font-bold rounded-xl cursor-pointer transition-colors duration-150 text-sm tracking-wide uppercase"
           @click="maximize"
         >
-          Resume Workout
+          {{ $t("dashboard.resume_workout") }}
         </button>
       </div>
 
@@ -218,12 +226,12 @@ watch(
             <h2
               class="text-lg font-bold text-text-h-light dark:text-text-h-dark"
             >
-              Start a Workout
+              {{ $t("dashboard.start_a_workout") }}
             </h2>
             <p
               class="text-xs text-text-light dark:text-text-dark opacity-55 mt-0.5"
             >
-              Pick a routine from your active plan or start fresh.
+              {{ $t("dashboard.start_workout_hint") }}
             </p>
           </div>
           <div
@@ -239,7 +247,7 @@ watch(
             >
               <circle cx="12" cy="12" r="10" />
             </svg>
-            Active
+            {{ $t("dashboard.active_badge") }}
           </div>
         </div>
 
@@ -266,8 +274,8 @@ watch(
                 <span
                   class="text-xs text-text-light dark:text-text-dark opacity-50"
                 >
-                  {{ routine.exercises.length }} exercise{{
-                    routine.exercises.length !== 1 ? "s" : ""
+                  {{
+                    $t("dashboard.exercise_count", routine.exercises.length)
                   }}
                 </span>
               </div>
@@ -290,7 +298,7 @@ watch(
               v-if="planRoutines.length === 0"
               class="text-sm italic text-text-light dark:text-text-dark opacity-50 col-span-full px-1"
             >
-              No routines in this plan yet.
+              {{ $t("dashboard.no_routines_in_plan") }}
             </p>
           </div>
         </div>
@@ -317,12 +325,12 @@ watch(
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <p class="text-sm text-text-light dark:text-text-dark opacity-60">
-            No active plan.
+            {{ $t("dashboard.no_active_plan") }}
             <button
               class="text-accent hover:text-accent/80 cursor-pointer transition-colors duration-150 font-semibold"
               @click="router.push({ name: 'plans' })"
             >
-              Set one in Plans →
+              {{ $t("dashboard.set_one_in_plans") }}
             </button>
           </p>
         </div>
@@ -338,7 +346,7 @@ watch(
             class="w-full py-2.5 text-sm font-semibold text-text-light dark:text-text-dark border border-border-light dark:border-border-dark rounded-lg hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer transition-colors duration-150"
             @click="startEmptyWorkout"
           >
-            + Empty Workout
+            {{ $t("dashboard.plus_empty_workout") }}
           </button>
         </div>
       </div>
@@ -372,12 +380,12 @@ watch(
           <div
             class="font-bold text-sm text-text-h-light dark:text-text-h-dark"
           >
-            Analytics
+            {{ $t("dashboard.analytics") }}
           </div>
           <div
             class="text-xs text-text-light dark:text-text-dark opacity-55 mt-0.5"
           >
-            Track progress
+            {{ $t("dashboard.track_progress") }}
           </div>
         </div>
       </button>
@@ -419,12 +427,12 @@ watch(
           <div
             class="font-bold text-sm text-text-h-light dark:text-text-h-dark"
           >
-            Active Plan
+            {{ $t("dashboard.active_plan") }}
           </div>
           <div
             class="text-xs text-text-light dark:text-text-dark opacity-55 mt-0.5 truncate"
           >
-            {{ loading ? "—" : (activePlan?.name ?? "None set") }}
+            {{ loading ? "—" : (activePlan?.name ?? $t("dashboard.none_set")) }}
           </div>
         </div>
       </button>
@@ -461,12 +469,12 @@ watch(
           <div
             class="font-bold text-sm text-text-h-light dark:text-text-h-dark"
           >
-            Exercises
+            {{ $t("dashboard.exercises") }}
           </div>
           <div
             class="text-xs text-text-light dark:text-text-dark opacity-55 mt-0.5"
           >
-            Manage library
+            {{ $t("dashboard.manage_library") }}
           </div>
         </div>
       </button>
@@ -500,12 +508,12 @@ watch(
           <div
             class="font-bold text-sm text-text-h-light dark:text-text-h-dark"
           >
-            Settings
+            {{ $t("dashboard.settings") }}
           </div>
           <div
             class="text-xs text-text-light dark:text-text-dark opacity-55 mt-0.5"
           >
-            Preferences
+            {{ $t("dashboard.preferences") }}
           </div>
         </div>
       </button>

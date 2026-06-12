@@ -10,8 +10,11 @@ import {
   type ExerciseInput,
 } from "../db/repository";
 import { MUSCLE_GROUPS } from "../utils/constants";
+import { useSystemNames } from "../composables/useSystemNames";
 import AppFab from "./AppFab.vue";
 import ExerciseFormSheet from "./ExerciseFormSheet.vue";
+
+const { muscleLabel, exerciseName } = useSystemNames();
 
 const exercises = ref<Exercise[]>([]);
 const searchQuery = ref("");
@@ -97,10 +100,10 @@ const handleDelete = async () => {
       <h1
         class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
       >
-        Exercises
+        {{ $t("exercises.title") }}
       </h1>
       <p class="mt-1 text-sm text-text-light dark:text-text-dark opacity-70">
-        Manage your exercise library
+        {{ $t("exercises.subtitle") }}
       </p>
     </div>
 
@@ -129,7 +132,7 @@ const handleDelete = async () => {
         <input
           v-model="searchQuery"
           type="search"
-          placeholder="Search exercises..."
+          :placeholder="$t('exercises.search_placeholder')"
           class="w-full rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark py-2.5 pl-10 pr-4 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/50 dark:placeholder-text-dark/50 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
         />
       </div>
@@ -141,7 +144,7 @@ const handleDelete = async () => {
           class="shrink-0 rounded-lg border border-border-light dark:border-border-dark px-3 py-1.5 text-xs font-semibold text-text-light dark:text-text-dark hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer transition-colors duration-150"
           @click="clearFilters"
         >
-          Clear
+          {{ $t("exercises.clear") }}
         </button>
         <button
           v-for="muscle in MUSCLE_GROUPS"
@@ -154,7 +157,7 @@ const handleDelete = async () => {
           "
           @click="muscleFilter = muscleFilter === muscle ? null : muscle"
         >
-          {{ muscle }}
+          {{ muscleLabel(muscle) }}
         </button>
       </div>
     </div>
@@ -187,11 +190,10 @@ const handleDelete = async () => {
       <h2
         class="mb-2 text-xl font-semibold text-text-h-light dark:text-text-h-dark"
       >
-        No exercises yet
+        {{ $t("exercises.no_exercises_yet") }}
       </h2>
       <p class="max-w-sm text-text-light dark:text-text-dark opacity-70">
-        Build your exercise library to start composing routines and tracking
-        progression.
+        {{ $t("exercises.empty_hint") }}
       </p>
     </div>
 
@@ -201,7 +203,7 @@ const handleDelete = async () => {
       class="flex flex-grow flex-col items-center justify-center py-16 text-center"
     >
       <p class="text-sm text-text-light dark:text-text-dark opacity-50">
-        No exercises match your filters.
+        {{ $t("exercises.no_match_filters") }}
       </p>
     </div>
 
@@ -220,13 +222,13 @@ const handleDelete = async () => {
           <div
             class="truncate text-sm font-bold text-text-h-light dark:text-text-h-dark"
           >
-            {{ exercise.name }}
+            {{ exerciseName(exercise) }}
           </div>
           <div
             v-if="exercise.primaryMuscleGroups?.length"
             class="mt-0.5 truncate text-xs text-text-light dark:text-text-dark opacity-55"
           >
-            {{ exercise.primaryMuscleGroups.join(", ") }}
+            {{ exercise.primaryMuscleGroups.map(muscleLabel).join(", ") }}
           </div>
         </div>
 
@@ -249,7 +251,7 @@ const handleDelete = async () => {
     </div>
 
     <!-- New Exercise FAB -->
-    <AppFab label="New Exercise" @click="openCreate" />
+    <AppFab :label="$t('exercises.new_exercise')" @click="openCreate" />
 
     <ExerciseFormSheet
       v-model:open="showForm"

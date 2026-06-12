@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { detectPlatform, isStandalone, type OS } from "../utils/platform";
+
+const { t } = useI18n();
 
 // Each instruction step; `glyph` (when set) renders a framed placeholder
 // showing the actual control the user is looking for, with `caption` describing
@@ -27,69 +30,69 @@ onMounted(() => {
 });
 onUnmounted(() => mql?.removeEventListener("change", onDisplayModeChange));
 
-const HEADINGS: Record<OS, string> = {
-  ios: "Install YAFA on iOS",
-  android: "Install YAFA on Android",
-  desktop: "Install YAFA Desktop App",
-};
+const HEADINGS = computed<Record<OS, string>>(() => ({
+  ios: t("install.heading_ios"),
+  android: t("install.heading_android"),
+  desktop: t("install.heading_desktop"),
+}));
 
-const STEPS: Record<OS, Step[]> = {
+const STEPS = computed<Record<OS, Step[]>>(() => ({
   ios: [
     {
-      title: "Open in Safari",
-      body: "Make sure you're viewing this page in the native Safari browser. In-app browsers (Instagram, Reddit, etc.) can't install apps.",
+      title: t("install.ios_safari_title"),
+      body: t("install.ios_safari_body"),
     },
     {
-      title: "Tap Share",
-      body: "Tap the Share icon in the toolbar — bottom center on iPhone, top right on iPad.",
+      title: t("install.ios_share_title"),
+      body: t("install.ios_share_body"),
       glyph: "share",
-      caption: "The Share icon — a square with an upward arrow",
+      caption: t("install.ios_share_caption"),
     },
     {
-      title: "Add to Home Screen",
-      body: "Scroll down the share menu and select Add to Home Screen.",
+      title: t("install.ios_add_title"),
+      body: t("install.ios_add_body"),
       glyph: "add-to-home",
-      caption: 'The "Add to Home Screen" row in the share menu',
+      caption: t("install.ios_add_caption"),
     },
     {
-      title: "Confirm",
-      body: "Tap Add in the top-right corner. YAFA now lives on your home screen and runs as a standalone app.",
+      title: t("install.ios_confirm_title"),
+      body: t("install.ios_confirm_body"),
     },
   ],
   android: [
     {
-      title: "Open the menu",
-      body: "Tap the Menu icon — three vertical dots — in the top-right corner of Chrome.",
+      title: t("install.android_menu_title"),
+      body: t("install.android_menu_body"),
       glyph: "menu-dots",
-      caption: "Chrome's 3-dot menu, top right",
+      caption: t("install.android_menu_caption"),
     },
     {
-      title: "Install app",
-      body: 'Select Install app (or "Add to Home screen" on older versions) from the dropdown.',
+      title: t("install.android_install_title"),
+      body: t("install.android_install_body"),
       glyph: "install",
-      caption: 'The "Install app" option in the menu',
+      caption: t("install.android_install_caption"),
     },
     {
-      title: "Confirm",
-      body: "Tap Install on the prompt. YAFA is added to your app drawer and home screen.",
+      title: t("install.android_confirm_title"),
+      body: t("install.android_confirm_body"),
     },
   ],
   desktop: [
     {
-      title: "Find the install icon",
-      body: "Look for the Install icon — a monitor with a downward arrow — on the right side of your browser's address bar.",
+      title: t("install.desktop_icon_title"),
+      body: t("install.desktop_icon_body"),
       glyph: "install",
-      caption: "The install icon in the address bar",
+      caption: t("install.desktop_icon_caption"),
     },
     {
-      title: "Click Install",
-      body: "Confirm the prompt to install YAFA as a native desktop application.",
+      title: t("install.desktop_install_title"),
+      body: t("install.desktop_install_body"),
     },
   ],
-};
+}));
 
-const heading = computed(() => HEADINGS[os]);
-const steps = computed(() => STEPS[os]);
+const heading = computed(() => HEADINGS.value[os]);
+const steps = computed(() => STEPS.value[os]);
 </script>
 
 <template>
@@ -99,10 +102,10 @@ const steps = computed(() => STEPS[os]);
       <h1
         class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
       >
-        Install App
+        {{ $t("install.title") }}
       </h1>
       <p class="text-sm text-text-light dark:text-text-dark opacity-70 mt-1">
-        Add YAFA to your device for instant, full-screen access.
+        {{ $t("install.subtitle") }}
       </p>
     </div>
 
@@ -130,10 +133,10 @@ const steps = computed(() => STEPS[os]);
           </svg>
         </span>
         <h2 class="text-lg font-bold text-text-h-light dark:text-text-h-dark">
-          YAFA is installed
+          {{ $t("install.installed_title") }}
         </h2>
         <p class="text-sm text-text-light dark:text-text-dark opacity-70">
-          You're running the installed app on this device. Nothing more to do.
+          {{ $t("install.installed_body") }}
         </p>
       </div>
 
@@ -162,7 +165,7 @@ const steps = computed(() => STEPS[os]);
             <line x1="12" x2="12.01" y1="17" y2="17" />
           </svg>
           <p class="text-sm font-medium">
-            iOS requires you to open this page in Safari to install the app.
+            {{ $t("install.ios_safari_warning") }}
           </p>
         </div>
 

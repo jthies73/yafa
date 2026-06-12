@@ -212,7 +212,7 @@ const isActive = (names: readonly string[] | string) => {
     ref="sidebarEl"
     role="dialog"
     aria-modal="true"
-    aria-label="Main navigation menu"
+    :aria-label="$t('sidebar.main_navigation')"
     class="fixed right-0 top-0 bottom-0 z-[60] w-3/4 max-w-xs bg-bg-light dark:bg-bg-dark text-text-light dark:text-text-dark shadow-2xl p-6 border-l border-border-light dark:border-border-dark flex flex-col justify-between h-full transition-transform duration-300 touch-pan-y"
     :style="sidebarStyle"
     @pointerdown="beginDrag"
@@ -222,7 +222,7 @@ const isActive = (names: readonly string[] | string) => {
       <div class="flex items-center justify-between">
         <div class="flex flex-col">
           <h2 class="text-lg font-bold tracking-wider text-accent uppercase">
-            Menu
+            {{ $t("sidebar.menu") }}
           </h2>
           <span
             class="text-xs font-mono text-text-light/60 dark:text-text-dark/60"
@@ -249,7 +249,7 @@ const isActive = (names: readonly string[] | string) => {
             <path d="M18 6 6 18" />
             <path d="m6 6 12 12" />
           </svg>
-          <span class="sr-only">Close menu</span>
+          <span class="sr-only">{{ $t("sidebar.close_menu") }}</span>
         </button>
       </div>
 
@@ -257,20 +257,36 @@ const isActive = (names: readonly string[] | string) => {
       <nav class="flex flex-col gap-4">
         <a
           v-for="item in [
-            { name: 'dashboard', label: 'Dashboard', match: ['dashboard'] },
+            {
+              name: 'dashboard',
+              label: $t('sidebar.dashboard'),
+              match: ['dashboard'],
+            },
             {
               name: 'plans',
-              label: 'Plans',
+              label: $t('sidebar.plans'),
               match: ['plans', 'plan-details', 'routine-details'],
             },
-            { name: 'analytics', label: 'Analytics', match: ['analytics'] },
-            { name: 'exercises', label: 'Exercises', match: ['exercises'] },
+            {
+              name: 'analytics',
+              label: $t('sidebar.analytics'),
+              match: ['analytics'],
+            },
+            {
+              name: 'exercises',
+              label: $t('sidebar.exercises'),
+              match: ['exercises'],
+            },
             {
               name: 'measurements',
-              label: 'Measurements',
+              label: $t('sidebar.measurements'),
               match: ['measurements'],
             },
-            { name: 'settings', label: 'Settings', match: ['settings'] },
+            {
+              name: 'settings',
+              label: $t('sidebar.settings'),
+              match: ['settings'],
+            },
           ]"
           :key="item.name"
           href="#"
@@ -458,7 +474,7 @@ const isActive = (names: readonly string[] | string) => {
             <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
             <path d="M8 16H3v5" />
           </svg>
-          <span>Update</span>
+          <span>{{ $t("sidebar.update") }}</span>
         </button>
 
         <!-- Import / Export (action styled as a nav item) -->
@@ -485,7 +501,7 @@ const isActive = (names: readonly string[] | string) => {
               d="M8 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3"
             />
           </svg>
-          <span>Import / Export</span>
+          <span>{{ $t("sidebar.import_export") }}</span>
         </button>
 
         <!-- Install App (route nav, highlighted when active) -->
@@ -521,7 +537,7 @@ const isActive = (names: readonly string[] | string) => {
             <path d="m9 10 3 3 3-3" />
             <path d="M10 18h4" />
           </svg>
-          <span>Install App</span>
+          <span>{{ $t("sidebar.install_app") }}</span>
         </a>
       </nav>
     </div>
@@ -555,9 +571,9 @@ const isActive = (names: readonly string[] | string) => {
             <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
             <line x1="6" x2="14" y1="2" y2="2" />
           </svg>
-          <span class="text-sm font-semibold tracking-wide"
-            >Buy me a coffee</span
-          >
+          <span class="text-sm font-semibold tracking-wide">
+            {{ $t("sidebar.buy_me_a_coffee") }}
+          </span>
         </div>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -580,7 +596,7 @@ const isActive = (names: readonly string[] | string) => {
       <div class="flex items-center justify-between px-1">
         <span
           class="text-sm font-medium text-text-light/80 dark:text-text-dark/80"
-          >Theme</span
+          >{{ $t("sidebar.theme") }}</span
         >
         <button
           class="p-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent flex items-center justify-center cursor-pointer group"
@@ -626,7 +642,7 @@ const isActive = (names: readonly string[] | string) => {
           >
             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
           </svg>
-          <span class="sr-only">Toggle theme</span>
+          <span class="sr-only">{{ $t("sidebar.toggle_theme") }}</span>
         </button>
       </div>
     </div>

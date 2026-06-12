@@ -5,12 +5,16 @@ import type {
 } from "../db/types";
 import type { BucketPoint } from "./compute";
 import type { Timeframe } from "./service";
+import { i18n } from "../i18n";
 
 // ----------------------------------------------
 // Analytics presentation layer: chart-type assignment, labels and tooltip
 // text. Pure string/enum logic (no Chart.js, no Vue) so it stays testable
-// independently of rendering.
+// independently of rendering. Labels resolve through i18n.global at call
+// time so they always reflect the active locale.
 // ----------------------------------------------
+
+const t = i18n.global.t;
 
 export type ChartType = "bar" | "stackedBar" | "line";
 
@@ -27,38 +31,22 @@ export function chartTypeFor(
   return config.sourceKind === "muscle" ? "stackedBar" : "bar";
 }
 
-export const METRIC_LABELS: Record<AnalyticsMetric, string> = {
-  workouts: "Workouts",
-  sets: "Sets",
-  reps: "Reps",
-  volume: "Volume",
-  e1rm: "e1RM",
-  value: "Value",
-};
+export const metricLabel = (metric: AnalyticsMetric): string =>
+  t(`analytics.metric_${metric}`);
 
-export const BUCKET_LABELS: Record<AnalyticsBucket, string> = {
-  session: "Per session",
-  week: "Weekly",
-  month: "Monthly",
-  mesocycle: "Per mesocycle",
-};
+export const bucketLabel = (bucket: AnalyticsBucket): string =>
+  t(`analytics.bucket_${bucket}`);
 
-export const TIMEFRAME_OPTIONS: { value: Timeframe; label: string }[] = [
-  { value: "max", label: "Max" },
-  { value: "year", label: "Year" },
-  { value: "month", label: "Month" },
-  { value: "week", label: "Week" },
+export const TIMEFRAME_OPTIONS: { value: Timeframe; labelKey: string }[] = [
+  { value: "max", labelKey: "analytics.timeframe_max" },
+  { value: "year", labelKey: "analytics.timeframe_year" },
+  { value: "month", labelKey: "analytics.timeframe_month" },
+  { value: "week", labelKey: "analytics.timeframe_week" },
 ];
 
 // Lowercase nouns for tooltip sentences ("10 direct sets", "240 kg volume").
-const METRIC_NOUNS: Record<AnalyticsMetric, string> = {
-  workouts: "workouts",
-  sets: "sets",
-  reps: "reps",
-  volume: "volume",
-  e1rm: "e1RM",
-  value: "value",
-};
+const metricNoun = (metric: AnalyticsMetric): string =>
+  t(`analytics.noun_${metric}`);
 
 export interface TooltipContext {
   bucket: AnalyticsBucket;
@@ -68,7 +56,9 @@ export interface TooltipContext {
 }
 
 const bucketPrefix = (bucket: AnalyticsBucket, point: BucketPoint): string =>
-  bucket === "week" ? `Week of ${point.label}` : point.label;
+  bucket === "week"
+    ? t("analytics.tooltip_week_of", { date: point.label })
+    : point.label;
 
 /** Headline, e.g. "Week of Mar 4 — Triceps sets: 10 total". */
 export function tooltipTitle(point: BucketPoint, ctx: TooltipContext): string {
@@ -76,13 +66,26 @@ export function tooltipTitle(point: BucketPoint, ctx: TooltipContext): string {
   const value = ctx.formatValue(point.value);
   switch (ctx.metric) {
     case "value":
-      return `${where} — ${ctx.scopeLabel}: ${value}`;
+      return t("analytics.tooltip_value", {
+        where,
+        scope: ctx.scopeLabel,
+        value,
+      });
     case "e1rm":
-      return `${where} — ${ctx.scopeLabel} e1RM: ${value}`;
+      return t("analytics.tooltip_e1rm", {
+        where,
+        scope: ctx.scopeLabel,
+        value,
+      });
     case "workouts":
-      return `${where} — Workouts: ${value}`;
+      return t("analytics.tooltip_workouts", { where, value });
     default:
-      return `${where} — ${ctx.scopeLabel} ${METRIC_NOUNS[ctx.metric]}: ${value} total`;
+      return t("analytics.tooltip_metric_total", {
+        where,
+        scope: ctx.scopeLabel,
+        noun: metricNoun(ctx.metric),
+        value,
+      });
   }
 }
 
@@ -102,17 +105,25 @@ export function tooltipLines(
   if (ctx.metric === "e1rm") {
     if (!point.bestSet) return [];
     const { weight, reps, rpe } = point.bestSet;
-    const rpePart = rpe !== undefined ? ` @ RPE ${rpe}` : "";
-    return [`Best set: ${ctx.formatValue(weight)} × ${reps}${rpePart}`];
+    const formatted = ctx.formatValue(weight);
+    return [
+      rpe !== undefined
+        ? t("analytics.tooltip_best_set_rpe", {
+            weight: formatted,
+            reps,
+            rpe,
+          })
+        : t("analytics.tooltip_best_set", { weight: formatted, reps }),
+    ];
   }
   if (ctx.metric === "value") {
     return point.samples && point.samples > 1
-      ? [`Average of ${point.samples} entries`]
+      ? [t("analytics.tooltip_average_entries", point.samples)]
       : [];
   }
   if (ctx.metric === "workouts") return [];
 
-  const noun = METRIC_NOUNS[ctx.metric];
+  const noun = metricNoun(ctx.metric);
   const lines: string[] = [];
   for (const role of ["direct", "indirect"] as const) {
     const group = point.contributions.filter((c) => c.role === role);
@@ -124,9 +135,17 @@ export function tooltipLines(
       .join(", ");
     const more =
       group.length > MAX_BREAKDOWN_EXERCISES
-        ? `, +${group.length - MAX_BREAKDOWN_EXERCISES} more`
+        ? t("analytics.tooltip_more", {
+            n: group.length - MAX_BREAKDOWN_EXERCISES,
+          })
         : "";
-    lines.push(`${ctx.formatValue(total)} ${role} ${noun} (${shown}${more})`);
+    lines.push(
+      t(`analytics.tooltip_breakdown_${role}`, {
+        value: ctx.formatValue(total),
+        noun,
+        breakdown: `${shown}${more}`,
+      }),
+    );
   }
   return lines;
 }

@@ -12,8 +12,10 @@ import {
 import ExercisePickerSheet from "./ExercisePickerSheet.vue";
 import ExerciseFormSheet from "./ExerciseFormSheet.vue";
 import { useWeightUnit } from "../composables/useWeightUnit";
+import { useI18n } from "vue-i18n";
 
 const { label: weightUnit } = useWeightUnit();
+useI18n();
 
 const selected = ref<Exercise | null>(null);
 const reps = ref("");
@@ -60,10 +62,10 @@ const selectRpe = (value: number) => {
       <p
         class="text-xs font-semibold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50"
       >
-        Calculator
+        {{ $t("workout.calculator.title") }}
       </p>
       <p class="text-sm text-text-light dark:text-text-dark opacity-60 mt-0.5">
-        Work out a single set. Enter any two values — the third is calculated.
+        {{ $t("workout.calculator.description") }}
       </p>
     </div>
 
@@ -72,7 +74,7 @@ const selectRpe = (value: number) => {
       <label
         class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
       >
-        Exercise
+        {{ $t("workout.calculator.exercise_label") }}
       </label>
       <button
         type="button"
@@ -87,7 +89,7 @@ const selectRpe = (value: number) => {
               : 'text-text-light dark:text-text-dark opacity-50'
           "
         >
-          {{ selected?.name || "Select an exercise" }}
+          {{ selected?.name || $t("workout.calculator.exercise_placeholder") }}
         </span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -112,7 +114,7 @@ const selectRpe = (value: number) => {
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Reps
+          {{ $t("workout.calculator.reps_label") }}
         </label>
         <input
           v-model="reps"
@@ -128,7 +130,7 @@ const selectRpe = (value: number) => {
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Weight ({{ weightUnit }})
+          {{ $t("workout.calculator.weight_label", { unit: weightUnit }) }}
         </label>
         <input
           ref="weightInput"
@@ -148,7 +150,7 @@ const selectRpe = (value: number) => {
       <label
         class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
       >
-        Target RPE
+        {{ $t("workout.calculator.target_rpe_label") }}
       </label>
       <div class="flex flex-wrap gap-1.5">
         <button

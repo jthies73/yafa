@@ -64,7 +64,7 @@ const handleSavePlan = async (input: PlanInput) => {
       <h1
         class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
       >
-        Plans
+        {{ $t("plans.title") }}
       </h1>
     </div>
 
@@ -73,8 +73,7 @@ const handleSavePlan = async (input: PlanInput) => {
       v-if="plans.length === 0"
       class="text-sm italic text-text-light dark:text-text-dark opacity-60"
     >
-      No plans yet. Create your first training plan to start organizing your
-      routines.
+      {{ $t("plans.empty_state") }}
     </div>
 
     <!-- Plans List -->
@@ -89,7 +88,7 @@ const handleSavePlan = async (input: PlanInput) => {
     </div>
 
     <!-- FAB Button -->
-    <AppFab label="New Plan" @click="handleCreatePlan" />
+    <AppFab :label="$t('plans.new_plan')" @click="handleCreatePlan" />
 
     <PlanFormSheet
       v-model:open="showForm"

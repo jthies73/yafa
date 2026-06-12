@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { liveQuery } from "dexie";
 import { db } from "../db/db";
 import type { MeasurementEntry, MeasurementType } from "../db/types";
@@ -8,11 +9,14 @@ import {
   type MeasurementTypeInput,
 } from "../db/measurements";
 import { useMeasurementFormat } from "../composables/useMeasurementUnit";
+import { useSystemNames } from "../composables/useSystemNames";
 import AppFab from "./AppFab.vue";
 import MeasurementTypeFormSheet from "./MeasurementTypeFormSheet.vue";
 import MeasurementHistorySheet from "./MeasurementHistorySheet.vue";
 
+const { t } = useI18n();
 const { format } = useMeasurementFormat();
+const { measurementTypeName } = useSystemNames();
 
 const types = ref<MeasurementType[]>([]);
 const latestByType = ref<Record<string, MeasurementEntry>>({});
@@ -49,7 +53,7 @@ onUnmounted(() => subscription?.unsubscribe());
 
 const latestLabel = (type: MeasurementType): string => {
   const entry = latestByType.value[type.id];
-  return entry ? format(entry.value, type.category) : "No data";
+  return entry ? format(entry.value, type.category) : t("measurements.no_data");
 };
 
 const hasData = (type: MeasurementType): boolean =>
@@ -75,11 +79,8 @@ const handleCreate = async (input: MeasurementTypeInput) => {
   if (created) openHistory(created);
 };
 
-const categoryLabel: Record<MeasurementType["category"], string> = {
-  WEIGHT: "Weight",
-  LENGTH: "Length",
-  PERCENTAGE: "Percentage",
-};
+const categoryLabel = (category: MeasurementType["category"]): string =>
+  t(`measurementTypeForm.category_${category.toLowerCase()}`);
 </script>
 
 <template>
@@ -89,10 +90,10 @@ const categoryLabel: Record<MeasurementType["category"], string> = {
       <h1
         class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
       >
-        Measurements
+        {{ $t("measurements.title") }}
       </h1>
       <p class="mt-1 text-sm text-text-light dark:text-text-dark opacity-70">
-        Track bodyweight, anthropometrics and composition over time
+        {{ $t("measurements.subtitle") }}
       </p>
     </div>
 
@@ -108,12 +109,12 @@ const categoryLabel: Record<MeasurementType["category"], string> = {
           <h3
             class="truncate text-sm font-bold text-text-h-light dark:text-text-h-dark"
           >
-            {{ type.name }}
+            {{ measurementTypeName(type) }}
           </h3>
           <span
             class="shrink-0 rounded-md border border-border-light dark:border-border-dark px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-text-light dark:text-text-dark opacity-55"
           >
-            {{ categoryLabel[type.category] }}
+            {{ categoryLabel(type.category) }}
           </span>
         </div>
         <div
@@ -130,7 +131,7 @@ const categoryLabel: Record<MeasurementType["category"], string> = {
     </div>
 
     <!-- New Measurement FAB -->
-    <AppFab label="New Measurement" @click="openCreate" />
+    <AppFab :label="$t('measurements.new_measurement')" @click="openCreate" />
 
     <MeasurementTypeFormSheet v-model:open="showCreate" @save="handleCreate" />
     <MeasurementHistorySheet

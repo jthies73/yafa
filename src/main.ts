@@ -4,6 +4,7 @@ import App from "./App.vue";
 import { seedDatabase } from "./db/seed";
 import { ensureSystemMeasurements } from "./db/measurements";
 import router from "./router";
+import { i18n } from "./i18n";
 import { initializeFeatures, useFeatureFlags } from "./config/features";
 import { vNumpad } from "./directives/numpad";
 import { vKeynav } from "./directives/keynav";
@@ -53,6 +54,7 @@ async function bootstrap() {
 
   createApp(App)
     .use(router)
+    .use(i18n)
     .directive("numpad", vNumpad)
     .directive("keynav", vKeynav)
     .mount("#app");

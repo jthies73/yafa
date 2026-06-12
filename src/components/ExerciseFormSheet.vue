@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import type { ExerciseInput } from "../db/repository";
 import { countExerciseUsage } from "../db/repository";
 import AppBottomSheet from "./AppBottomSheet.vue";
@@ -7,6 +8,10 @@ import ConfirmDialog from "./ConfirmDialog.vue";
 import ExerciseMusclePicker from "./ExerciseMusclePicker.vue";
 import ExerciseRpeMatrixEditor from "./ExerciseRpeMatrixEditor.vue";
 import { useExerciseForm } from "../composables/useExerciseForm";
+import { useSystemNames } from "../composables/useSystemNames";
+
+const { t } = useI18n();
+const { muscleLabel } = useSystemNames();
 
 const props = defineProps<{
   isEditing: boolean;
@@ -26,13 +31,15 @@ const showConfirm = ref(false);
 const pendingUsage = ref(0);
 
 const confirmMessage = computed(() => {
-  const name = props.initial?.name ?? "this exercise";
+  const name = props.initial?.name ?? t("exerciseForm.this_exercise");
   if (pendingUsage.value > 0) {
-    return `"${name}" is used in ${pendingUsage.value} routine slot${
-      pendingUsage.value === 1 ? "" : "s"
-    }. Deleting it will remove it from those routines. This cannot be undone.`;
+    return t(
+      "exerciseForm.delete_in_use",
+      { name, n: pendingUsage.value },
+      pendingUsage.value,
+    );
   }
-  return `Delete "${name}" from your exercise library? This cannot be undone.`;
+  return t("exerciseForm.delete_message", { name });
 });
 
 const requestDelete = async () => {
@@ -129,7 +136,11 @@ const save = async () => {
         <h2
           class="text-lg font-bold text-text-h-light dark:text-text-h-dark truncate"
         >
-          {{ isEditing ? "Edit Exercise" : "New Exercise" }}
+          {{
+            isEditing
+              ? $t("exerciseForm.edit_exercise")
+              : $t("exerciseForm.new_exercise")
+          }}
         </h2>
         <button
           v-if="isEditing"
@@ -137,7 +148,7 @@ const save = async () => {
           class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-500 hover:bg-red-500/20 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25 transition-colors duration-150 cursor-pointer shrink-0"
           @click="requestDelete"
         >
-          Delete
+          {{ $t("common.delete") }}
         </button>
       </div>
     </template>
@@ -156,13 +167,13 @@ const save = async () => {
             <label
               class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
             >
-              Exercise Name
+              {{ $t("exerciseForm.name_label") }}
             </label>
             <input
               v-model="name"
               v-keynav
               type="text"
-              placeholder="e.g. Barbell Back Squat"
+              :placeholder="$t('exerciseForm.name_placeholder')"
               class="rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
             />
           </div>
@@ -172,7 +183,7 @@ const save = async () => {
             <label
               class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
             >
-              Primary Muscle Groups
+              {{ $t("exerciseForm.primary_label") }}
             </label>
             <div
               role="button"
@@ -187,11 +198,11 @@ const save = async () => {
                   :key="tag"
                   class="inline-flex items-center gap-1 rounded-md bg-accent/15 py-1 pl-2.5 pr-1 text-xs font-semibold text-accent"
                 >
-                  {{ tag }}
+                  {{ muscleLabel(tag) }}
                   <button
                     type="button"
                     class="flex h-4 w-4 items-center justify-center rounded-sm text-accent/80 transition-colors duration-150 hover:bg-accent/20 hover:text-accent cursor-pointer"
-                    aria-label="Remove muscle group"
+                    :aria-label="$t('exerciseForm.remove_muscle_group')"
                     @click.stop="removePrimaryTag(tag)"
                   >
                     <svg
@@ -214,7 +225,7 @@ const save = async () => {
                   v-if="!primaryMuscleGroups.length"
                   class="text-sm text-text-light/40 dark:text-text-dark/40"
                 >
-                  Add primary muscle groups...
+                  {{ $t("exerciseForm.primary_placeholder") }}
                 </span>
               </div>
               <svg
@@ -239,10 +250,10 @@ const save = async () => {
             <label
               class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
             >
-              Secondary Muscle Groups
-              <span class="ml-1 font-normal normal-case opacity-60"
-                >(optional)</span
-              >
+              {{ $t("exerciseForm.secondary_label") }}
+              <span class="ml-1 font-normal normal-case opacity-60">{{
+                $t("exerciseForm.optional")
+              }}</span>
             </label>
             <div
               role="button"
@@ -257,11 +268,11 @@ const save = async () => {
                   :key="tag"
                   class="inline-flex items-center gap-1 rounded-md bg-accent/15 py-1 pl-2.5 pr-1 text-xs font-semibold text-accent"
                 >
-                  {{ tag }}
+                  {{ muscleLabel(tag) }}
                   <button
                     type="button"
                     class="flex h-4 w-4 items-center justify-center rounded-sm text-accent/80 transition-colors duration-150 hover:bg-accent/20 hover:text-accent cursor-pointer"
-                    aria-label="Remove muscle group"
+                    :aria-label="$t('exerciseForm.remove_muscle_group')"
                     @click.stop="removeTag(tag)"
                   >
                     <svg
@@ -284,7 +295,7 @@ const save = async () => {
                   v-if="!secondaryTags.length"
                   class="text-sm text-text-light/40 dark:text-text-dark/40"
                 >
-                  Add secondary muscle groups...
+                  {{ $t("exerciseForm.secondary_placeholder") }}
                 </span>
               </div>
               <svg
@@ -309,7 +320,7 @@ const save = async () => {
             <label
               class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
             >
-              Bodyweight Factor
+              {{ $t("exerciseForm.bodyweight_factor_label") }}
             </label>
             <input
               v-model.number="bodyweightFactor"
@@ -322,8 +333,7 @@ const save = async () => {
               class="rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 font-mono text-sm text-text-h-light dark:text-text-h-dark focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
             />
             <p class="text-xs text-text-light dark:text-text-dark opacity-50">
-              Share of bodyweight moved — 1.0 pull-ups, 0.65 push-ups, 0 for
-              barbell/dumbbell lifts.
+              {{ $t("exerciseForm.bodyweight_factor_hint") }}
             </p>
           </div>
 
@@ -332,15 +342,15 @@ const save = async () => {
             <label
               class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
             >
-              Notes
-              <span class="ml-1 font-normal normal-case opacity-60"
-                >(optional)</span
-              >
+              {{ $t("exerciseForm.notes_label") }}
+              <span class="ml-1 font-normal normal-case opacity-60">{{
+                $t("exerciseForm.optional")
+              }}</span>
             </label>
             <textarea
               v-model="notes"
               rows="3"
-              placeholder="Form cues, setup notes, variations…"
+              :placeholder="$t('exerciseForm.notes_placeholder')"
               class="resize-none rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
             ></textarea>
           </div>
@@ -372,14 +382,18 @@ const save = async () => {
           class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-3 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer"
           @click="close"
         >
-          Cancel
+          {{ $t("common.cancel") }}
         </button>
         <button
           class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
           :disabled="!canSave"
           @click="save"
         >
-          {{ isEditing ? "Save Changes" : "Create Exercise" }}
+          {{
+            isEditing
+              ? $t("exerciseForm.save_changes")
+              : $t("exerciseForm.create_exercise")
+          }}
         </button>
       </template>
       <template v-else>
@@ -387,7 +401,7 @@ const save = async () => {
           class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent-hover cursor-pointer"
           @click="goToPage1"
         >
-          Done
+          {{ $t("exerciseForm.done") }}
         </button>
       </template>
     </template>
@@ -395,9 +409,9 @@ const save = async () => {
 
   <ConfirmDialog
     v-model:open="showConfirm"
-    title="Delete exercise?"
+    :title="$t('exerciseForm.delete_title')"
     :message="confirmMessage"
-    confirm-label="Delete"
+    :confirm-label="$t('common.delete')"
     @confirm="confirmDelete"
   />
 </template>

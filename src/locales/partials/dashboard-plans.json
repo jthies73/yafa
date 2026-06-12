@@ -1,0 +1,114 @@
+{
+  "en": {
+    "dashboard": {
+      "title": "Dashboard",
+      "install_badge": "Install",
+      "install_prompt": "Install YAFA for offline access and faster logging.",
+      "view_install_guide": "View Install Guide",
+      "remind_me_later": "Remind me later",
+      "do_not_ask_again": "Do not ask again",
+      "workout_in_progress": "Workout in Progress",
+      "active_session": "Active Session: {name}",
+      "empty_workout": "Empty Workout",
+      "running_time": "Running time: {time}",
+      "resume_workout": "Resume Workout",
+      "start_a_workout": "Start a Workout",
+      "start_workout_hint": "Pick a routine from your active plan or start fresh.",
+      "active_badge": "Active",
+      "exercise_count": "{n} exercise | {n} exercises",
+      "no_routines_in_plan": "No routines in this plan yet.",
+      "no_active_plan": "No active plan.",
+      "set_one_in_plans": "Set one in Plans →",
+      "plus_empty_workout": "+ Empty Workout",
+      "analytics": "Analytics",
+      "track_progress": "Track progress",
+      "active_plan": "Active Plan",
+      "none_set": "None set",
+      "exercises": "Exercises",
+      "manage_library": "Manage library",
+      "settings": "Settings",
+      "preferences": "Preferences"
+    },
+    "plans": {
+      "title": "Plans",
+      "empty_state": "No plans yet. Create your first training plan to start organizing your routines.",
+      "new_plan": "New Plan"
+    },
+    "planCard": {
+      "active_badge": "Active",
+      "routines": "Routines",
+      "routine_stats": "{exercises}ex · {sets}sets",
+      "no_routines": "No routines configured for this plan."
+    },
+    "planForm": {
+      "edit_plan": "Edit Plan",
+      "new_plan": "New Plan",
+      "plan_name": "Plan Name",
+      "plan_name_placeholder": "e.g. Powerbuilding Split",
+      "description": "Description",
+      "optional": "(optional)",
+      "description_placeholder": "What is this plan designed to achieve?",
+      "set_as_active": "Set as active plan",
+      "replaces_active": "Replaces the currently active plan",
+      "toggle_set_as_active": "Toggle set as active plan",
+      "save_changes": "Save Changes",
+      "create_plan": "Create Plan"
+    }
+  },
+  "de": {
+    "dashboard": {
+      "title": "Dashboard",
+      "install_badge": "Installieren",
+      "install_prompt": "Installiere YAFA für Offline-Zugriff und schnelleres Tracking.",
+      "view_install_guide": "Installationsanleitung ansehen",
+      "remind_me_later": "Später erinnern",
+      "do_not_ask_again": "Nicht mehr fragen",
+      "workout_in_progress": "Training läuft",
+      "active_session": "Aktive Einheit: {name}",
+      "empty_workout": "Leeres Training",
+      "running_time": "Laufzeit: {time}",
+      "resume_workout": "Training fortsetzen",
+      "start_a_workout": "Training starten",
+      "start_workout_hint": "Wähle eine Routine aus deinem aktiven Plan oder starte neu.",
+      "active_badge": "Aktiv",
+      "exercise_count": "{n} Übung | {n} Übungen",
+      "no_routines_in_plan": "Noch keine Routinen in diesem Plan.",
+      "no_active_plan": "Kein aktiver Plan.",
+      "set_one_in_plans": "Unter Pläne festlegen →",
+      "plus_empty_workout": "+ Leeres Training",
+      "analytics": "Analyse",
+      "track_progress": "Fortschritt verfolgen",
+      "active_plan": "Aktiver Plan",
+      "none_set": "Keiner festgelegt",
+      "exercises": "Übungen",
+      "manage_library": "Bibliothek verwalten",
+      "settings": "Einstellungen",
+      "preferences": "Einstellungen anpassen"
+    },
+    "plans": {
+      "title": "Pläne",
+      "empty_state": "Noch keine Pläne. Erstelle deinen ersten Trainingsplan, um deine Routinen zu organisieren.",
+      "new_plan": "Neuer Plan"
+    },
+    "planCard": {
+      "active_badge": "Aktiv",
+      "routines": "Routinen",
+      "routine_stats": "{exercises} Üb. · {sets} Sätze",
+      "no_routines": "Keine Routinen für diesen Plan konfiguriert."
+    },
+    "planForm": {
+      "edit_plan": "Plan bearbeiten",
+      "new_plan": "Neuer Plan",
+      "plan_name": "Planname",
+      "plan_name_placeholder": "z. B. Powerbuilding-Split",
+      "description": "Beschreibung",
+      "optional": "(optional)",
+      "description_placeholder": "Was soll dieser Plan erreichen?",
+      "set_as_active": "Als aktiven Plan festlegen",
+      "replaces_active": "Ersetzt den aktuell aktiven Plan",
+      "toggle_set_as_active": "Als aktiven Plan festlegen umschalten",
+      "save_changes": "Änderungen speichern",
+      "create_plan": "Plan erstellen"
+    }
+  }
+}

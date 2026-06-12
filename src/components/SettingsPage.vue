@@ -4,6 +4,11 @@ import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
 import RpeMatrixTable from "./RpeMatrixTable.vue";
 import { useWeightUnit, type WeightUnit } from "../composables/useWeightUnit";
 import { useLengthUnit, type LengthUnit } from "../composables/useLengthUnit";
+import { setLocale, type Locale } from "../i18n";
+import { useI18n } from "vue-i18n";
+import AppBottomSheet from "./AppBottomSheet.vue";
+
+const { locale } = useI18n();
 
 const isDark = ref(false);
 const rpeMatrix = DEFAULT_RPE_MATRIX;
@@ -41,6 +46,22 @@ const toggleWeightUnit = () => {
 const toggleLengthUnit = () => {
   setLengthUnit(lengthUnit.value === "cm" ? "in" : "cm");
 };
+
+// ── Language picker ──────────────────────────────────────────────────────────
+const LANGUAGE_OPTIONS: { code: Locale; nativeName: string }[] = [
+  { code: "en", nativeName: "English" },
+  { code: "de", nativeName: "Deutsch" },
+];
+
+const showLangPicker = ref(false);
+
+const selectLanguage = (code: Locale) => {
+  setLocale(code);
+  showLangPicker.value = false;
+};
+
+const currentLanguageName = () =>
+  LANGUAGE_OPTIONS.find((l) => l.code === locale.value)?.nativeName ?? locale.value;
 </script>
 
 <template>
@@ -50,10 +71,10 @@ const toggleLengthUnit = () => {
       <h1
         class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
       >
-        Settings
+        {{ $t("settings.title") }}
       </h1>
       <p class="text-sm text-text-light dark:text-text-dark opacity-70 mt-1">
-        Configure your preferences and autoregulation defaults
+        {{ $t("settings.subtitle") }}
       </p>
     </div>
 
@@ -82,7 +103,7 @@ const toggleLengthUnit = () => {
             />
             <circle cx="12" cy="12" r="3" />
           </svg>
-          Preferences
+          {{ $t("settings.preferences") }}
         </h2>
 
         <!-- Theme Option -->
@@ -93,10 +114,10 @@ const toggleLengthUnit = () => {
             <div
               class="font-semibold text-text-h-light dark:text-text-h-dark text-sm sm:text-base"
             >
-              Dark Mode
+              {{ $t("settings.dark_mode") }}
             </div>
             <div class="text-xs text-text-light dark:text-text-dark opacity-60">
-              Enable dark theme styling
+              {{ $t("settings.dark_mode_desc") }}
             </div>
           </div>
           <button
@@ -104,7 +125,7 @@ const toggleLengthUnit = () => {
             :class="
               isDark ? 'bg-accent' : 'bg-border-light dark:bg-border-dark'
             "
-            aria-label="Toggle dark mode"
+            :aria-label="$t('settings.toggle_dark_mode')"
             @click="toggleTheme"
           >
             <span
@@ -122,10 +143,10 @@ const toggleLengthUnit = () => {
             <div
               class="font-semibold text-text-h-light dark:text-text-h-dark text-sm sm:text-base"
             >
-              Weight Units
+              {{ $t("settings.weight_units") }}
             </div>
             <div class="text-xs text-text-light dark:text-text-dark opacity-60">
-              Preferred system for exercises
+              {{ $t("settings.weight_units_desc") }}
             </div>
           </div>
           <button
@@ -134,7 +155,7 @@ const toggleLengthUnit = () => {
             @click="toggleWeightUnit"
             role="switch"
             :aria-checked="weightUnit === 'lbs'"
-            aria-label="Toggle weight unit"
+            :aria-label="$t('settings.toggle_weight_unit')"
           >
             <span
               class="flex-1 text-center py-1.5 text-xs font-semibold transition-colors duration-150"
@@ -160,15 +181,17 @@ const toggleLengthUnit = () => {
         </div>
 
         <!-- Length Units -->
-        <div class="flex items-center justify-between py-3">
+        <div
+          class="flex items-center justify-between py-3 border-b border-border-light dark:border-border-dark"
+        >
           <div>
             <div
               class="font-semibold text-text-h-light dark:text-text-h-dark text-sm sm:text-base"
             >
-              Length Units
+              {{ $t("settings.length_units") }}
             </div>
             <div class="text-xs text-text-light dark:text-text-dark opacity-60">
-              Preferred system for body measurements
+              {{ $t("settings.length_units_desc") }}
             </div>
           </div>
           <button
@@ -177,7 +200,7 @@ const toggleLengthUnit = () => {
             @click="toggleLengthUnit"
             role="switch"
             :aria-checked="lengthUnit === 'in'"
-            aria-label="Toggle length unit"
+            :aria-label="$t('settings.toggle_length_unit')"
           >
             <span
               class="flex-1 text-center py-1.5 text-xs font-semibold transition-colors duration-150"
@@ -199,6 +222,46 @@ const toggleLengthUnit = () => {
             >
               in
             </span>
+          </button>
+        </div>
+
+        <!-- Language -->
+        <div class="flex items-center justify-between py-3">
+          <div>
+            <div
+              class="font-semibold text-text-h-light dark:text-text-h-dark text-sm sm:text-base"
+            >
+              {{ $t("settings.language") }}
+            </div>
+            <div class="text-xs text-text-light dark:text-text-dark opacity-60">
+              {{ $t("settings.language_desc") }}
+            </div>
+          </div>
+          <button
+            type="button"
+            class="flex items-center justify-between border border-border-light dark:border-border-dark rounded-lg bg-black/5 dark:bg-white/5 px-3 py-1.5 w-24 cursor-pointer select-none hover:bg-surface-light-hover/40 dark:hover:bg-surface-dark-hover/40 transition-colors duration-150"
+            :aria-label="$t('settings.select_language')"
+            @click="showLangPicker = true"
+          >
+            <span
+              class="text-xs font-semibold text-text-h-light dark:text-text-h-dark"
+            >
+              {{ currentLanguageName() }}
+            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="text-text-light dark:text-text-dark opacity-50"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </button>
         </div>
       </div>
@@ -228,13 +291,12 @@ const toggleLengthUnit = () => {
                 <line x1="3" y1="9" x2="21" y2="9" />
                 <line x1="9" y1="9" x2="9" y2="21" />
               </svg>
-              Global RPE Matrix
+              {{ $t("settings.global_rpe_matrix") }}
             </h2>
             <p
               class="text-xs text-text-light dark:text-text-dark opacity-60 mt-1"
             >
-              Target % of 1RM per reps × RPE. Exercises without a custom
-              override inherit these values.
+              {{ $t("settings.global_rpe_matrix_desc") }}
             </p>
           </div>
         </div>
@@ -243,4 +305,52 @@ const toggleLengthUnit = () => {
       </div>
     </div>
   </div>
+
+  <!-- Language picker bottom sheet -->
+  <AppBottomSheet v-model:open="showLangPicker">
+    <template #title>
+      <h2 class="text-lg font-bold text-text-h-light dark:text-text-h-dark">
+        {{ $t("settings.select_language") }}
+      </h2>
+    </template>
+
+    <div class="flex flex-col gap-2 px-5 py-5 pb-8">
+      <label
+        v-for="lang in LANGUAGE_OPTIONS"
+        :key="lang.code"
+        class="flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-colors"
+        :class="
+          locale === lang.code
+            ? 'bg-accent/10 border-accent/30'
+            : 'border-border-light dark:border-border-dark hover:bg-surface-light dark:hover:bg-surface-dark'
+        "
+        @click="selectLanguage(lang.code)"
+      >
+        <span
+          class="text-sm font-semibold"
+          :class="
+            locale === lang.code
+              ? 'text-accent'
+              : 'text-text-h-light dark:text-text-h-dark'
+          "
+        >
+          {{ lang.nativeName }}
+        </span>
+        <svg
+          v-if="locale === lang.code"
+          class="w-5 h-5 text-accent"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="3"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+      </label>
+    </div>
+  </AppBottomSheet>
 </template>

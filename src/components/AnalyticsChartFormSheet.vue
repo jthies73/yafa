@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { liveQuery } from "dexie";
 import { db } from "../db/db";
 import type {
@@ -19,8 +20,11 @@ import ConfirmDialog from "./ConfirmDialog.vue";
 import ExercisePickerSheet from "./ExercisePickerSheet.vue";
 import ExerciseFormSheet from "./ExerciseFormSheet.vue";
 import ListPickerSheet, { type ListPickerOption } from "./ListPickerSheet.vue";
+import { useSystemNames } from "../composables/useSystemNames";
 
 const open = defineModel<boolean>("open", { required: true });
+const { t } = useI18n();
+const { muscleLabel, exerciseName, measurementTypeName } = useSystemNames();
 
 const props = defineProps<{
   // null ⇒ creating a new chart; otherwise the config being edited.
@@ -82,16 +86,16 @@ onMounted(() => {
 onUnmounted(() => subscriptions.forEach((s) => s.unsubscribe()));
 
 // --- Option matrices (availability per the spec) ---
-const SOURCE_OPTIONS: { value: AnalyticsSourceKind; label: string }[] = [
-  { value: "global", label: "Global" },
-  { value: "muscle", label: "Muscle Group" },
-  { value: "exercise", label: "Exercise" },
-  { value: "measurement", label: "Measurement" },
+const SOURCE_OPTIONS: { value: AnalyticsSourceKind; labelKey: string }[] = [
+  { value: "global", labelKey: "analyticsForm.source_global" },
+  { value: "muscle", labelKey: "analyticsForm.source_muscle" },
+  { value: "exercise", labelKey: "analyticsForm.source_exercise" },
+  { value: "measurement", labelKey: "analyticsForm.source_measurement" },
 ];
 
 interface ToggleOption<T extends string> {
   value: T;
-  label: string;
+  labelKey: string;
   enabled: boolean;
 }
 
@@ -100,24 +104,24 @@ const metricOptions = computed<ToggleOption<AnalyticsMetric>[]>(() => [
   // sessions; e1RM only exists for a single exercise's load history.
   {
     value: "workouts",
-    label: "Workouts",
+    labelKey: "analyticsForm.metric_workouts",
     enabled: sourceKind.value === "global",
   },
-  { value: "sets", label: "Sets", enabled: true },
-  { value: "reps", label: "Reps", enabled: true },
-  { value: "volume", label: "Volume", enabled: true },
-  { value: "e1rm", label: "e1RM", enabled: sourceKind.value === "exercise" },
+  { value: "sets", labelKey: "analyticsForm.metric_sets", enabled: true },
+  { value: "reps", labelKey: "analyticsForm.metric_reps", enabled: true },
+  { value: "volume", labelKey: "analyticsForm.metric_volume", enabled: true },
+  { value: "e1rm", labelKey: "analyticsForm.metric_e1rm", enabled: sourceKind.value === "exercise" },
 ]);
 
 const bucketOptions = computed<ToggleOption<AnalyticsBucket>[]>(() => [
-  { value: "session", label: "Session", enabled: true },
-  { value: "week", label: "Week", enabled: true },
+  { value: "session", labelKey: "analyticsForm.bucket_session", enabled: true },
+  { value: "week", labelKey: "analyticsForm.bucket_week", enabled: true },
   // e1RM: max-per-week is the finest useful bucket — monthly or mesocycle
   // aggregation compresses the variance that makes the trend meaningful.
-  { value: "month", label: "Month", enabled: metric.value !== "e1rm" },
+  { value: "month", labelKey: "analyticsForm.bucket_month", enabled: metric.value !== "e1rm" },
   {
     value: "mesocycle",
-    label: "Mesocycle",
+    labelKey: "analyticsForm.bucket_mesocycle",
     enabled: metric.value !== "e1rm" && hasMesocycle.value,
   },
 ]);
@@ -150,36 +154,36 @@ const showMeasurementPicker = ref(false);
 const showExerciseForm = ref(false);
 
 const muscleOptions = computed<ListPickerOption[]>(() =>
-  MUSCLE_GROUPS.map((m) => ({ value: m, label: m })),
+  MUSCLE_GROUPS.map((m) => ({ value: m, label: muscleLabel(m) })),
 );
 
-const categoryLabel: Record<MeasurementType["category"], string> = {
-  WEIGHT: "Weight",
-  LENGTH: "Length",
-  PERCENTAGE: "Percentage",
+const categoryLabelKey: Record<MeasurementType["category"], string> = {
+  WEIGHT: "measurementTypeForm.category_weight",
+  LENGTH: "measurementTypeForm.category_length",
+  PERCENTAGE: "measurementTypeForm.category_percentage",
 };
 
 const measurementOptions = computed<ListPickerOption[]>(() =>
-  measurementTypes.value.map((t) => ({
-    value: t.id,
-    label: t.name,
-    sub: categoryLabel[t.category],
+  measurementTypes.value.map((mType) => ({
+    value: mType.id,
+    label: measurementTypeName(mType),
+    sub: t(categoryLabelKey[mType.category]),
   })),
 );
 
-const selectedExerciseName = computed(
-  () => exercises.value.find((e) => e.id === exerciseId.value)?.name ?? null,
-);
-const selectedMeasurementName = computed(
-  () =>
-    measurementTypes.value.find((t) => t.id === measurementTypeId.value)
-      ?.name ?? null,
-);
+const selectedExerciseName = computed(() => {
+  const ex = exercises.value.find((e) => e.id === exerciseId.value);
+  return ex ? exerciseName(ex) : null;
+});
+const selectedMeasurementName = computed(() => {
+  const ms = measurementTypes.value.find((t) => t.id === measurementTypeId.value);
+  return ms ? measurementTypeName(ms) : null;
+});
 
 const selectionLabel = computed<string | null>(() => {
   switch (sourceKind.value) {
     case "muscle":
-      return muscleGroup.value;
+      return muscleGroup.value ? muscleLabel(muscleGroup.value) : null;
     case "exercise":
       return selectedExerciseName.value;
     case "measurement":
@@ -247,7 +251,7 @@ const confirmDeleteOpen = ref(false);
         <h2
           class="text-lg font-bold text-text-h-light dark:text-text-h-dark truncate"
         >
-          {{ editing ? "Edit Chart" : "New Chart" }}
+          {{ editing ? $t("analyticsForm.edit_chart") : $t("analyticsForm.new_chart") }}
         </h2>
         <button
           v-if="editing"
@@ -255,7 +259,7 @@ const confirmDeleteOpen = ref(false);
           class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-500 hover:bg-red-500/20 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25 transition-colors duration-150 cursor-pointer shrink-0"
           @click="confirmDeleteOpen = true"
         >
-          Delete
+          {{ $t("common.delete") }}
         </button>
       </div>
     </template>
@@ -265,7 +269,7 @@ const confirmDeleteOpen = ref(false);
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Data Source
+          {{ $t("analyticsForm.data_source") }}
         </label>
         <div class="grid grid-cols-2 gap-2">
           <button
@@ -279,7 +283,7 @@ const confirmDeleteOpen = ref(false);
             "
             @click="sourceKind = option.value"
           >
-            {{ option.label }}
+            {{ $t(option.labelKey) }}
           </button>
         </div>
       </div>
@@ -291,10 +295,10 @@ const confirmDeleteOpen = ref(false);
         >
           {{
             sourceKind === "muscle"
-              ? "Muscle Group"
+              ? $t("analyticsForm.source_muscle")
               : sourceKind === "exercise"
-                ? "Exercise"
-                : "Measurement"
+                ? $t("analyticsForm.source_exercise")
+                : $t("analyticsForm.source_measurement")
           }}
         </label>
         <button
@@ -312,10 +316,10 @@ const confirmDeleteOpen = ref(false);
             {{
               selectionLabel ??
               (sourceKind === "muscle"
-                ? "Select muscle group…"
+                ? $t("analyticsForm.select_muscle")
                 : sourceKind === "exercise"
-                  ? "Select exercise…"
-                  : "Select measurement…")
+                  ? $t("analyticsForm.select_exercise")
+                  : $t("analyticsForm.select_measurement"))
             }}
           </span>
           <svg
@@ -340,7 +344,7 @@ const confirmDeleteOpen = ref(false);
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Metric
+          {{ $t("analyticsForm.metric") }}
         </label>
         <div class="flex flex-wrap gap-2">
           <button
@@ -355,7 +359,7 @@ const confirmDeleteOpen = ref(false);
             "
             @click="metric = option.value"
           >
-            {{ option.label }}
+            {{ $t(option.labelKey) }}
           </button>
         </div>
       </div>
@@ -365,7 +369,7 @@ const confirmDeleteOpen = ref(false);
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Time Scale
+          {{ $t("analyticsForm.time_scale") }}
         </label>
         <div
           class="flex gap-1 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-1"
@@ -384,14 +388,14 @@ const confirmDeleteOpen = ref(false);
             "
             @click="bucket = option.value"
           >
-            {{ option.label }}
+            {{ $t(option.labelKey) }}
           </button>
         </div>
         <p
           v-if="!hasMesocycle && metric !== 'e1rm'"
           class="text-xs text-text-light dark:text-text-dark opacity-50"
         >
-          Mesocycle buckets need an active plan with periodization configured.
+          {{ $t("analyticsForm.mesocycle_hint") }}
         </p>
       </div>
     </div>
@@ -401,14 +405,14 @@ const confirmDeleteOpen = ref(false);
         class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-2.5 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer"
         @click="open = false"
       >
-        Cancel
+        {{ $t("common.cancel") }}
       </button>
       <button
         class="flex-1 rounded-lg bg-accent py-2.5 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent-hover cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
         :disabled="!canSave"
         @click="save"
       >
-        Save
+        {{ $t("common.save") }}
       </button>
     </template>
   </AppBottomSheet>
@@ -416,7 +420,7 @@ const confirmDeleteOpen = ref(false);
   <!-- Pickers stack above the form sheet -->
   <ListPickerSheet
     v-model:open="showMusclePicker"
-    title="Select Muscle Group"
+    :title="$t('analyticsForm.select_muscle_title')"
     :options="muscleOptions"
     @select="
       (value) => {
@@ -428,7 +432,7 @@ const confirmDeleteOpen = ref(false);
 
   <ListPickerSheet
     v-model:open="showMeasurementPicker"
-    title="Select Measurement"
+    :title="$t('analyticsForm.select_measurement_title')"
     :options="measurementOptions"
     @select="
       (value) => {
@@ -452,9 +456,9 @@ const confirmDeleteOpen = ref(false);
 
   <ConfirmDialog
     v-model:open="confirmDeleteOpen"
-    title="Delete chart?"
-    message="Remove this chart from your analytics page? Your workout data is not affected."
-    confirm-label="Delete"
+    :title="$t('analyticsForm.delete_confirm_title')"
+    :message="$t('analyticsForm.delete_confirm_msg')"
+    :confirm-label="$t('common.delete')"
     @confirm="emit('delete')"
   />
 </template>

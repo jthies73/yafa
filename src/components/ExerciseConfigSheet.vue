@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import type {
   RoutineExerciseConfig,
   ProgressionModelType,
@@ -12,6 +12,9 @@ import AppBottomSheet from "./AppBottomSheet.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
 import LockToggle from "./LockToggle.vue";
 import ExerciseRpeMatrixEditor from "./ExerciseRpeMatrixEditor.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const showConfirm = ref(false);
 const matrixEditor = ref<InstanceType<typeof ExerciseRpeMatrixEditor> | null>(
@@ -65,11 +68,11 @@ const toggleLock = (field: string) => {
   lockedFields.value = next;
 };
 
-const PROGRESSION_MODELS: { value: ProgressionModelType; label: string }[] = [
-  { value: "linear", label: "Linear" },
-  { value: "double", label: "Double" },
-  { value: "topset_backoff", label: "Top Set" },
-];
+const PROGRESSION_MODELS = computed<{ value: ProgressionModelType; label: string }[]>(() => [
+  { value: "linear", label: t("exerciseConfig.model_linear") },
+  { value: "double", label: t("exerciseConfig.model_double") },
+  { value: "topset_backoff", label: t("exerciseConfig.model_topset") },
+]);
 
 const DEFAULT_PARAMS: Record<ProgressionModelType, Record<string, number>> = {
   linear: { targetSets: 3, targetReps: 5, targetRpe: 8, weightIncrement: 2.5 },
@@ -147,7 +150,7 @@ const save = async () => {
           <p
             class="text-xs font-semibold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50 mb-0.5"
           >
-            {{ isEditing ? "Edit Exercise" : "Add Exercise" }}
+            {{ isEditing ? $t("exerciseConfig.edit_exercise") : $t("exerciseConfig.add_exercise") }}
           </p>
           <h2
             class="text-lg font-bold text-text-h-light dark:text-text-h-dark truncate"
@@ -161,7 +164,7 @@ const save = async () => {
           class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-500 hover:bg-red-500/20 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25 transition-colors duration-150 cursor-pointer shrink-0"
           @click="showConfirm = true"
         >
-          Remove
+          {{ $t("common.delete") }}
         </button>
       </div>
     </template>
@@ -172,7 +175,7 @@ const save = async () => {
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Progression Model
+          {{ $t("exerciseConfig.progression_model") }}
         </label>
         <div
           class="flex gap-1 p-1 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl"
@@ -214,9 +217,7 @@ const save = async () => {
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
         <p class="text-xs text-text-light dark:text-text-dark opacity-80">
-          This plan uses periodization. Unlocked fields may be adjusted by the
-          mesocycle when generating each workout. Lock a field to keep its value
-          fixed.
+          {{ $t("exerciseConfig.periodization_hint") }}
         </p>
       </div>
 
@@ -228,7 +229,7 @@ const save = async () => {
               <label
                 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
               >
-                Sets
+                {{ $t("exerciseConfig.sets") }}
               </label>
               <LockToggle
                 v-if="periodizationEnabled"
@@ -252,7 +253,7 @@ const save = async () => {
               <label
                 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
               >
-                Reps
+                {{ $t("exerciseConfig.reps") }}
               </label>
               <LockToggle
                 v-if="periodizationEnabled"
@@ -276,7 +277,7 @@ const save = async () => {
               <label
                 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
               >
-                Target RPE
+                {{ $t("exerciseConfig.target_rpe") }}
               </label>
               <LockToggle
                 v-if="periodizationEnabled"
@@ -300,7 +301,7 @@ const save = async () => {
           <label
             class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
           >
-            Weight Increment ({{ weightUnit }})
+            {{ $t("exerciseConfig.weight_increment", { unit: weightUnit }) }}
           </label>
           <input
             v-model="incrementBuffer"
@@ -322,7 +323,7 @@ const save = async () => {
               <label
                 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
               >
-                Sets
+                {{ $t("exerciseConfig.sets") }}
               </label>
               <LockToggle
                 v-if="periodizationEnabled"
@@ -345,7 +346,7 @@ const save = async () => {
             <label
               class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
             >
-              Min Reps
+              {{ $t("exerciseConfig.min_reps") }}
             </label>
             <input
               v-model.number="configParams.minReps"
@@ -362,7 +363,7 @@ const save = async () => {
             <label
               class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
             >
-              Max Reps
+              {{ $t("exerciseConfig.max_reps") }}
             </label>
             <input
               v-model.number="configParams.maxReps"
@@ -380,7 +381,7 @@ const save = async () => {
           <label
             class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
           >
-            Weight Increment ({{ weightUnit }})
+            {{ $t("exerciseConfig.weight_increment", { unit: weightUnit }) }}
           </label>
           <input
             v-model="incrementBuffer"
@@ -405,7 +406,7 @@ const save = async () => {
               <label
                 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
               >
-                Top Set Reps
+                {{ $t("exerciseConfig.top_set_reps") }}
               </label>
               <LockToggle
                 v-if="periodizationEnabled"
@@ -429,7 +430,7 @@ const save = async () => {
               <label
                 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
               >
-                Target RPE
+                {{ $t("exerciseConfig.target_rpe") }}
               </label>
               <LockToggle
                 v-if="periodizationEnabled"
@@ -455,7 +456,7 @@ const save = async () => {
               <label
                 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
               >
-                Back-Off Sets
+                {{ $t("exerciseConfig.back_off_sets") }}
               </label>
               <LockToggle
                 v-if="periodizationEnabled"
@@ -478,7 +479,7 @@ const save = async () => {
             <label
               class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
             >
-              % Drop
+              {{ $t("exerciseConfig.percentage_drop") }}
             </label>
             <input
               v-model.number="configParams.percentageDrop"
@@ -496,7 +497,7 @@ const save = async () => {
           <label
             class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
           >
-            Weight Increment ({{ weightUnit }})
+            {{ $t("exerciseConfig.weight_increment", { unit: weightUnit }) }}
           </label>
           <input
             v-model="incrementBuffer"
@@ -515,15 +516,15 @@ const save = async () => {
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Notes
+          {{ $t("exerciseConfig.notes") }}
           <span class="normal-case font-normal opacity-60 ml-1"
-            >(optional)</span
+            >{{ $t("exerciseConfig.optional") }}</span
           >
         </label>
         <textarea
           v-model="configNotes"
           rows="3"
-          placeholder="Any specific cues or notes for this exercise..."
+          :placeholder="$t('exerciseConfig.notes_placeholder')"
           class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50 resize-none"
         ></textarea>
       </div>
@@ -543,22 +544,22 @@ const save = async () => {
         class="flex-1 py-3 text-sm font-bold rounded-lg cursor-pointer transition-colors duration-150 border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:bg-surface-light dark:hover:bg-surface-dark"
         @click="close"
       >
-        Cancel
+        {{ $t("common.cancel") }}
       </button>
       <button
         class="flex-1 py-3 text-sm font-bold rounded-lg cursor-pointer transition-colors duration-150 bg-accent hover:bg-accent-hover text-bg-dark"
         @click="save"
       >
-        {{ isEditing ? "Save Changes" : "Add Exercise" }}
+        {{ isEditing ? $t("common.save_changes") : $t("exerciseConfig.add_exercise") }}
       </button>
     </template>
   </AppBottomSheet>
 
   <ConfirmDialog
     v-model:open="showConfirm"
-    title="Remove exercise?"
-    :message="`Remove '${exerciseName}' from this routine?`"
-    confirm-label="Remove"
+    :title="$t('exerciseConfig.remove_confirm_title')"
+    :message="$t('exerciseConfig.remove_confirm_msg', { name: exerciseName })"
+    :confirm-label="$t('common.delete')"
     @confirm="$emit('remove')"
   />
 </template>

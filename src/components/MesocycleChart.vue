@@ -14,6 +14,9 @@ import {
 import { Line } from "vue-chartjs";
 import type { MesocycleWeek, PeriodizationFocus } from "../db/types";
 import { FOCUS_META } from "../config/periodization";
+import { useSystemNames } from "../composables/useSystemNames";
+
+const { focusLabel } = useSystemNames();
 
 // Tree-shaken registration: only what the two trend lines need.
 ChartJS.register(
@@ -131,7 +134,7 @@ const legendFocuses = computed<PeriodizationFocus[]>(() => {
           :key="i"
           class="h-1.5 rounded-full"
           :style="{ backgroundColor: FOCUS_META[week.focus].colorVar }"
-          :title="`Week ${i + 1} — ${FOCUS_META[week.focus].label}`"
+          :title="$t('mesocycle.week_tooltip', { n: i + 1, focus: focusLabel(week.focus) })"
         />
       </div>
       <div
@@ -158,13 +161,13 @@ const legendFocuses = computed<PeriodizationFocus[]>(() => {
             class="inline-block h-0.5 w-4 rounded-full"
             :style="{ backgroundColor: 'var(--color-chart-volume)' }"
           />
-          Volume
+          {{ $t('mesocycle.volume') }}
         </span>
         <span
           class="inline-flex items-center gap-1.5 text-xs text-text-light dark:text-text-dark"
         >
           <span class="inline-block h-0.5 w-4 rounded-full bg-accent" />
-          Intensity
+          {{ $t('mesocycle.intensity') }}
         </span>
       </div>
       <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">
@@ -177,7 +180,7 @@ const legendFocuses = computed<PeriodizationFocus[]>(() => {
             class="inline-block h-2.5 w-2.5 rounded-sm"
             :style="{ backgroundColor: FOCUS_META[focus].colorVar }"
           />
-          {{ FOCUS_META[focus].label }}
+          {{ focusLabel(focus) }}
         </span>
       </div>
     </div>

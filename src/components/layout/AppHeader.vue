@@ -68,13 +68,13 @@ const sidebar = ref<InstanceType<typeof AppSidebar> | null>(null);
         v-if="isStaging"
         class="text-[10px] font-bold ml-5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 select-none uppercase tracking-wider"
       >
-        Staging
+        {{ $t("header.staging") }}
       </span>
       <span
         v-if="isDevelopment"
         class="text-[10px] font-bold ml-5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 select-none uppercase tracking-wider"
       >
-        Development
+        {{ $t("header.development") }}
       </span>
     </a>
 
@@ -99,7 +99,7 @@ const sidebar = ref<InstanceType<typeof AppSidebar> | null>(null);
         <line x1="4" x2="20" y1="6" y2="6" />
         <line x1="4" x2="20" y1="18" y2="18" />
       </svg>
-      <span class="sr-only">Open menu</span>
+      <span class="sr-only">{{ $t("header.open_menu") }}</span>
     </button>
   </header>
 

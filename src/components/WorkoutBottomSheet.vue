@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import AppBottomSheet from "./AppBottomSheet.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
 import WorkoutTrackerPanel from "./WorkoutTrackerPanel.vue";
@@ -17,6 +18,7 @@ const {
   finishWorkout,
   discardWorkout,
 } = useActiveWorkout();
+const { t } = useI18n();
 const { timerString } = useWorkoutTimer(() => activeWorkout.value?.startTime);
 
 const confirmingDiscard = ref(false);
@@ -38,13 +40,12 @@ const onFinishClick = () => {
   }
 };
 
-const finishMessage = computed(() => {
-  const n = trackerStats.value.pending;
-  return `${n} incomplete set${n === 1 ? "" : "s"} will be discarded. Finish anyway?`;
-});
+const finishMessage = computed(() =>
+  t("workout.finish_incomplete_message", trackerStats.value.pending),
+);
 
 // ── Tracker / Calculator pager ───────────────────────────────────────────────
-const TABS = ["Tracker", "Calculator"] as const;
+const TABS = ["workout.tab_tracker", "workout.tab_calculator"] as const;
 const page = ref(0);
 const pagerEl = ref<HTMLElement | null>(null);
 
@@ -76,7 +77,7 @@ watch(
             <h2
               class="text-base font-bold text-text-h-light dark:text-text-h-dark truncate"
             >
-              {{ routine?.name || "Empty Workout" }}
+              {{ routine?.name || $t("workout.empty_workout") }}
             </h2>
           </div>
           <div
@@ -89,7 +90,7 @@ watch(
           class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-500 hover:bg-red-500/20 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25 transition-colors duration-150 cursor-pointer shrink-0"
           @click.stop="confirmingDiscard = true"
         >
-          Discard
+          {{ $t("workout.discard") }}
         </button>
       </div>
     </template>
@@ -110,7 +111,7 @@ watch(
           class="flex-1 py-2.5 text-xs font-semibold cursor-pointer transition-colors duration-150"
           @click="page = index"
         >
-          {{ tab }}
+          {{ $t(tab) }}
         </button>
       </div>
     </template>
@@ -137,32 +138,32 @@ watch(
         class="w-full py-3.5 bg-accent hover:bg-accent-hover text-bg-dark font-bold rounded-xl cursor-pointer transition-colors duration-150 text-sm tracking-wide uppercase"
         @click="onFinishClick"
       >
-        Finish Workout
+        {{ $t("workout.finish_workout") }}
       </button>
       <button
         v-else
         disabled
         class="w-full py-3.5 bg-accent/40 text-bg-dark font-bold rounded-xl text-sm tracking-wide uppercase cursor-not-allowed"
-        title="Calculation coming soon"
+        :title="$t('workout.calculation_coming_soon')"
       >
-        Calculate
+        {{ $t("workout.calculate") }}
       </button>
     </template>
   </AppBottomSheet>
 
   <ConfirmDialog
     v-model:open="confirmingDiscard"
-    title="Discard Workout?"
-    message="Are you sure you want to discard this workout? All progress will be lost."
-    confirm-label="Discard"
+    :title="$t('workout.discard_title')"
+    :message="$t('workout.discard_message')"
+    :confirm-label="$t('workout.discard')"
     @confirm="discardWorkout"
   />
 
   <ConfirmDialog
     v-model:open="confirmingFinish"
-    title="Finish Workout?"
+    :title="$t('workout.finish_title')"
     :message="finishMessage"
-    confirm-label="Finish"
+    :confirm-label="$t('workout.finish')"
     @confirm="finishWorkout"
   />
 </template>

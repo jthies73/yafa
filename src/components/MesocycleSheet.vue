@@ -9,6 +9,9 @@ import {
 import { useSortableList } from "../composables/useSortableList";
 import AppBottomSheet from "./AppBottomSheet.vue";
 import MesocycleChart from "./MesocycleChart.vue";
+import { useSystemNames } from "../composables/useSystemNames";
+
+const { focusLabel, focusShortLabel } = useSystemNames();
 
 const props = defineProps<{
   isEditing: boolean;
@@ -78,7 +81,7 @@ const save = () => {
 <template>
   <AppBottomSheet
     v-model:open="open"
-    :title="isEditing ? 'Edit Periodization' : 'Set Up Periodization'"
+    :title="isEditing ? $t('mesocycle.edit_title') : $t('mesocycle.setup_title')"
   >
     <div class="flex flex-col gap-6 px-5 py-5 select-none">
       <!-- Live preview -->
@@ -92,7 +95,7 @@ const save = () => {
         v-else
         class="rounded-xl border border-dashed border-border-light dark:border-border-dark py-6 text-center text-sm text-text-light dark:text-text-dark opacity-60"
       >
-        Add weeks or start from a preset below.
+        {{ $t("mesocycle.empty_hint") }}
       </p>
 
       <!-- Presets -->
@@ -100,17 +103,17 @@ const save = () => {
         <span
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Presets
+          {{ $t("mesocycle.presets") }}
         </span>
         <div class="flex flex-wrap gap-2">
           <button
             v-for="preset in MESOCYCLE_PRESETS"
-            :key="preset.name"
+            :key="preset.nameKey"
             type="button"
             class="rounded-lg border border-border-light dark:border-border-dark px-3 py-2 text-xs font-semibold text-text-light dark:text-text-dark transition-colors duration-150 hover:border-accent/50 hover:text-accent cursor-pointer"
             @click="applyPreset(preset)"
           >
-            {{ preset.name }}
+            {{ $t(preset.nameKey) }}
           </button>
         </div>
       </div>
@@ -120,7 +123,7 @@ const save = () => {
         <span
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Weeks
+          {{ $t("mesocycle.weeks") }}
         </span>
 
         <div ref="weekListEl" class="flex flex-col gap-2">
@@ -172,10 +175,10 @@ const save = () => {
                     ? { backgroundColor: FOCUS_META[focus].colorVar }
                     : {}
                 "
-                :title="FOCUS_META[focus].label"
+                :title="focusLabel(focus)"
                 @click="setFocus(idx, focus)"
               >
-                {{ FOCUS_META[focus].short }}
+                {{ focusShortLabel(focus) }}
               </button>
             </div>
 
@@ -183,7 +186,7 @@ const save = () => {
             <button
               type="button"
               class="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg text-text-light dark:text-text-dark opacity-40 hover:opacity-100 hover:text-red-500 dark:hover:text-red-400 cursor-pointer transition-colors duration-150"
-              title="Remove week"
+              :title="$t('mesocycle.remove_week')"
               @click="removeWeek(idx)"
             >
               <svg
@@ -212,7 +215,7 @@ const save = () => {
           class="mt-1 w-full rounded-lg border border-dashed border-border-light dark:border-border-dark py-2.5 text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60 transition-colors duration-150 hover:opacity-100 hover:border-accent/50 hover:text-accent cursor-pointer"
           @click="addWeek"
         >
-          + Add week
+          + {{ $t("mesocycle.add_week") }}
         </button>
       </div>
 
@@ -224,13 +227,13 @@ const save = () => {
         class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-3 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer"
         @click="close"
       >
-        Cancel
+        {{ $t("common.cancel") }}
       </button>
       <button
         class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent-hover cursor-pointer"
         @click="save"
       >
-        Save Changes
+        {{ $t("common.save_changes") }}
       </button>
     </template>
   </AppBottomSheet>

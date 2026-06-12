@@ -33,6 +33,17 @@ This file contains base instructions and technical guidelines for Google Gemini 
 
 ---
 
+## 🌍 Localization (i18n)
+
+- **Library**: `vue-i18n` (Composition API, `legacy: false`). Locale files live in `src/locales/` as flat JSON per language (`en.json`, `de.json`); the i18n instance is configured in `src/i18n.ts`. English is the default and strict fallback.
+- **Mandatory Coverage**: Every new or modified component must have ALL user-facing strings (template text, aria-labels, titles, placeholders, dynamic script strings) behind translation keys, with **both English and German** translations added to `en.json` and `de.json`.
+- **Key Convention**: Component-scoped snake_case keys (e.g. `settings.language_label`), shared strings under `common.*`. Use vue-i18n pluralization (`"{n} set | {n} sets"`, called as `$t('key', n)`) and interpolation (`"Adherence: {percentage}%"`) — never concatenate translated fragments in code.
+- **Data Boundary**: System UI and system constants translate via keys. User-entered data (custom exercise/routine/plan/measurement names, notes) must NEVER be translated — render raw strings. Seeded entries and system names (muscle groups, seeded exercises, the system Bodyweight type, mesocycle focus labels) translate at display time via the `useSystemNames()` composable; stored DB values stay in English.
+- **Units Are Independent**: Language selection never affects weight/length unit settings.
+- **Locale-Aware Dates**: Use the active locale (`useI18n().locale.value`) for `toLocaleDateString`/`toLocaleTimeString`, never hardcoded `"en-US"`.
+
+---
+
 ## 📂 Structural Layout & SEO
 
 - **Static Landing Page**: The landing page is contained entirely in `index.html` (including styling, logo, and 3-second redirect logic) to optimize search engine crawling and SEO before JavaScript execution.

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import type { ProgressionModelType } from "../db/types";
-import { FOCUS_META } from "../config/periodization";
 import {
   DOUBLE_PLATEAU_RESET_TRIGGER,
   DOUBLE_REGRESSION_RESET_TRIGGER,
@@ -16,12 +16,15 @@ import {
 } from "../engine/service";
 import AppBottomSheet from "./AppBottomSheet.vue";
 import { useWeightUnit } from "../composables/useWeightUnit";
+import { useSystemNames } from "../composables/useSystemNames";
 
+const { t } = useI18n();
 const {
   label: weightUnit,
   display: displayWeight,
   format: fmtWeight,
 } = useWeightUnit();
+const { focusLabel } = useSystemNames();
 
 const props = defineProps<{
   routineId: string | null;
@@ -59,17 +62,11 @@ const start = () => {
 
 // ── Formatting ────────────────────────────────────────────────────────────────
 
-const MODEL_LABELS: Record<ProgressionModelType, string> = {
-  linear: "Linear",
-  double: "Double",
-  topset_backoff: "Top Set",
-};
+const modelLabel = (model: ProgressionModelType): string =>
+  t(`exerciseConfig.model_${model === "topset_backoff" ? "topset" : model}`);
 
-const ROLE_LABELS: Record<PrescribedSet["role"], string> = {
-  straight: "Sets",
-  top: "Top set",
-  backoff: "Back-off",
-};
+const roleLabel = (role: PrescribedSet["role"]): string =>
+  t(`workout.preview.role_${role}`);
 
 const fmtMult = (m: number) => `×${Math.round(m * 100) / 100}`;
 
@@ -126,24 +123,28 @@ const baseConfigLine = (e: ExercisePreview): string => {
   }
 };
 
-const FIELD_LABELS: Record<string, string> = {
-  targetSets: "Sets",
-  targetReps: "Reps",
-  targetRpe: "RPE",
-  topSetTargetReps: "Reps",
-  topSetTargetRpe: "RPE",
-  backOffSets: "Back-offs",
+const FIELD_LABEL_KEYS: Record<string, string> = {
+  targetSets: "workout.preview.field_target_sets",
+  targetReps: "workout.preview.field_target_reps",
+  targetRpe: "workout.preview.field_target_rpe",
+  topSetTargetReps: "workout.preview.field_top_set_reps",
+  topSetTargetRpe: "workout.preview.field_top_set_rpe",
+  backOffSets: "workout.preview.field_back_off_sets",
 };
 
 const lockedLine = (e: ExercisePreview): string =>
-  (e.config?.lockedFields ?? []).map((f) => FIELD_LABELS[f] ?? f).join(", ");
+  (e.config?.lockedFields ?? [])
+    .map((f) => (FIELD_LABEL_KEYS[f] ? t(FIELD_LABEL_KEYS[f]) : f))
+    .join(", ");
 
 const resetLine = (r: ResetEffect): string =>
-  `${r.kind === "intensity" ? "Intensity" : "Volume"} reset ${fmtMult(
-    r.multiplier,
-  )} — ${r.sessionsRemaining} session${
-    r.sessionsRemaining === 1 ? "" : "s"
-  } left`;
+  t(
+    r.kind === "intensity"
+      ? "workout.preview.intensity_reset"
+      : "workout.preview.volume_reset",
+    { mult: fmtMult(r.multiplier), count: r.sessionsRemaining },
+    r.sessionsRemaining,
+  );
 
 const streakNotes = (e: ExercisePreview): string[] => {
   if (!e.config) return [];
@@ -151,24 +152,37 @@ const streakNotes = (e: ExercisePreview): string[] => {
   if (e.config.progressionModel === "double") {
     if (e.regressionStreak > 0)
       notes.push(
-        `Regression streak ${e.regressionStreak}/${DOUBLE_REGRESSION_RESET_TRIGGER}`,
+        t("workout.preview.regression_streak", {
+          current: e.regressionStreak,
+          max: DOUBLE_REGRESSION_RESET_TRIGGER,
+        }),
       );
     if (e.plateauStreak > 0)
       notes.push(
-        `Plateau streak ${e.plateauStreak}/${DOUBLE_PLATEAU_RESET_TRIGGER}`,
+        t("workout.preview.plateau_streak", {
+          current: e.plateauStreak,
+          max: DOUBLE_PLATEAU_RESET_TRIGGER,
+        }),
       );
   } else if (e.failureStreak > 0) {
-    notes.push(`Failure streak ${e.failureStreak}/${LP_FAILURE_RESET_TRIGGER}`);
+    notes.push(
+      t("workout.preview.failure_streak", {
+        current: e.failureStreak,
+        max: LP_FAILURE_RESET_TRIGGER,
+      }),
+    );
   }
   return notes;
 };
 
 const e1rmLine = (e: ExercisePreview): string => {
-  if (e.workingE1rm === null) return "Not calibrated";
-  const working = `Working ${fmtWeight(e.workingE1rm)}`;
+  if (e.workingE1rm === null) return t("workout.preview.not_calibrated");
+  const working = t("workout.preview.working_e1rm", {
+    weight: fmtWeight(e.workingE1rm),
+  });
   return e.observedE1rm === null
     ? working
-    : `${working} · observed ≈ ${fmtWeight(e.observedE1rm)}`;
+    : `${working} · ${t("workout.preview.observed_e1rm", { weight: fmtWeight(e.observedE1rm) })}`;
 };
 </script>
 
@@ -179,7 +193,7 @@ const e1rmLine = (e: ExercisePreview): string => {
         <p
           class="text-xs font-semibold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50 mb-0.5"
         >
-          Workout Preview
+          {{ $t("workout.preview.title") }}
         </p>
         <h2
           class="text-lg font-bold text-text-h-light dark:text-text-h-dark truncate"
@@ -206,29 +220,28 @@ const e1rmLine = (e: ExercisePreview): string => {
             <span
               class="px-2.5 py-1 rounded-md bg-accent/15 text-accent text-xs font-bold uppercase tracking-wider"
             >
-              {{ FOCUS_META[preview.mesocycle.focus].label }}
+              {{ focusLabel(preview.mesocycle.focus) }}
             </span>
             <span
               class="text-xs font-bold text-text-h-light dark:text-text-h-dark"
             >
-              Week {{ preview.mesocycle.weekIndex + 1 }} of
-              {{ preview.mesocycle.weekCount }}
+              {{ $t("workout.preview.week_of", { current: preview.mesocycle.weekIndex + 1, total: preview.mesocycle.weekCount }) }}
             </span>
           </div>
           <div class="flex items-center justify-between gap-3 text-xs">
             <span class="text-text-light dark:text-text-dark opacity-60">
-              Mesocycle modifiers
+              {{ $t("workout.preview.meso_modifiers") }}
             </span>
             <span
               class="font-mono font-semibold text-text-h-light dark:text-text-h-dark"
             >
-              Volume {{ fmtMult(preview.mesocycle.modifiers.volume) }} ·
-              Intensity {{ fmtMult(preview.mesocycle.modifiers.intensity) }}
+              {{ $t("workout.preview.volume_label") }} {{ fmtMult(preview.mesocycle.modifiers.volume) }} ·
+              {{ $t("workout.preview.intensity_label") }} {{ fmtMult(preview.mesocycle.modifiers.intensity) }}
             </span>
           </div>
           <div class="flex items-center justify-between gap-3 text-xs">
             <span class="text-text-light dark:text-text-dark opacity-60">
-              Workouts this week
+              {{ $t("workout.preview.workouts_this_week") }}
             </span>
             <span
               class="font-mono font-semibold text-text-h-light dark:text-text-h-dark"
@@ -241,7 +254,7 @@ const e1rmLine = (e: ExercisePreview): string => {
           v-else
           class="text-xs text-text-light dark:text-text-dark opacity-60 px-1"
         >
-          No periodization configured — base exercise targets apply.
+          {{ $t("workout.preview.no_periodization") }}
         </p>
 
         <!-- Per-exercise calculation breakdown -->
@@ -260,7 +273,7 @@ const e1rmLine = (e: ExercisePreview): string => {
               v-if="e.config"
               class="shrink-0 px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/5 text-xs font-bold text-text-light dark:text-text-dark"
             >
-              {{ MODEL_LABELS[e.config.progressionModel] }}
+              {{ modelLabel(e.config.progressionModel) }}
             </span>
           </div>
 
@@ -274,7 +287,7 @@ const e1rmLine = (e: ExercisePreview): string => {
               <span
                 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-45"
               >
-                {{ ROLE_LABELS[g.set.role] }}
+                {{ roleLabel(g.set.role) }}
               </span>
               <span
                 class="font-mono text-sm font-semibold text-text-h-light dark:text-text-h-dark"
@@ -287,7 +300,7 @@ const e1rmLine = (e: ExercisePreview): string => {
             v-else
             class="text-xs italic text-text-light dark:text-text-dark opacity-50"
           >
-            No progression config — tracker rows start empty.
+            {{ $t("workout.preview.no_progression") }}
           </p>
 
           <!-- Calculation inputs -->
@@ -297,7 +310,7 @@ const e1rmLine = (e: ExercisePreview): string => {
           >
             <div class="flex items-center justify-between gap-3">
               <span class="text-text-light dark:text-text-dark opacity-60"
-                >Base config</span
+                >{{ $t("workout.preview.base_config") }}</span
               >
               <span class="font-mono text-text-h-light dark:text-text-h-dark">
                 {{ baseConfigLine(e) }}
@@ -305,7 +318,7 @@ const e1rmLine = (e: ExercisePreview): string => {
             </div>
             <div class="flex items-center justify-between gap-3">
               <span class="text-text-light dark:text-text-dark opacity-60"
-                >e1RM</span
+                >{{ $t("workout.preview.e1rm") }}</span
               >
               <span class="font-mono text-text-h-light dark:text-text-h-dark">
                 {{ e1rmLine(e) }}
@@ -316,7 +329,7 @@ const e1rmLine = (e: ExercisePreview): string => {
               class="flex items-center justify-between gap-3"
             >
               <span class="text-text-light dark:text-text-dark opacity-60"
-                >Locked fields</span
+                >{{ $t("workout.preview.locked_fields") }}</span
               >
               <span class="font-mono text-text-h-light dark:text-text-h-dark">
                 {{ lockedLine(e) }}
@@ -340,7 +353,7 @@ const e1rmLine = (e: ExercisePreview): string => {
               v-if="e.workingE1rm === null"
               class="text-text-light dark:text-text-dark opacity-60 italic"
             >
-              First session calibrates this exercise — weights appear next time.
+              {{ $t("workout.preview.first_session_calibrates") }}
             </p>
           </div>
         </div>
@@ -354,13 +367,13 @@ const e1rmLine = (e: ExercisePreview): string => {
         class="flex-1 py-3 text-sm font-bold rounded-lg cursor-pointer transition-colors duration-150 border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:bg-surface-light dark:hover:bg-surface-dark"
         @click="open = false"
       >
-        Cancel
+        {{ $t("common.cancel") }}
       </button>
       <button
         class="flex-1 py-3 text-sm font-bold rounded-lg cursor-pointer transition-colors duration-150 bg-accent hover:bg-accent-hover text-bg-dark"
         @click="start"
       >
-        Start Workout
+        {{ $t("workout.preview.start_workout") }}
       </button>
     </template>
   </AppBottomSheet>

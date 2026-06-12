@@ -49,7 +49,7 @@ const routineStats = (routine: Routine) => {
           v-if="plan.active"
           class="px-2 py-1 text-xs font-semibold bg-accent/20 text-accent rounded-md uppercase tracking-wider"
         >
-          Active
+          {{ $t("planCard.active_badge") }}
         </span>
       </div>
       <p
@@ -65,7 +65,7 @@ const routineStats = (routine: Routine) => {
       <h4
         class="text-xs font-semibold text-text-light dark:text-text-dark uppercase tracking-wider mb-3 opacity-60"
       >
-        Routines
+        {{ $t("planCard.routines") }}
       </h4>
       <ul class="space-y-2">
         <li
@@ -82,15 +82,19 @@ const routineStats = (routine: Routine) => {
           <span
             class="text-xs font-mono text-text-light dark:text-text-dark opacity-50 shrink-0"
           >
-            {{ routineStats(routine).exercises }}ex ·
-            {{ routineStats(routine).sets }}sets
+            {{
+              $t("planCard.routine_stats", {
+                exercises: routineStats(routine).exercises,
+                sets: routineStats(routine).sets,
+              })
+            }}
           </span>
         </li>
         <li
           v-if="routines.length === 0"
           class="text-sm italic opacity-50 text-text-light dark:text-text-dark"
         >
-          No routines configured for this plan.
+          {{ $t("planCard.no_routines") }}
         </li>
       </ul>
     </div>

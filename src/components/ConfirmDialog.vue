@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { watch, onMounted, onUnmounted } from "vue";
 
+// Label defaults are resolved in the template so they react to locale changes.
 withDefaults(
   defineProps<{
     title?: string;
@@ -10,10 +11,7 @@ withDefaults(
     danger?: boolean;
   }>(),
   {
-    title: "Are you sure?",
     message: "",
-    confirmLabel: "Delete",
-    cancelLabel: "Cancel",
     danger: true,
   },
 );
@@ -80,7 +78,7 @@ const confirm = () => {
             <h2
               class="text-lg font-bold text-text-h-light dark:text-text-h-dark"
             >
-              {{ title }}
+              {{ title ?? $t("confirm.are_you_sure") }}
             </h2>
             <p
               v-if="message"
@@ -95,7 +93,7 @@ const confirm = () => {
               class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-2.5 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent"
               @click="open = false"
             >
-              {{ cancelLabel }}
+              {{ cancelLabel ?? $t("common.cancel") }}
             </button>
             <button
               class="flex-1 rounded-lg py-2.5 text-sm font-bold transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1"
@@ -106,7 +104,7 @@ const confirm = () => {
               "
               @click="confirm"
             >
-              {{ confirmLabel }}
+              {{ confirmLabel ?? $t("common.delete") }}
             </button>
           </div>
         </div>

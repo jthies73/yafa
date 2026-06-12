@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { liveQuery } from "dexie";
 import { db } from "../db/db";
 import type {
@@ -20,6 +21,10 @@ import { useSortableList } from "../composables/useSortableList";
 import AppFab from "./AppFab.vue";
 import AnalyticsChartCard from "./AnalyticsChartCard.vue";
 import AnalyticsChartFormSheet from "./AnalyticsChartFormSheet.vue";
+import { useSystemNames } from "../composables/useSystemNames";
+
+const { t } = useI18n();
+const { exerciseName, measurementTypeName, muscleLabel } = useSystemNames();
 
 // --- Global timeframe toggle (persisted, applies to every chart) ---
 const TIMEFRAME_STORAGE_KEY = "yafa:analyticsTimeframe";
@@ -74,18 +79,17 @@ onUnmounted(() => subscriptions.forEach((s) => s.unsubscribe()));
 const titleFor = (config: AnalyticsChartConfig): string => {
   switch (config.sourceKind) {
     case "global":
-      return "All Training";
+      return t("analytics.scope_global");
     case "muscle":
-      return config.muscleGroup ?? "Muscle Group";
-    case "exercise":
-      return (
-        exercisesById.value[config.exerciseId ?? ""]?.name ?? "Unknown Exercise"
-      );
-    case "measurement":
-      return (
-        measurementTypesById.value[config.measurementTypeId ?? ""]?.name ??
-        "Unknown Measurement"
-      );
+      return config.muscleGroup ? muscleLabel(config.muscleGroup) : t("analytics.scope_muscle");
+    case "exercise": {
+      const ex = exercisesById.value[config.exerciseId ?? ""];
+      return ex ? exerciseName(ex) : t("analytics.scope_unknown_exercise");
+    }
+    case "measurement": {
+      const ms = measurementTypesById.value[config.measurementTypeId ?? ""];
+      return ms ? measurementTypeName(ms) : t("analytics.scope_unknown_measurement");
+    }
   }
 };
 
@@ -146,10 +150,10 @@ const handleDelete = async () => {
         <h1
           class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
         >
-          Analytics
+          {{ $t("analytics.title") }}
         </h1>
         <p class="text-sm text-text-light dark:text-text-dark opacity-70 mt-1">
-          Track your progression over time.
+          {{ $t("analytics.subtitle") }}
         </p>
       </div>
 
@@ -167,7 +171,7 @@ const handleDelete = async () => {
           "
           @click="setTimeframe(option.value)"
         >
-          {{ option.label }}
+          {{ $t(option.labelKey) }}
         </button>
       </div>
     </div>
@@ -206,11 +210,10 @@ const handleDelete = async () => {
       <p
         class="text-sm font-semibold text-text-h-light dark:text-text-h-dark mb-1"
       >
-        No charts yet
+        {{ $t("analytics.no_charts") }}
       </p>
       <p class="text-xs text-text-light dark:text-text-dark opacity-50">
-        Create your first chart to visualize volume, performance and body
-        measurements.
+        {{ $t("analytics.empty_hint") }}
       </p>
     </div>
 
@@ -228,7 +231,7 @@ const handleDelete = async () => {
     </div>
 
     <!-- New chart FAB -->
-    <AppFab label="New Chart" @click="openCreate" />
+    <AppFab :label="$t('analytics.new_chart')" @click="openCreate" />
 
     <AnalyticsChartFormSheet
       v-model:open="showForm"

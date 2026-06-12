@@ -102,9 +102,9 @@ const weeksOf = (focuses: PeriodizationFocus[]): MesocycleWeek[] =>
   focuses.map((focus) => ({ focus }));
 
 /** One-click starting points surfaced as preset buttons in the editor. */
-export const MESOCYCLE_PRESETS: { name: string; weeks: MesocycleWeek[] }[] = [
+export const MESOCYCLE_PRESETS: { nameKey: string; weeks: MesocycleWeek[] }[] = [
   {
-    name: "Classic 6-week peak",
+    nameKey: "mesocycle.preset_classic",
     weeks: weeksOf([
       "hypertrophy",
       "hypertrophy",
@@ -115,7 +115,7 @@ export const MESOCYCLE_PRESETS: { name: string; weeks: MesocycleWeek[] }[] = [
     ]),
   },
   {
-    name: "4-week accumulation",
+    nameKey: "mesocycle.preset_accumulation",
     weeks: weeksOf(["hypertrophy", "hypertrophy", "hypertrophy", "deload"]),
   },
 ];

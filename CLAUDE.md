@@ -24,6 +24,15 @@
 - **State Persistence / Database**: **Dexie.js** (IndexedDB wrapper) for robust, offline persistence of all app-related state (workouts, exercises, routines, RPE grids).
 - **Navigation Persistence**: Always save and restore the `fullPath` (e.g. `/plans/123`) of the current page to the persistent app state instead of just the route name, ensuring dynamic routes with parameters remain persistent across reloads.
 
+## Localization (i18n)
+
+- **Library**: `vue-i18n` (Composition API, `legacy: false`). Locale files live in `src/locales/` as flat JSON per language (`en.json`, `de.json`); the i18n instance is configured in `src/i18n.ts`. English is the default and strict fallback.
+- **Mandatory coverage**: Every new or modified component must have ALL user-facing strings (template text, aria-labels, titles, placeholders, dynamic script strings) behind translation keys, with **both English and German** translations added to `en.json` and `de.json`.
+- **Key convention**: Component-scoped snake_case keys (e.g. `settings.language_label`), shared strings under `common.*`. Use vue-i18n pluralization (`"{n} set | {n} sets"`, called as `$t('key', n)`) and interpolation (`"Adherence: {percentage}%"`) — never concatenate translated fragments in code.
+- **Data boundary**: System UI and system constants translate via keys. User-entered data (custom exercise/routine/plan/measurement names, notes) must NEVER be translated — render raw strings. Seeded entries and system names (muscle groups, seeded exercises, the system Bodyweight type, mesocycle focus labels) translate at display time via the `useSystemNames()` composable; stored DB values stay in English.
+- **Units are independent**: Language selection never affects weight/length unit settings.
+- **Locale-aware dates**: Use the active locale (`useI18n().locale.value`) for `toLocaleDateString`/`toLocaleTimeString`, never hardcoded `"en-US"`.
+
 ## Project Structure
 
 - `index.html` — static landing page with inline styles, logo, and 3-second redirect logic (kept static for SEO before JS execution)

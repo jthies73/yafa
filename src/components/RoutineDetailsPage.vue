@@ -10,6 +10,8 @@ import type {
   RoutineExerciseConfig,
   ProgressionParams,
 } from "../db/types";
+import { useI18n } from "vue-i18n";
+import { useSystemNames } from "../composables/useSystemNames";
 import { useSortableList } from "../composables/useSortableList";
 import {
   updateRoutine,
@@ -27,6 +29,8 @@ import ConfirmDialog from "./ConfirmDialog.vue";
 
 const props = defineProps<{ id: string }>();
 const router = useRouter();
+const { t } = useI18n();
+const { exerciseName } = useSystemNames();
 
 // --- Live data ---
 const routine = ref<Routine | null>(null);
@@ -105,7 +109,7 @@ const showConfirm = ref(false);
 
 const deleteMessage = computed(() =>
   routine.value
-    ? `Delete "${routine.value.name}" and its exercise configuration? This cannot be undone.`
+    ? t("routineDetails.delete_message", { name: routine.value.name })
     : "",
 );
 
@@ -154,7 +158,7 @@ const initialConfig = computed(() => {
 
 const handleSelectExercise = async (exercise: Exercise) => {
   configExerciseId.value = exercise.id;
-  configExerciseName.value = exercise.name;
+  configExerciseName.value = exerciseName(exercise);
   editingIndex.value = null;
   showPicker.value = false;
   await nextTick();
@@ -164,8 +168,10 @@ const handleSelectExercise = async (exercise: Exercise) => {
 const editExercise = (idx: number) => {
   const rEx = orderedExercises.value[idx];
   configExerciseId.value = rEx.exerciseId;
-  configExerciseName.value =
-    exercisesMap.value[rEx.exerciseId]?.name ?? "Exercise";
+  const ex = exercisesMap.value[rEx.exerciseId];
+  configExerciseName.value = ex
+    ? exerciseName(ex)
+    : t("routineDetails.unknown_exercise");
   editingIndex.value = idx;
   showConfig.value = true;
 };
@@ -243,12 +249,14 @@ useSortableList(exerciseListEl, {
 
 // --- Display helpers ---
 const getProgressionLabel = (config?: RoutineExerciseConfig) => {
-  if (!config) return "Not configured";
-  if (config.progressionModel === "linear") return "Linear Progression";
-  if (config.progressionModel === "double") return "Double Progression";
+  if (!config) return t("routineDetails.not_configured");
+  if (config.progressionModel === "linear")
+    return t("routineDetails.progression_linear");
+  if (config.progressionModel === "double")
+    return t("routineDetails.progression_double");
   if (config.progressionModel === "topset_backoff")
-    return "Top Set + Back-Off Progression";
-  return "Custom";
+    return t("routineDetails.progression_topset");
+  return t("routineDetails.custom");
 };
 
 const getSummary = (config?: RoutineExerciseConfig) => {
@@ -286,7 +294,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
-        Back
+        {{ $t("common.back") }}
       </button>
 
       <div
@@ -303,7 +311,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
         <div class="flex items-center gap-2 self-start md:shrink-0">
           <button
             class="p-2.5 rounded-lg border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:text-accent hover:bg-surface-light-hover dark:hover:bg-surface-dark-hover cursor-pointer transition-colors duration-150"
-            title="Rename routine"
+            :title="$t('routineDetails.rename_routine')"
             @click="showRoutineForm = true"
           >
             <svg
@@ -325,7 +333,7 @@ const getSummary = (config?: RoutineExerciseConfig) => {
           </button>
           <button
             class="p-2.5 rounded-lg border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:text-red-500 hover:bg-surface-light-hover dark:hover:bg-surface-dark-hover cursor-pointer transition-colors duration-150"
-            title="Delete routine"
+            :title="$t('routineDetails.delete_routine')"
             @click="showConfirm = true"
           >
             <svg
@@ -369,14 +377,14 @@ const getSummary = (config?: RoutineExerciseConfig) => {
         <h2
           class="text-xl font-bold text-text-h-light dark:text-text-h-dark mb-4"
         >
-          Exercises
+          {{ $t("routineDetails.exercises") }}
         </h2>
 
         <div
           v-if="orderedExercises.length === 0"
           class="text-sm italic text-text-light dark:text-text-dark opacity-60"
         >
-          No exercises configured for this routine.
+          {{ $t("routineDetails.no_exercises") }}
         </div>
 
         <div
@@ -417,7 +425,11 @@ const getSummary = (config?: RoutineExerciseConfig) => {
               <div
                 class="font-bold text-sm text-text-h-light dark:text-text-h-dark truncate"
               >
-                {{ exercisesMap[rEx.exerciseId]?.name || "Unknown Exercise" }}
+                {{
+                  exercisesMap[rEx.exerciseId]
+                    ? exerciseName(exercisesMap[rEx.exerciseId])
+                    : $t("routineDetails.unknown_exercise")
+                }}
               </div>
               <div
                 class="text-xs text-text-light dark:text-text-dark opacity-55 mt-0.5"
@@ -477,22 +489,26 @@ const getSummary = (config?: RoutineExerciseConfig) => {
       <h2
         class="text-xl font-bold text-text-h-light dark:text-text-h-dark mb-1"
       >
-        Routine not found
+        {{ $t("routineDetails.not_found_title") }}
       </h2>
       <p class="text-sm text-text-light dark:text-text-dark opacity-70 mb-4">
-        The requested routine could not be located in the database.
+        {{ $t("routineDetails.not_found_message") }}
       </p>
       <button
         class="px-4 py-2 bg-accent hover:bg-accent-hover text-bg-dark text-xs font-bold rounded-lg cursor-pointer transition-colors duration-150 tracking-wider uppercase"
         @click="goBack"
       >
-        Go Back
+        {{ $t("common.back") }}
       </button>
     </div>
   </div>
 
   <!-- Add Exercise FAB -->
-  <AppFab v-if="routine" label="Add Exercise" @click="showPicker = true" />
+  <AppFab
+    v-if="routine"
+    :label="$t('routineDetails.add_exercise')"
+    @click="showPicker = true"
+  />
 
   <ExercisePickerSheet
     v-model:open="showPicker"
@@ -526,9 +542,9 @@ const getSummary = (config?: RoutineExerciseConfig) => {
 
   <ConfirmDialog
     v-model:open="showConfirm"
-    title="Delete routine?"
+    :title="$t('routineDetails.delete_title')"
     :message="deleteMessage"
-    confirm-label="Delete"
+    :confirm-label="$t('common.delete')"
     @confirm="confirmDeleteRoutine"
   />
 </template>

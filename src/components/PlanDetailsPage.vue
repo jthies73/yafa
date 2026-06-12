@@ -22,7 +22,9 @@ import {
   type PlanInput,
   type RoutineInput,
 } from "../db/repository";
-import { FOCUS_META, FOCUS_ORDER } from "../config/periodization";
+import { useI18n } from "vue-i18n";
+import { useSystemNames } from "../composables/useSystemNames";
+import { FOCUS_ORDER } from "../config/periodization";
 import AppFab from "./AppFab.vue";
 import PlanFormSheet from "./PlanFormSheet.vue";
 import RoutineFormSheet from "./RoutineFormSheet.vue";
@@ -35,6 +37,8 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
+const { t } = useI18n();
+const { exerciseName, focusLabel } = useSystemNames();
 
 const plan = ref<Plan | null>(null);
 const routines = ref<Routine[]>([]);
@@ -99,11 +103,13 @@ const setActiveState = async () => {
 
 const getProgressionType = (config?: RoutineExerciseConfig) => {
   if (!config) return "—";
-  if (config.progressionModel === "linear") return "Linear Progression";
-  if (config.progressionModel === "double") return "Double Progression";
+  if (config.progressionModel === "linear")
+    return t("planDetails.progression_linear");
+  if (config.progressionModel === "double")
+    return t("planDetails.progression_double");
   if (config.progressionModel === "topset_backoff")
-    return "Top Set + Back-Off Progression";
-  return "Custom Progression";
+    return t("planDetails.progression_topset");
+  return t("planDetails.progression_custom");
 };
 
 const getSetsAndReps = (config?: RoutineExerciseConfig) => {
@@ -120,9 +126,12 @@ const getSetsAndReps = (config?: RoutineExerciseConfig) => {
   }
   if (model === "topset_backoff") {
     const p = params as TopSetProgressionParams;
-    return `1 × ${p.topSetTargetReps} + ${p.backOffSets} back-offs`;
+    return t("planDetails.topset_summary", {
+      reps: p.topSetTargetReps,
+      sets: p.backOffSets,
+    });
   }
-  return "Custom";
+  return t("planDetails.custom");
 };
 
 const handleRoutineClick = (routine: Routine) => {
@@ -169,7 +178,7 @@ const mesocycleBreakdown = computed(() => {
     count: weeks.filter((w) => w.focus === focus).length,
   }))
     .filter((g) => g.count > 0)
-    .map((g) => `${g.count} ${FOCUS_META[g.focus].label}`)
+    .map((g) => `${g.count} ${focusLabel(g.focus)}`)
     .join(" · ");
 });
 
@@ -228,8 +237,8 @@ const routineStats = (routine: Routine) => {
 const requestDeletePlan = () => {
   if (!plan.value) return;
   requestConfirm(
-    "Delete plan?",
-    `Delete "${plan.value.name}"? Routines used only by this plan will also be removed. This cannot be undone.`,
+    t("planDetails.delete_plan_title"),
+    t("planDetails.delete_plan_message", { name: plan.value.name }),
     async () => {
       await deletePlan(props.id);
       router.push({ name: "plans" });
@@ -260,7 +269,7 @@ const requestDeletePlan = () => {
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
-        Back
+        {{ $t("common.back") }}
       </button>
 
       <!-- Plan Header with Title and Action Buttons -->
@@ -279,7 +288,7 @@ const requestDeletePlan = () => {
               v-if="plan.active"
               class="px-2.5 py-1.5 text-xs font-bold bg-accent/20 text-accent rounded-md uppercase tracking-wider shrink-0"
             >
-              Active Plan
+              {{ $t("planDetails.active_plan") }}
             </span>
           </div>
           <p
@@ -293,7 +302,7 @@ const requestDeletePlan = () => {
             class="px-4 py-2 text-xs font-bold rounded-lg cursor-pointer transition-colors duration-150 tracking-wider uppercase border bg-accent hover:bg-accent-hover text-bg-dark border-transparent self-start"
             @click="setActiveState"
           >
-            Set as Active Plan
+            {{ $t("planDetails.set_active") }}
           </button>
         </div>
 
@@ -301,7 +310,7 @@ const requestDeletePlan = () => {
         <div class="flex items-center gap-2 self-start md:shrink-0">
           <button
             class="p-2.5 rounded-lg border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:text-accent hover:bg-surface-light-hover dark:hover:bg-surface-dark-hover cursor-pointer transition-colors duration-150"
-            title="Edit plan"
+            :title="$t('planDetails.edit_plan')"
             @click="openEditPlan"
           >
             <svg
@@ -323,7 +332,7 @@ const requestDeletePlan = () => {
           </button>
           <button
             class="p-2.5 rounded-lg border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:text-red-500 hover:bg-surface-light-hover dark:hover:bg-surface-dark-hover cursor-pointer transition-colors duration-150"
-            title="Delete plan"
+            :title="$t('planDetails.delete_plan')"
             @click="requestDeletePlan"
           >
             <svg
@@ -368,7 +377,7 @@ const requestDeletePlan = () => {
         <h2
           class="text-xl font-bold text-text-h-light dark:text-text-h-dark mb-4"
         >
-          Periodization
+          {{ $t("planDetails.periodization") }}
         </h2>
 
         <!-- Populated — the whole card opens the editor -->
@@ -385,7 +394,11 @@ const requestDeletePlan = () => {
               <div
                 class="text-sm font-bold text-text-h-light dark:text-text-h-dark"
               >
-                {{ plan.mesocycle.length }}-week mesocycle
+                {{
+                  $t("planDetails.mesocycle_length", {
+                    n: plan.mesocycle.length,
+                  })
+                }}
               </div>
               <div
                 class="text-xs text-text-light dark:text-text-dark opacity-60 truncate"
@@ -403,13 +416,12 @@ const requestDeletePlan = () => {
           @click="openEditMesocycle"
         >
           <p class="text-sm text-text-light dark:text-text-dark opacity-60">
-            Plan a mesocycle to shape volume and intensity across training
-            weeks.
+            {{ $t("planDetails.mesocycle_empty_hint") }}
           </p>
           <span
             class="px-4 py-2 text-xs font-bold rounded-lg transition-colors duration-150 tracking-wider uppercase bg-accent text-bg-dark group-hover:bg-accent-hover"
           >
-            Set up periodization
+            {{ $t("planDetails.setup_periodization") }}
           </span>
         </div>
       </div>
@@ -418,14 +430,14 @@ const requestDeletePlan = () => {
         <h2
           class="text-xl font-bold text-text-h-light dark:text-text-h-dark mb-4"
         >
-          Routines Configuration
+          {{ $t("planDetails.routines_section") }}
         </h2>
 
         <div
           v-if="routines.length === 0"
           class="text-sm italic text-text-light dark:text-text-dark opacity-60"
         >
-          No routines configured for this plan.
+          {{ $t("planDetails.no_routines") }}
         </div>
 
         <div
@@ -451,8 +463,12 @@ const requestDeletePlan = () => {
               <span
                 class="text-xs font-mono text-text-light dark:text-text-dark opacity-50 shrink-0"
               >
-                {{ routineStats(routine).exercises }}ex ·
-                {{ routineStats(routine).sets }}sets
+                {{
+                  $t("planDetails.routine_stats", {
+                    exercises: routineStats(routine).exercises,
+                    sets: routineStats(routine).sets,
+                  })
+                }}
               </span>
             </div>
 
@@ -462,7 +478,7 @@ const requestDeletePlan = () => {
                 v-if="routine.exercises.length === 0"
                 class="text-sm italic opacity-50"
               >
-                No exercises configured for this routine.
+                {{ $t("planDetails.no_exercises") }}
               </div>
 
               <div v-else class="flex flex-col gap-4">
@@ -482,8 +498,9 @@ const requestDeletePlan = () => {
                         class="font-bold text-text-h-light dark:text-text-h-dark text-sm sm:text-base break-words"
                       >
                         {{
-                          exercisesMap[rEx.exerciseId]?.name ||
-                          "Loading Exercise..."
+                          exercisesMap[rEx.exerciseId]
+                            ? exerciseName(exercisesMap[rEx.exerciseId])
+                            : $t("common.loading")
                         }}
                       </h4>
                     </div>
@@ -532,21 +549,25 @@ const requestDeletePlan = () => {
       <h2
         class="text-xl font-bold text-text-h-light dark:text-text-h-dark mb-1"
       >
-        Plan not found
+        {{ $t("planDetails.not_found_title") }}
       </h2>
       <p class="text-sm text-text-light dark:text-text-dark opacity-70 mb-4">
-        The requested training plan could not be located in the database.
+        {{ $t("planDetails.not_found_message") }}
       </p>
       <button
         class="px-4 py-2 bg-accent hover:bg-accent-hover text-bg-dark text-xs font-bold rounded-lg cursor-pointer transition-colors duration-150 tracking-wider uppercase"
         @click="goBack"
       >
-        Go to Plans
+        {{ $t("planDetails.go_to_plans") }}
       </button>
     </div>
 
     <!-- FAB Button -->
-    <AppFab v-if="plan" label="New Routine" @click="handleAddRoutine" />
+    <AppFab
+      v-if="plan"
+      :label="$t('planDetails.new_routine')"
+      @click="handleAddRoutine"
+    />
 
     <PlanFormSheet
       v-model:open="showPlanForm"

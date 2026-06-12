@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import AppBottomSheet from "./AppBottomSheet.vue";
 import { exportData, importData, type BackupFile } from "../db/backup";
+
+const { t } = useI18n();
 
 const open = defineModel<boolean>("open", { required: true });
 
@@ -36,7 +39,7 @@ const exportBackup = async () => {
     a.click();
     URL.revokeObjectURL(url);
     status.value = "done";
-    message.value = "Backup exported.";
+    message.value = t("importExport.backup_exported");
   } catch (err) {
     status.value = "error";
     message.value = (err as Error).message;
@@ -76,12 +79,15 @@ const close = () => {
 </script>
 
 <template>
-  <AppBottomSheet v-model:open="open" title="Import / Export" z-index="z-[55]">
+  <AppBottomSheet
+    v-model:open="open"
+    :title="$t('importExport.title')"
+    z-index="z-[55]"
+  >
     <div class="flex flex-col gap-6 px-5 py-5">
       <!-- Description -->
       <p class="text-sm text-text-light dark:text-text-dark opacity-70">
-        YAFA stores everything on this device. Export a backup to keep your data
-        safe or move it to another device, and import it to restore.
+        {{ $t("importExport.description") }}
       </p>
 
       <!-- Export -->
@@ -89,7 +95,7 @@ const close = () => {
         <span
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Export
+          {{ $t("importExport.export") }}
         </span>
         <button
           class="flex items-center justify-center gap-2 rounded-lg border border-border-light dark:border-border-dark py-3 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer"
@@ -110,7 +116,7 @@ const close = () => {
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          Export backup
+          {{ $t("importExport.export_backup") }}
         </button>
       </div>
 
@@ -119,7 +125,7 @@ const close = () => {
         <span
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Import
+          {{ $t("importExport.import") }}
         </span>
         <input
           ref="fileInput"
@@ -150,29 +156,39 @@ const close = () => {
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
-          Choose backup file
+          {{ $t("importExport.choose_backup_file") }}
         </button>
 
         <!-- Step 2: confirm destructive replace -->
         <div v-else class="flex flex-col gap-3">
-          <p class="text-sm text-red-500">
-            Importing <span class="font-semibold">{{ pendingFile.name }}</span>
-            replaces all current data on this device. This cannot be undone.
-          </p>
+          <i18n-t
+            keypath="importExport.import_warning"
+            tag="p"
+            scope="global"
+            class="text-sm text-red-500"
+          >
+            <template #file>
+              <span class="font-semibold">{{ pendingFile.name }}</span>
+            </template>
+          </i18n-t>
           <div class="flex gap-3">
             <button
               class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-2.5 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer disabled:opacity-40"
               :disabled="status === 'importing'"
               @click="pendingFile = null"
             >
-              Cancel
+              {{ $t("common.cancel") }}
             </button>
             <button
               class="flex-1 rounded-lg bg-red-500 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-red-500/90 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
               :disabled="status === 'importing'"
               @click="confirmImport"
             >
-              {{ status === "importing" ? "Importing…" : "Replace data" }}
+              {{
+                status === "importing"
+                  ? $t("importExport.importing")
+                  : $t("importExport.replace_data")
+              }}
             </button>
           </div>
         </div>
@@ -193,7 +209,7 @@ const close = () => {
         class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-3 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer"
         @click="close"
       >
-        Close
+        {{ $t("common.close") }}
       </button>
     </template>
   </AppBottomSheet>

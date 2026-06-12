@@ -4,6 +4,9 @@ import { liveQuery } from "dexie";
 import { db } from "../db/db";
 import type { Exercise } from "../db/types";
 import AppBottomSheet from "./AppBottomSheet.vue";
+import { useSystemNames } from "../composables/useSystemNames";
+
+const { exerciseName, muscleLabel } = useSystemNames();
 
 const open = defineModel<boolean>("open", { required: true });
 
@@ -53,7 +56,7 @@ const createNew = () => {
 </script>
 
 <template>
-  <AppBottomSheet v-model:open="open" title="Select Exercise">
+  <AppBottomSheet v-model:open="open" :title="$t('exercisePicker.title')">
     <template #subheader>
       <div class="px-5 py-3 shrink-0">
         <div class="relative">
@@ -79,7 +82,7 @@ const createNew = () => {
           <input
             v-model="searchQuery"
             type="search"
-            placeholder="Search exercises..."
+            :placeholder="$t('exercisePicker.search_placeholder')"
             class="w-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg py-2.5 pl-9 pr-4 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50"
           />
         </div>
@@ -109,29 +112,27 @@ const createNew = () => {
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
       </span>
-      Create new exercise
+      {{ $t("exercisePicker.create_new") }}
     </button>
 
-    <!-- Empty DB state -->
     <div
       v-if="allExercises.length === 0"
       class="flex flex-col items-center justify-center py-16 text-center px-8"
     >
       <p class="text-sm text-text-light dark:text-text-dark opacity-50 mb-1">
-        No exercises in your library yet.
+        {{ $t("exercisePicker.no_exercises") }}
       </p>
       <p class="text-xs text-text-light dark:text-text-dark opacity-35">
-        Tap "Create new exercise" above to add your first one.
+        {{ $t("exercisePicker.empty_hint") }}
       </p>
     </div>
 
-    <!-- No search results -->
     <div
       v-else-if="filteredExercises.length === 0"
       class="flex flex-col items-center justify-center py-16"
     >
       <p class="text-sm text-text-light dark:text-text-dark opacity-50">
-        No exercises match "{{ searchQuery }}"
+        {{ $t("exercisePicker.no_matches", { query: searchQuery }) }}
       </p>
     </div>
 
@@ -146,20 +147,20 @@ const createNew = () => {
         <div
           class="truncate font-semibold text-sm text-text-h-light dark:text-text-h-dark"
         >
-          {{ exercise.name }}
+          {{ exerciseName(exercise) }}
         </div>
         <div
           v-if="exercise.secondaryMuscleGroups?.length"
           class="mt-0.5 truncate text-xs text-text-light dark:text-text-dark opacity-55"
         >
-          {{ exercise.secondaryMuscleGroups.join(", ") }}
+          {{ exercise.secondaryMuscleGroups.map(muscleLabel).join(", ") }}
         </div>
       </div>
 
       <span
         class="shrink-0 rounded-md border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-2 py-0.5 text-xs text-text-light dark:text-text-dark"
       >
-        {{ exercise.primaryMuscleGroups?.join(", ") }}
+        {{ exercise.primaryMuscleGroups?.map(muscleLabel).join(", ") }}
       </span>
     </div>
 

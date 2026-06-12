@@ -78,7 +78,7 @@ defineExpose({
       <button
         type="button"
         class="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg text-text-light dark:text-text-dark opacity-40 hover:opacity-100 hover:text-red-500 dark:hover:text-red-400 cursor-pointer transition-colors duration-150"
-        title="Remove exercise"
+        :title="$t('workout.tracker.remove_exercise_tooltip')"
         @click="emit('request-delete-exercise')"
       >
         <svg
@@ -114,17 +114,17 @@ defineExpose({
             <span class="w-5 shrink-0" />
             <span
               class="flex-1 text-center text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-40"
-              >Reps</span
+              >{{ $t("exerciseConfig.reps") }}</span
             >
             <span class="text-xs opacity-0">×</span>
             <span
               class="flex-1 text-center text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-40"
-              >Weight</span
+              >{{ $t("measurementTypeForm.category_weight") }}</span
             >
             <span class="text-xs opacity-0">@</span>
             <span
               class="w-14 shrink-0 text-center text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-40"
-              >RPE</span
+              >{{ $t("exerciseConfig.target_rpe") }}</span
             >
             <span class="w-9 shrink-0" />
           </div>
@@ -151,7 +151,7 @@ defineExpose({
             class="mt-1 w-full rounded-lg border border-dashed border-border-light dark:border-border-dark py-2 text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50 transition-colors duration-150 hover:opacity-100 hover:border-accent/50 hover:text-accent cursor-pointer"
             @click="emit('add-set')"
           >
-            + Add set
+            {{ $t("workout.tracker.add_set") }}
           </button>
         </div>
       </div>

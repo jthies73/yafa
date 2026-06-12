@@ -8,8 +8,8 @@ import {
   type Timeframe,
 } from "../analytics/service";
 import {
-  BUCKET_LABELS,
-  METRIC_LABELS,
+  bucketLabel,
+  metricLabel,
   chartTypeFor,
   tooltipLines,
   tooltipTitle,
@@ -83,7 +83,7 @@ const chartType = computed(() => chartTypeFor(props.config));
 
 const subtitle = computed(
   () =>
-    `${METRIC_LABELS[props.config.metric]} · ${BUCKET_LABELS[props.config.bucket]}`,
+    `${metricLabel(props.config.metric)} · ${bucketLabel(props.config.bucket)}`,
 );
 
 const tooltipContext = computed(() => ({

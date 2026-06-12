@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { MUSCLE_GROUPS } from "../utils/constants";
+import { useSystemNames } from "../composables/useSystemNames";
+
+const { muscleLabel } = useSystemNames();
 
 const props = defineProps<{
   mode: "primary" | "secondary" | null;
@@ -49,8 +52,8 @@ const isSelected = (group: string) => {
       <h3 class="font-bold text-lg text-text-h-light dark:text-text-h-dark">
         {{
           mode === "primary"
-            ? "Primary Muscle Group"
-            : "Secondary Muscle Groups"
+            ? $t("exerciseForm.primary_label")
+            : $t("exerciseForm.secondary_label")
         }}
       </h3>
     </div>
@@ -74,7 +77,7 @@ const isSelected = (group: string) => {
               : 'text-text-h-light dark:text-text-h-dark'
           "
         >
-          {{ group }}
+          {{ muscleLabel(group) }}
         </span>
         <svg
           v-if="isSelected(group)"

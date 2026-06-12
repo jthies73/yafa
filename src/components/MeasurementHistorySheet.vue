@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { liveQuery } from "dexie";
 import { db } from "../db/db";
 import type {
@@ -21,6 +22,7 @@ import {
   type BucketPoint,
 } from "../analytics/compute";
 import { guardWeightKey } from "../utils/numericInput";
+import { useSystemNames } from "../composables/useSystemNames";
 import AnalyticsChart from "./AnalyticsChart.vue";
 import AppBottomSheet from "./AppBottomSheet.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
@@ -35,7 +37,9 @@ const emit = defineEmits<{
   (e: "deleted"): void;
 }>();
 
+const { t, locale } = useI18n();
 const { format } = useMeasurementFormat();
+const { measurementTypeName } = useSystemNames();
 
 // --- Entries (live) ---
 const entries = ref<MeasurementEntry[]>([]);
@@ -144,12 +148,12 @@ const onLog = async () => {
 // --- History formatting ---
 const formatTimestamp = (epoch: number): string => {
   const d = new Date(epoch);
-  const date = d.toLocaleDateString(undefined, {
+  const date = d.toLocaleDateString(locale.value, {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
-  const time = d.toLocaleTimeString(undefined, {
+  const time = d.toLocaleTimeString(locale.value, {
     hour: "numeric",
     minute: "2-digit",
   });
@@ -181,8 +185,11 @@ const onConfirm = () => {
 
 const requestDeleteEntry = (entry: MeasurementEntry) => {
   requestConfirm(
-    "Delete entry?",
-    `Delete the ${format(entry.value, category.value)} entry from ${formatTimestamp(entry.timestamp)}?`,
+    t("measurementHistory.delete_entry_title"),
+    t("measurementHistory.delete_entry_message", {
+      value: format(entry.value, category.value),
+      date: formatTimestamp(entry.timestamp),
+    }),
     () => deleteMeasurementEntry(entry.id),
   );
 };
@@ -191,8 +198,8 @@ const requestDeleteType = () => {
   const type = props.type;
   if (!type || type.isSystem) return;
   requestConfirm(
-    "Delete measurement?",
-    `Delete "${type.name}" and all its logged entries? This cannot be undone.`,
+    t("measurementHistory.delete_type_title"),
+    t("measurementHistory.delete_type_message", { name: type.name }),
     async () => {
       await deleteMeasurementType(type.id);
       open.value = false;
@@ -209,13 +216,13 @@ const requestDeleteType = () => {
         <h2
           class="truncate text-lg font-bold text-text-h-light dark:text-text-h-dark"
         >
-          {{ type?.name }}
+          {{ type ? measurementTypeName(type) : "" }}
         </h2>
         <span
           v-if="type?.isSystem"
           class="shrink-0 rounded-md bg-accent/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent"
         >
-          System
+          {{ $t("measurementHistory.system_badge") }}
         </span>
       </div>
     </template>
@@ -229,10 +236,10 @@ const requestDeleteType = () => {
         <h3
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50"
         >
-          Trend
+          {{ $t("measurementHistory.trend") }}
         </h3>
         <span class="text-xs text-text-light dark:text-text-dark opacity-40">
-          Last 3 months
+          {{ $t("measurementHistory.last_3_months") }}
         </span>
       </div>
       <AnalyticsChart
@@ -280,7 +287,7 @@ const requestDeleteType = () => {
         class="w-full rounded-lg bg-accent py-2.5 text-sm font-bold uppercase tracking-wider text-bg-dark transition-colors duration-150 hover:bg-accent-hover cursor-pointer"
         @click="onLog"
       >
-        Log Measurement
+        {{ $t("measurementHistory.log_measurement") }}
       </button>
     </div>
 
@@ -289,14 +296,14 @@ const requestDeleteType = () => {
       <h3
         class="mb-2 text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50"
       >
-        History
+        {{ $t("measurementHistory.history") }}
       </h3>
 
       <div
         v-if="entries.length === 0"
         class="py-6 text-center text-sm italic text-text-light dark:text-text-dark opacity-50"
       >
-        No entries logged yet.
+        {{ $t("measurementHistory.no_entries") }}
       </div>
 
       <ul v-else class="flex flex-col">
@@ -317,7 +324,7 @@ const requestDeleteType = () => {
           </div>
           <button
             class="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg text-text-light dark:text-text-dark opacity-40 hover:opacity-100 hover:text-red-500 dark:hover:text-red-400 cursor-pointer transition-colors duration-150"
-            aria-label="Delete entry"
+            :aria-label="$t('measurementHistory.delete_entry')"
             @click="requestDeleteEntry(entry)"
           >
             <svg
@@ -346,7 +353,7 @@ const requestDeleteType = () => {
         class="mt-5 w-full cursor-pointer rounded-lg border border-red-500/30 py-2.5 text-sm font-bold text-red-500 transition-colors duration-150 hover:bg-red-500/10"
         @click="requestDeleteType"
       >
-        Delete Measurement
+        {{ $t("measurementHistory.delete_measurement") }}
       </button>
 
       <div class="h-4"></div>

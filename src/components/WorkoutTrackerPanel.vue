@@ -9,6 +9,9 @@ import ExercisePickerSheet from "./ExercisePickerSheet.vue";
 import ExerciseFormSheet from "./ExerciseFormSheet.vue";
 import RpeSheet from "./RpeSheet.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const {
   cards,
@@ -45,16 +48,16 @@ let pendingDelete: (() => void) | null = null;
 
 const requestDeleteSet = (cardIndex: number, setIndex: number) => {
   const card = cards.value[cardIndex];
-  confirmTitle.value = "Delete set?";
-  confirmMessage.value = `Remove set ${setIndex + 1} from ${exerciseName(card.exerciseId)}?`;
+  confirmTitle.value = t("workout.tracker.delete_set_title");
+  confirmMessage.value = t("workout.tracker.delete_set_msg", { set: setIndex + 1, exercise: exerciseName(card.exerciseId) });
   pendingDelete = () => deleteSet(card, setIndex);
   confirmOpen.value = true;
 };
 
 const requestDeleteExercise = (cardIndex: number) => {
   const card = cards.value[cardIndex];
-  confirmTitle.value = "Remove exercise?";
-  confirmMessage.value = `Remove ${exerciseName(card.exerciseId)} and its ${card.sets.length} set${card.sets.length === 1 ? "" : "s"} from this workout?`;
+  confirmTitle.value = t("workout.tracker.delete_exercise_title");
+  confirmMessage.value = t("workout.tracker.delete_exercise_msg", { exercise: exerciseName(card.exerciseId), count: card.sets.length }, card.sets.length);
   pendingDelete = () => deleteExercise(card);
   confirmOpen.value = true;
 };
@@ -162,7 +165,7 @@ const onSelectRpe = (rpe: string) => {
       v-else
       class="text-center text-sm text-text-light dark:text-text-dark opacity-50 py-6"
     >
-      No exercises yet — add one to get started.
+      {{ $t("workout.tracker.empty") }}
     </p>
 
     <!-- Add exercise -->
@@ -171,7 +174,7 @@ const onSelectRpe = (rpe: string) => {
       class="w-full rounded-xl border border-dashed border-border-light dark:border-border-dark py-4 text-sm font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60 transition-colors duration-150 hover:opacity-100 hover:border-accent/50 hover:text-accent cursor-pointer"
       @click="showPicker = true"
     >
-      + Add exercise
+      {{ $t("workout.tracker.add_exercise") }}
     </button>
   </div>
 
@@ -197,7 +200,7 @@ const onSelectRpe = (rpe: string) => {
     v-model:open="confirmOpen"
     :title="confirmTitle"
     :message="confirmMessage"
-    confirm-label="Delete"
+    :confirm-label="$t('common.delete')"
     @confirm="onConfirmDelete"
   />
 </template>

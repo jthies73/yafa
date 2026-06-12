@@ -53,7 +53,7 @@ const dismissKeyboard = (e: KeyboardEvent) => {
 <template>
   <AppBottomSheet
     v-model:open="open"
-    :title="isEditing ? 'Edit Plan' : 'New Plan'"
+    :title="isEditing ? $t('planForm.edit_plan') : $t('planForm.new_plan')"
   >
     <div class="flex flex-col gap-6 px-5 py-5">
       <!-- Name -->
@@ -61,12 +61,12 @@ const dismissKeyboard = (e: KeyboardEvent) => {
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Plan Name
+          {{ $t("planForm.plan_name") }}
         </label>
         <input
           v-model="name"
           type="text"
-          placeholder="e.g. Powerbuilding Split"
+          :placeholder="$t('planForm.plan_name_placeholder')"
           class="rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
           @keyup.enter="dismissKeyboard"
         />
@@ -77,15 +77,15 @@ const dismissKeyboard = (e: KeyboardEvent) => {
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Description
-          <span class="ml-1 font-normal normal-case opacity-60"
-            >(optional)</span
-          >
+          {{ $t("planForm.description") }}
+          <span class="ml-1 font-normal normal-case opacity-60">{{
+            $t("planForm.optional")
+          }}</span>
         </label>
         <textarea
           v-model="description"
           rows="3"
-          placeholder="What is this plan designed to achieve?"
+          :placeholder="$t('planForm.description_placeholder')"
           class="resize-none rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
         ></textarea>
       </div>
@@ -99,10 +99,10 @@ const dismissKeyboard = (e: KeyboardEvent) => {
           <div
             class="text-sm font-semibold text-text-h-light dark:text-text-h-dark"
           >
-            Set as active plan
+            {{ $t("planForm.set_as_active") }}
           </div>
           <div class="text-xs text-text-light dark:text-text-dark opacity-60">
-            Replaces the currently active plan
+            {{ $t("planForm.replaces_active") }}
           </div>
         </div>
         <button
@@ -111,7 +111,7 @@ const dismissKeyboard = (e: KeyboardEvent) => {
           :class="
             setActive ? 'bg-accent' : 'bg-border-light dark:bg-border-dark'
           "
-          aria-label="Toggle set as active plan"
+          :aria-label="$t('planForm.toggle_set_as_active')"
           @click="setActive = !setActive"
         >
           <span
@@ -129,14 +129,16 @@ const dismissKeyboard = (e: KeyboardEvent) => {
         class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-3 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer"
         @click="close"
       >
-        Cancel
+        {{ $t("common.cancel") }}
       </button>
       <button
         class="flex-1 rounded-lg bg-accent py-3 text-sm font-bold text-bg-dark transition-colors duration-150 hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
         :disabled="!canSave"
         @click="save"
       >
-        {{ isEditing ? "Save Changes" : "Create Plan" }}
+        {{
+          isEditing ? $t("planForm.save_changes") : $t("planForm.create_plan")
+        }}
       </button>
     </template>
   </AppBottomSheet>

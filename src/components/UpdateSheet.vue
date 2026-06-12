@@ -25,12 +25,11 @@ const close = () => {
 </script>
 
 <template>
-  <AppBottomSheet v-model:open="open" title="Update" z-index="z-[55]">
+  <AppBottomSheet v-model:open="open" :title="$t('update.title')" z-index="z-[55]">
     <div class="flex flex-col gap-5 px-5 py-5">
       <!-- Description -->
       <p class="text-sm text-text-light dark:text-text-dark opacity-70">
-        YAFA is a fully offline PWA — it runs entirely on your device. Updating
-        fetches the latest app code and runs any pending data migrations.
+        {{ $t("update.description") }}
       </p>
 
       <!-- Version summary -->
@@ -41,7 +40,7 @@ const close = () => {
           <span
             class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
           >
-            Current version
+            {{ $t("update.current_version") }}
           </span>
           <span
             class="text-sm font-mono font-semibold text-text-h-light dark:text-text-h-dark"
@@ -53,7 +52,7 @@ const close = () => {
           <span
             class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
           >
-            Latest version
+            {{ $t("update.latest_version") }}
           </span>
           <span
             class="text-sm font-mono font-semibold text-text-h-light dark:text-text-h-dark"
@@ -70,9 +69,9 @@ const close = () => {
           <span
             class="w-4 h-4 rounded-full border-2 border-accent border-t-transparent animate-spin shrink-0"
           />
-          <span class="text-sm text-text-light dark:text-text-dark"
-            >Checking for updates…</span
-          >
+          <span class="text-sm text-text-light dark:text-text-dark">
+            {{ $t("update.checking") }}
+          </span>
         </template>
 
         <!-- Up to date -->
@@ -92,7 +91,7 @@ const close = () => {
             <path d="M20 6 9 17l-5-5" />
           </svg>
           <span class="text-sm text-text-h-light dark:text-text-h-dark">
-            The application is up to date.
+            {{ $t("update.up_to_date") }}
           </span>
         </template>
 
@@ -115,7 +114,7 @@ const close = () => {
             <path d="M3 20h18" />
           </svg>
           <span class="text-sm text-text-h-light dark:text-text-h-dark">
-            A new version is available.
+            {{ $t("update.available") }}
           </span>
         </template>
 
@@ -125,7 +124,7 @@ const close = () => {
             class="w-4 h-4 rounded-full border-2 border-accent border-t-transparent animate-spin shrink-0"
           />
           <span class="text-sm text-text-light dark:text-text-dark">
-            Updating…
+            {{ $t("update.updating") }}
           </span>
         </template>
 
@@ -148,7 +147,7 @@ const close = () => {
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <span class="text-sm text-red-500">
-            {{ errorMessage ?? "Update failed." }}
+            {{ errorMessage ?? $t("update.failed") }}
           </span>
         </template>
       </div>
@@ -161,14 +160,16 @@ const close = () => {
         :disabled="status === 'updating'"
         @click="runUpdate"
       >
-        {{ status === "updating" ? "Updating…" : "Update now" }}
+        {{
+          status === "updating" ? $t("update.updating") : $t("update.update_now")
+        }}
       </button>
       <button
         v-else
         class="flex-1 rounded-lg border border-border-light dark:border-border-dark py-3 text-sm font-bold text-text-light dark:text-text-dark transition-colors duration-150 hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer"
         @click="close"
       >
-        Close
+        {{ $t("common.close") }}
       </button>
     </template>
   </AppBottomSheet>
