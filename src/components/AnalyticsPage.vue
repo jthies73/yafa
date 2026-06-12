@@ -141,7 +141,7 @@ const handleDelete = async () => {
 <template>
   <div class="p-6 relative min-h-full flex flex-col gap-6 pb-24">
     <!-- Header with the global timeframe toggle (top-right, applies to all charts) -->
-    <div class="flex items-start justify-between gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
       <div class="min-w-0">
         <h1
           class="text-3xl font-bold tracking-tight text-text-h-light dark:text-text-h-dark"
@@ -154,7 +154,7 @@ const handleDelete = async () => {
       </div>
 
       <div
-        class="flex shrink-0 gap-1 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-1"
+        class="flex self-start sm:self-auto shrink-0 gap-1 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-1"
       >
         <button
           v-for="option in TIMEFRAME_OPTIONS"
