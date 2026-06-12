@@ -50,9 +50,9 @@ export const MATRIX_SMOOTHING_KERNEL: { offset: number; factor: number }[] = [
 // against the same RPE it was computed from.
 export const DEFAULT_TARGET_RPE = 8;
 
-// Smallest weight step a barbell can actually be loaded to (a 1.25 kg plate
+// Smallest weight step a barbell can actually be loaded to (ususally a 1.25 kg plate
 // pair). All prescribed weights are rounded to this.
-export const LOADABLE_INCREMENT_KG = 2.5;
+export const LOADABLE_INCREMENT_KG = 0.1;
 
 // ---- Reset triggers ----
 
