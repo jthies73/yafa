@@ -101,12 +101,27 @@ const toLocalInput = (epoch: number): string => {
   )}:${pad(d.getMinutes())}`;
 };
 
-// datetime-local <input> bound to the entry timestamp; defaults to "now".
-const entryTimeLocal = ref(toLocalInput(Date.now()));
+// Epoch milliseconds are the source of truth for the entry time; it defaults to
+// "now" with full precision. The datetime-local <input> below only has minute
+// resolution, so it's a display proxy (see entryTimeLocal): editing it keeps the
+// existing sub-minute component, and an untouched field logs the live timestamp.
+// This keeps rapid same-minute entries distinct and correctly ordered — two
+// truncated-to-the-minute timestamps would collide on the trend chart.
+const entryTimestamp = ref(Date.now());
+
+const entryTimeLocal = computed<string>({
+  get: () => toLocalInput(entryTimestamp.value),
+  set: (local) => {
+    const minute = new Date(local).getTime();
+    if (Number.isFinite(minute)) {
+      entryTimestamp.value = minute + (entryTimestamp.value % 60_000);
+    }
+  },
+});
 
 const resetEntryForm = () => {
   pendingValue.value = null;
-  entryTimeLocal.value = toLocalInput(Date.now());
+  entryTimestamp.value = Date.now();
 };
 
 watch(
@@ -130,13 +145,10 @@ const onLog = async () => {
   if (!props.type) return;
   const base = commit(); // flush buffer → pendingValue, returns source-of-truth value
   if (base == null || base <= 0) return;
-  const ts = entryTimeLocal.value
-    ? new Date(entryTimeLocal.value).getTime()
-    : Date.now();
   await logMeasurementEntry({
     measurementTypeId: props.type.id,
     value: base,
-    timestamp: Number.isFinite(ts) ? ts : Date.now(),
+    timestamp: entryTimestamp.value,
   });
   resetEntryForm();
 };
