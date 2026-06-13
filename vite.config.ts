@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => ({
         navigateFallback: "index.html",
         // Don't let a new worker take over until the user asks for it.
         skipWaiting: false,
-        clientsClaim: false,
+        clientsClaim: true,
       },
       manifest: {
         name: "Y A F A",

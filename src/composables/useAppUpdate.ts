@@ -73,11 +73,25 @@ export function useAppUpdate() {
     status.value = "updating";
     errorMessage.value = null;
     try {
+      // If the service worker hasn't downloaded the update yet, force it to.
+      if (!needRefresh.value && "serviceWorker" in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          await reg.update();
+          // Poll until the service worker finishes downloading and goes into the waiting state.
+          let attempts = 0;
+          while (!needRefresh.value && attempts < 40) {
+            await new Promise((resolve) => setTimeout(resolve, 250));
+            attempts++;
+          }
+        }
+      }
+
       // Activating the new service worker automatically reloads the page.
-      // If needRefresh is false (e.g. dev environment), fallback to a manual reload.
       if (needRefresh.value) {
         await applyCodeUpdate();
       } else {
+        // Fallback for dev environment or if service workers are disabled.
         location.reload();
       }
     } catch (err) {

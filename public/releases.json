@@ -1,6 +1,10 @@
 {
-  "latest": "0.5.0",
+  "latest": "0.5.1",
   "releases": [
+    {
+      "version": "0.5.1",
+      "notes": "- Improve Update functionality."
+    },
     {
       "version": "0.5.0",
       "notes": "- Add Installation instructions page for mobile devices."
