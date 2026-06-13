@@ -200,11 +200,19 @@ const e1rmLine = (e: ExercisePreview): string => {
         <!-- Mesocycle position -->
         <div
           v-if="preview.mesocycle"
-          class="rounded-xl border border-accent/25 bg-accent/5 p-4 flex flex-col gap-2.5"
+          class="rounded-xl border p-4 flex flex-col gap-2.5"
+          :style="{
+            borderColor: `color-mix(in srgb, ${FOCUS_META[preview.mesocycle.focus].colorVar} 25%, transparent)`,
+            backgroundColor: `color-mix(in srgb, ${FOCUS_META[preview.mesocycle.focus].colorVar} 5%, transparent)`,
+          }"
         >
           <div class="flex items-center justify-between gap-3">
             <span
-              class="px-2.5 py-1 rounded-md bg-accent/15 text-accent text-xs font-bold uppercase tracking-wider"
+              class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider"
+              :style="{
+                color: FOCUS_META[preview.mesocycle.focus].colorVar,
+                backgroundColor: `color-mix(in srgb, ${FOCUS_META[preview.mesocycle.focus].colorVar} 15%, transparent)`,
+              }"
             >
               {{ FOCUS_META[preview.mesocycle.focus].label }}
             </span>
