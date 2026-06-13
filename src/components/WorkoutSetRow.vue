@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import type { PrescribedSet } from "../engine/prescription";
 import {
   guardRepsKey,
@@ -120,10 +120,11 @@ function onRepsKeydown(e: KeyboardEvent) {
   guardRepsKey(e);
 }
 
-function onWeightKeydown(e: KeyboardEvent) {
+async function onWeightKeydown(e: KeyboardEvent) {
   if (e.key === "Enter") {
     e.preventDefault();
     commitWeight(); // flush the buffer to the kg model before validating
+    await nextTick(); // wait for the defineModel prop update to round-trip
     tryComplete();
     return;
   }
