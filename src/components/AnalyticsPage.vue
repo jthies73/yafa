@@ -72,6 +72,7 @@ onMounted(() => {
 onUnmounted(() => subscriptions.forEach((s) => s.unsubscribe()));
 
 const titleFor = (config: AnalyticsChartConfig): string => {
+  if (config.name) return config.name;
   switch (config.sourceKind) {
     case "global":
       return "All Training";

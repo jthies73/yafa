@@ -220,6 +220,7 @@ export type AnalyticsBucket = "session" | "week" | "month" | "mesocycle";
 // the field matching `sourceKind` is set.
 export interface AnalyticsChartConfig {
   id: string;
+  name?: string;
   sourceKind: AnalyticsSourceKind;
   muscleGroup?: string; // sourceKind === "muscle"
   exerciseId?: string; // sourceKind === "exercise"

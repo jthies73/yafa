@@ -24,6 +24,7 @@ export type ChartConfigInput = Omit<
  */
 function toRecordFields(input: ChartConfigInput): ChartConfigInput {
   return {
+    name: input.name,
     sourceKind: input.sourceKind,
     muscleGroup: input.sourceKind === "muscle" ? input.muscleGroup : undefined,
     exerciseId: input.sourceKind === "exercise" ? input.exerciseId : undefined,

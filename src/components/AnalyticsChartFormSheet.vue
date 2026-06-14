@@ -33,6 +33,7 @@ const emit = defineEmits<{
 }>();
 
 // --- Form state ---
+const chartName = ref("");
 const sourceKind = ref<AnalyticsSourceKind>("global");
 const muscleGroup = ref<string | null>(null);
 const exerciseId = ref<string | null>(null);
@@ -44,6 +45,7 @@ const bucket = ref<AnalyticsBucket>("week");
 watch(open, (isOpen) => {
   if (!isOpen) return;
   const editing = props.editing;
+  chartName.value = editing?.name ?? "";
   sourceKind.value = editing?.sourceKind ?? "global";
   muscleGroup.value = editing?.muscleGroup ?? null;
   exerciseId.value = editing?.exerciseId ?? null;
@@ -228,6 +230,7 @@ const canSave = computed(() => {
 const save = () => {
   if (!canSave.value) return;
   emit("save", {
+    name: chartName.value.trim() || undefined,
     sourceKind: sourceKind.value,
     muscleGroup: muscleGroup.value ?? undefined,
     exerciseId: exerciseId.value ?? undefined,
@@ -260,6 +263,21 @@ const confirmDeleteOpen = ref(false);
       </div>
     </template>
     <div class="flex flex-col gap-5 px-5 py-4">
+      <!-- Chart Name -->
+      <div class="flex flex-col gap-2">
+        <label
+          class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+        >
+          Chart Name <span class="normal-case font-normal opacity-60 ml-1">(optional)</span>
+        </label>
+        <input
+          v-model="chartName"
+          type="text"
+          placeholder="e.g. Weekly Squat Volume, My Bodyweight"
+          class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50"
+        />
+      </div>
+
       <!-- Data source -->
       <div class="flex flex-col gap-2">
         <label

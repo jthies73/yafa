@@ -5,6 +5,7 @@ import type {
   MeasurementType,
   Routine,
   Plan,
+  AnalyticsChartConfig,
 } from "./types";
 
 const measurementTypes: MeasurementType[] = [
@@ -12,6 +13,18 @@ const measurementTypes: MeasurementType[] = [
     id: BODYWEIGHT_TYPE_ID,
     name: "Bodyweight",
     category: "WEIGHT",
+    created_at: Date.now(),
+  },
+];
+
+const defaultCharts: AnalyticsChartConfig[] = [
+  {
+    id: "default-workouts-per-week",
+    name: "Workouts Per Week",
+    sourceKind: "global",
+    metric: "workouts",
+    bucket: "week",
+    order: 0,
     created_at: Date.now(),
   },
 ];
@@ -223,12 +236,19 @@ export async function seedDatabase() {
   try {
     await db.transaction(
       "rw",
-      [db.exercises, db.routines, db.plans, db.measurementTypes],
+      [
+        db.exercises,
+        db.routines,
+        db.plans,
+        db.measurementTypes,
+        db.analyticsCharts,
+      ],
       async () => {
         await db.exercises.bulkAdd(exercises);
         await db.routines.bulkAdd(routines);
         await db.plans.add(plan);
         await db.measurementTypes.bulkAdd(measurementTypes);
+        await db.analyticsCharts.bulkAdd(defaultCharts);
       },
     );
     console.log("YAFA: Seeding completed successfully!");
