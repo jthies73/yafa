@@ -15,6 +15,7 @@ concurrency:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   lint:
@@ -114,20 +115,29 @@ jobs:
     if: github.event_name == 'release'
     environment: production
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: dist-production
           path: dist/
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/jthies73/yafa-pwa:latest
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa_deploy
           chmod 600 ~/.ssh/id_rsa_deploy
           ssh-keyscan -H ${{ secrets.VPS_IP }} >> ~/.ssh/known_hosts
-      - name: Sync dist to production
+      - name: Deploy via Docker Compose
         run: |
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/id_rsa_deploy -o StrictHostKeyChecking=no" \
-            --rsync-path="sudo rsync" \
-            dist/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }}:/opt/yafa-pwa/html/
+          ssh -i ~/.ssh/id_rsa_deploy -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} "cd /opt/yafa-pwa && sudo docker compose pull web && sudo docker compose up -d"
