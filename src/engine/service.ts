@@ -11,7 +11,6 @@ import type {
   Workout,
 } from "../db/types";
 import { FOCUS_MODIFIERS, type FocusModifiers } from "../config/periodization";
-import { BODYWEIGHT_TYPE_ID, latestEntry } from "../db/measurements";
 import { QUALIFYING_MAX_REPS } from "./config";
 import {
   applyMatrixUpdates,
@@ -49,28 +48,6 @@ export function freshProgressionState(exerciseId: string): ProgressionState {
 
 const effectiveMatrix = (exercise: Exercise): RpeMatrix =>
   exercise.rpeMatrix ?? DEFAULT_RPE_MATRIX;
-
-/** Bodyweight contribution to every rep of this exercise (0 for pure loads). */
-const bodyweightLoadFor = (exercise: Exercise, bodyweight: number): number =>
-  bodyweight * (exercise.bodyweightFactor ?? 0);
-
-/**
- * Lift logged sets (added weight) into the engine's TOTAL-system-load frame by
- * folding the bodyweight contribution into both target and actual weight. The
- * matrix, e1RM seeding and progression all reason about total load; the stored
- * Set keeps the added weight the lifter entered.
- */
-const toTotalLoadSets = (
-  sets: LoggedSet[],
-  bodyweightLoad: number,
-): LoggedSet[] =>
-  bodyweightLoad === 0
-    ? sets
-    : sets.map((s) => ({
-        ...s,
-        targetWeight: s.targetWeight + bodyweightLoad,
-        actualWeight: s.actualWeight + bodyweightLoad,
-      }));
 
 /**
  * Cold-start seed for the working e1RM, derived from the first logged session:
@@ -145,9 +122,6 @@ export async function previewWorkout(
   const routine = await db.routines.get(routineId);
   if (!routine) return null;
 
-  const bwEntry = await latestEntry(BODYWEIGHT_TYPE_ID);
-  const bodyweight = bwEntry?.value ?? 0;
-
   // The mesocycle week comes from the plan this routine belongs to — the
   // active plan wins when a routine is shared across plans.
   const plans = await db.plans.toArray();
@@ -206,7 +180,6 @@ export async function previewWorkout(
             state,
             matrix: effectiveMatrix(exercise),
             week,
-            bodyweightLoad: bodyweightLoadFor(exercise, bodyweight),
           })
         : null,
     });
@@ -237,20 +210,15 @@ export async function prescribeWorkout(
  */
 export async function applyWorkoutResults(workout: Workout): Promise<void> {
   const routine = await db.routines.get(workout.routineId);
-  const bwEntry = await latestEntry(BODYWEIGHT_TYPE_ID);
-  const bodyweight = bwEntry?.value ?? 0;
 
   await db.transaction("rw", [db.exercises, db.progressionStates], async () => {
     for (const workoutExercise of workout.exercises) {
       const exercise = await db.exercises.get(workoutExercise.exerciseId);
       if (!exercise) continue;
 
-      // Engine math is in total system load — fold bodyweight in before sorting
-      // so e1RM seeding, matrix learning and progression all see honest loads.
-      const sets = toTotalLoadSets(
-        workoutExercise.sets,
-        bodyweightLoadFor(exercise, bodyweight),
-      ).sort((a, b) => a.timestamp - b.timestamp);
+      const sets = [...workoutExercise.sets].sort(
+        (a, b) => a.timestamp - b.timestamp,
+      );
       if (!sets.length) continue;
       // Duplicate slots of the same movement share the first slot's config.
       const config = routine?.exercises.find(

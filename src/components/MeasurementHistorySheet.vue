@@ -201,7 +201,7 @@ const requestDeleteEntry = (entry: MeasurementEntry) => {
 
 const requestDeleteType = () => {
   const type = props.type;
-  if (!type || type.isSystem) return;
+  if (!type) return;
   requestConfirm(
     "Delete measurement?",
     `Delete "${type.name}" and all its logged entries? This cannot be undone.`,
@@ -223,12 +223,6 @@ const requestDeleteType = () => {
         >
           {{ type?.name }}
         </h2>
-        <span
-          v-if="type?.isSystem"
-          class="shrink-0 rounded-md bg-accent/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent"
-        >
-          System
-        </span>
       </div>
     </template>
 
@@ -352,9 +346,9 @@ const requestDeleteType = () => {
         </li>
       </ul>
 
-      <!-- Delete the whole measurement type (non-system only) -->
+      <!-- Delete the whole measurement type -->
       <button
-        v-if="type && !type.isSystem"
+        v-if="type"
         class="mt-5 w-full cursor-pointer rounded-lg border border-red-500/30 py-2.5 text-sm font-bold text-red-500 transition-colors duration-150 hover:bg-red-500/10"
         @click="requestDeleteType"
       >

@@ -1,5 +1,4 @@
 import { db } from "../db/db";
-import { BODYWEIGHT_TYPE_ID } from "../db/measurements";
 import type { AnalyticsChartConfig, MeasurementCategory } from "../db/types";
 import {
   computeMeasurementSeries,
@@ -88,13 +87,9 @@ export async function buildChartSeries(
     };
   }
 
-  const [workouts, exercises, bodyweightEntries] = await Promise.all([
+  const [workouts, exercises] = await Promise.all([
     db.workouts.toArray(),
     db.exercises.toArray(),
-    db.measurementEntries
-      .where("measurementTypeId")
-      .equals(BODYWEIGHT_TYPE_ID)
-      .toArray(),
   ]);
 
   const scope: WorkoutScope =
@@ -111,9 +106,6 @@ export async function buildChartSeries(
     bucket: config.bucket,
     workouts: workouts.filter((w) => w.startTime >= cutoff),
     exercisesById: new Map(exercises.map((e) => [e.id, e])),
-    // Bodyweight entries deliberately ignore the timeframe cutoff: a workout
-    // inside the window may need a weigh-in logged before it.
-    bodyweightEntries,
     mesocycle,
   });
 

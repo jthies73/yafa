@@ -2,7 +2,7 @@ import type { RpeMatrix } from "../db/types";
 import { matrixPct, weightFromE1rm } from "./matrix";
 import { RPE_MIN, RPE_MAX, LOOKUP_REPS_MIN, LOOKUP_REPS_MAX } from "./config";
 
-// Pure solvers — all weights in total-system-load kg frame (added weight + bodyweight contribution).
+// Pure solvers — all weights in kg.
 
 /** Weight (kg) for a given e1RM, rep count, and RPE. */
 export function solveWeight(

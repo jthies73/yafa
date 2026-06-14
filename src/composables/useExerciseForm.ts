@@ -8,7 +8,6 @@ export function useExerciseForm(
   const name = ref("");
   const primaryMuscleGroups = ref<string[]>([]);
   const secondaryTags = ref<string[]>([]);
-  const bodyweightFactor = ref(0);
   const notes = ref("");
 
   watch(
@@ -20,7 +19,6 @@ export function useExerciseForm(
         ...(initial.value?.primaryMuscleGroups ?? []),
       ];
       secondaryTags.value = [...(initial.value?.secondaryMuscleGroups ?? [])];
-      bodyweightFactor.value = initial.value?.bodyweightFactor ?? 0;
       notes.value = initial.value?.notes ?? "";
     },
     { immediate: true },
@@ -45,14 +43,12 @@ export function useExerciseForm(
     primaryMuscleGroups: primaryMuscleGroups.value,
     secondaryMuscleGroups: secondaryTags.value,
     notes: notes.value,
-    bodyweightFactor: Number(bodyweightFactor.value) || 0,
   });
 
   return {
     name,
     primaryMuscleGroups,
     secondaryTags,
-    bodyweightFactor,
     notes,
     canSave,
     removePrimaryTag,

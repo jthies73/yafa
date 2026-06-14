@@ -27,11 +27,7 @@ onMounted(() => {
     return { allTypes, allEntries };
   }).subscribe({
     next: ({ allTypes, allEntries }) => {
-      // System types (Bodyweight) lead; the rest follow alphabetically.
-      types.value = allTypes.sort((a, b) => {
-        if (a.isSystem !== b.isSystem) return a.isSystem ? -1 : 1;
-        return a.name.localeCompare(b.name);
-      });
+      types.value = allTypes.sort((a, b) => a.name.localeCompare(b.name));
       const latest: Record<string, MeasurementEntry> = {};
       for (const entry of allEntries) {
         const current = latest[entry.measurementTypeId];

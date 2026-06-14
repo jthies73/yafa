@@ -9,7 +9,6 @@ import type {
 } from "../db/types";
 import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
 import { createExercise, type ExerciseInput } from "../db/repository";
-import { BODYWEIGHT_TYPE_ID, latestEntry } from "../db/measurements";
 import {
   guardRepsKey,
   guardWeightKey,
@@ -31,7 +30,6 @@ const { logCalculatorSet, removeCalculatorSet, calculatorSets } =
 
 const selected = ref<Exercise | null>(null);
 const progressionState = ref<ProgressionState | null>(null);
-const bodyweight = ref(0);
 const showPicker = ref(false);
 const showForm = ref(false);
 
@@ -53,19 +51,10 @@ const sessionE1rm = computed(() => {
 
 const effectiveE1rm = computed(() => workingE1rm.value ?? sessionE1rm.value);
 
-const bodyweightLoad = computed(
-  () => bodyweight.value * (selected.value?.bodyweightFactor ?? 0),
-);
-
 watch(selected, async (ex) => {
   progressionState.value = null;
   if (!ex) return;
-  const [state, bwEntry] = await Promise.all([
-    db.progressionStates.get(ex.id),
-    latestEntry(BODYWEIGHT_TYPE_ID),
-  ]);
-  progressionState.value = state ?? null;
-  bodyweight.value = bwEntry?.value ?? 0;
+  progressionState.value = (await db.progressionStates.get(ex.id)) ?? null;
 });
 
 const onSelect = (exercise: Exercise) => {
@@ -122,14 +111,17 @@ function onWeightKeydown(e: KeyboardEvent) {
 interface CalcResult {
   reps: number;
   rpe: number;
-  addedKg: number; // added weight (no bodyweight) — what gets stored
-  totalKg: number; // total system load — what the matrix uses
+  weightKg: number; // resolved weight in kg
   e1rm: number;
 }
 
 /** Which dimension is absent when exactly two of three are filled. */
 const missing = computed<"reps" | "weight" | "rpe" | null>(() => {
-  const has = [repsNum.value != null, weightNum.value != null, rpe.value != null];
+  const has = [
+    repsNum.value != null,
+    weightNum.value != null,
+    rpe.value != null,
+  ];
   if (has.filter(Boolean).length !== 2) return null;
   if (!has[0]) return "reps";
   if (!has[1]) return "weight";
@@ -141,27 +133,27 @@ const calc = computed<CalcResult | null>(() => {
   if (!e1rm || !missing.value) return null;
 
   const m = matrix.value;
-  const bwLoad = bodyweightLoad.value;
   let r = repsNum.value;
   let rp = rpe.value;
-  let totalKg: number;
+  let weightKg: number;
 
   if (missing.value === "weight") {
-    totalKg = solveWeight(m, e1rm, r!, rp!);
+    weightKg = solveWeight(m, e1rm, r!, rp!);
   } else if (missing.value === "reps") {
-    totalKg = toKg(weightNum.value!) + bwLoad;
-    r = solveReps(m, e1rm, totalKg, rp!);
+    weightKg = toKg(weightNum.value!);
+    r = solveReps(m, e1rm, weightKg, rp!);
   } else {
-    totalKg = toKg(weightNum.value!) + bwLoad;
-    rp = solveRpe(m, e1rm, totalKg, r!);
+    weightKg = toKg(weightNum.value!);
+    rp = solveRpe(m, e1rm, weightKg, r!);
   }
 
-  const addedKg = Math.max(0, totalKg - bwLoad);
-  return { reps: r!, rpe: rp!, addedKg, totalKg, e1rm };
+  return { reps: r!, rpe: rp!, weightKg, e1rm };
 });
 
 const allFilled = computed(() => {
-  return repsNum.value !== null && weightNum.value !== null && rpe.value !== null;
+  return (
+    repsNum.value !== null && weightNum.value !== null && rpe.value !== null
+  );
 });
 
 const manualE1rm = computed(() => {
@@ -173,8 +165,12 @@ const manualE1rm = computed(() => {
   ) {
     return null;
   }
-  const totalKg = toKg(weightNum.value) + bodyweightLoad.value;
-  return impliedE1rm(matrix.value, totalKg, repsNum.value, rpe.value);
+  return impliedE1rm(
+    matrix.value,
+    toKg(weightNum.value),
+    repsNum.value,
+    rpe.value,
+  );
 });
 
 // ── Actual confirmation ───────────────────────────────────────────────────────
@@ -215,7 +211,7 @@ const onLogSet = () => {
   if (!selected.value || !canLog.value) return;
 
   let actualReps: number;
-  let actualWeight: number; // added kg — engine folds bodyweight in on read
+  let actualWeight: number;
   let actualRpe: number;
   let targetReps: number;
   let targetWeight: number;
@@ -232,15 +228,20 @@ const onLogSet = () => {
     e1rm = effectiveE1rm.value ?? manualE1rm.value ?? 0;
   } else {
     if (!calc.value || !missing.value) return;
-    const { reps: calcReps, addedKg, rpe: calcRpe, e1rm: calcE1rm } = calc.value;
+    const {
+      reps: calcReps,
+      weightKg,
+      rpe: calcRpe,
+      e1rm: calcE1rm,
+    } = calc.value;
     targetReps = calcReps;
-    targetWeight = addedKg;
+    targetWeight = weightKg;
     targetRpe = calcRpe;
     e1rm = calcE1rm;
 
     if (missing.value === "weight") {
       actualReps = repsNum.value!;
-      actualWeight = addedKg; // calculated weight is fixed — load the bar to this
+      actualWeight = weightKg; // calculated weight is fixed — load the bar to this
       actualRpe = rpe.value!;
     } else if (missing.value === "reps") {
       actualReps = parseInt(actualText.value, 10);
@@ -470,7 +471,7 @@ const onLogSet = () => {
             </p>
             <p class="mt-0.5 font-mono text-2xl font-bold text-accent">
               <template v-if="missing === 'weight'">{{
-                format(calc.addedKg)
+                format(calc.weightKg)
               }}</template>
               <template v-else-if="missing === 'reps'"
                 >{{ calc.reps }} reps</template
@@ -492,7 +493,10 @@ const onLogSet = () => {
       </div>
 
       <!-- Actual confirmation (only for calculated reps or RPE — weight is fixed, not shown for manual sets) -->
-      <div v-if="!allFilled && calc && missing !== 'weight'" class="flex flex-col gap-1.5">
+      <div
+        v-if="!allFilled && calc && missing !== 'weight'"
+        class="flex flex-col gap-1.5"
+      >
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
@@ -569,9 +573,8 @@ const onLogSet = () => {
             <p
               class="mt-0.5 font-mono text-xs text-text-light dark:text-text-dark opacity-60"
             >
-              {{ entry.set.actualReps }}×
-              {{ format(entry.set.actualWeight) }} · RPE
-              {{ entry.set.actualRpe }} · e1RM {{ format(entry.e1rm) }}
+              {{ entry.set.actualReps }}× {{ format(entry.set.actualWeight) }} ·
+              RPE {{ entry.set.actualRpe }} · e1RM {{ format(entry.e1rm) }}
             </p>
           </div>
           <button

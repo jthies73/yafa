@@ -51,7 +51,6 @@ const {
   name,
   primaryMuscleGroups,
   secondaryTags,
-  bodyweightFactor,
   notes,
   canSave,
   removePrimaryTag,
@@ -302,29 +301,6 @@ const save = async () => {
                 />
               </svg>
             </div>
-          </div>
-
-          <!-- Bodyweight factor -->
-          <div class="flex flex-col gap-1.5">
-            <label
-              class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-            >
-              Bodyweight Factor
-            </label>
-            <input
-              v-model.number="bodyweightFactor"
-              v-numpad
-              v-keynav
-              type="number"
-              min="0"
-              max="2"
-              step="0.05"
-              class="rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2.5 font-mono text-sm text-text-h-light dark:text-text-h-dark focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
-            />
-            <p class="text-xs text-text-light dark:text-text-dark opacity-50">
-              Share of bodyweight moved — 1.0 pull-ups, 0.65 push-ups, 0 for
-              barbell/dumbbell lifts.
-            </p>
           </div>
 
           <!-- Notes -->

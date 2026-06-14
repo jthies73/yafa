@@ -222,14 +222,22 @@ const e1rmLine = (e: ExercisePreview): string => {
             </span>
           </div>
           <div class="flex items-center justify-between gap-3 text-xs">
-            <span class="text-text-light dark:text-text-dark opacity-60">Volume</span>
-            <span class="font-mono font-semibold text-text-h-light dark:text-text-h-dark">
+            <span class="text-text-light dark:text-text-dark opacity-60"
+              >Volume</span
+            >
+            <span
+              class="font-mono font-semibold text-text-h-light dark:text-text-h-dark"
+            >
               {{ fmtMult(preview.mesocycle.modifiers.volume) }}
             </span>
           </div>
           <div class="flex items-center justify-between gap-3 text-xs">
-            <span class="text-text-light dark:text-text-dark opacity-60">Intensity</span>
-            <span class="font-mono font-semibold text-text-h-light dark:text-text-h-dark">
+            <span class="text-text-light dark:text-text-dark opacity-60"
+              >Intensity</span
+            >
+            <span
+              class="font-mono font-semibold text-text-h-light dark:text-text-h-dark"
+            >
               {{ fmtMult(preview.mesocycle.modifiers.intensity) }}
             </span>
           </div>

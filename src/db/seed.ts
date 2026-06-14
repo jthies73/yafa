@@ -1,5 +1,21 @@
 import { db } from "./db";
-import type { Exercise, Routine, Plan, Workout } from "./types";
+import { BODYWEIGHT_TYPE_ID } from "./measurements";
+import type {
+  Exercise,
+  MeasurementType,
+  Routine,
+  Plan,
+  Workout,
+} from "./types";
+
+const measurementTypes: MeasurementType[] = [
+  {
+    id: BODYWEIGHT_TYPE_ID,
+    name: "Bodyweight",
+    category: "WEIGHT",
+    created_at: Date.now(),
+  },
+];
 
 const exercises: Exercise[] = [
   {
@@ -8,7 +24,6 @@ const exercises: Exercise[] = [
     primaryMuscleGroups: ["Quads"],
     secondaryMuscleGroups: ["Glutes", "Hamstrings", "Lower Back"],
     notes: "",
-    bodyweightFactor: 0.0,
     created_at: Date.now(),
   },
   {
@@ -17,7 +32,6 @@ const exercises: Exercise[] = [
     primaryMuscleGroups: ["Chest"],
     secondaryMuscleGroups: ["Front Delts", "Triceps"],
     notes: "",
-    bodyweightFactor: 0.0,
     created_at: Date.now(),
   },
   {
@@ -26,7 +40,6 @@ const exercises: Exercise[] = [
     primaryMuscleGroups: ["Hamstrings"],
     secondaryMuscleGroups: ["Glutes", "Lower Back", "Lats", "Forearms"],
     notes: "",
-    bodyweightFactor: 0.0,
     created_at: Date.now(),
   },
   {
@@ -35,7 +48,6 @@ const exercises: Exercise[] = [
     primaryMuscleGroups: ["Shoulders"],
     secondaryMuscleGroups: ["Triceps", "Upper Chest", "Core"],
     notes: "",
-    bodyweightFactor: 0.0,
     created_at: Date.now(),
   },
   {
@@ -44,7 +56,6 @@ const exercises: Exercise[] = [
     primaryMuscleGroups: ["Lats"],
     secondaryMuscleGroups: ["Biceps", "Upper Back", "Rear Delts"],
     notes: "",
-    bodyweightFactor: 1.0,
     created_at: Date.now(),
   },
   {
@@ -53,7 +64,6 @@ const exercises: Exercise[] = [
     primaryMuscleGroups: ["Chest"],
     secondaryMuscleGroups: ["Front Delts", "Triceps", "Core"],
     notes: "",
-    bodyweightFactor: 0.65,
     created_at: Date.now(),
   },
   {
@@ -62,7 +72,6 @@ const exercises: Exercise[] = [
     primaryMuscleGroups: ["Side Delts"],
     secondaryMuscleGroups: ["Traps"],
     notes: "",
-    bodyweightFactor: 0.0,
     created_at: Date.now(),
   },
   {
@@ -71,7 +80,6 @@ const exercises: Exercise[] = [
     primaryMuscleGroups: ["Biceps"],
     secondaryMuscleGroups: ["Forearms"],
     notes: "",
-    bodyweightFactor: 0.0,
     created_at: Date.now(),
   },
 ];
@@ -308,12 +316,13 @@ export async function seedDatabase() {
   try {
     await db.transaction(
       "rw",
-      [db.exercises, db.routines, db.plans, db.workouts],
+      [db.exercises, db.routines, db.plans, db.workouts, db.measurementTypes],
       async () => {
         await db.exercises.bulkAdd(exercises);
         await db.routines.bulkAdd(routines);
         await db.plans.add(plan);
         await db.workouts.bulkAdd(workouts);
+        await db.measurementTypes.bulkAdd(measurementTypes);
       },
     );
     console.log("YAFA: Seeding completed successfully!");

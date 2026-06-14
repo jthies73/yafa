@@ -31,7 +31,6 @@ export interface ExerciseInput {
   primaryMuscleGroups: string[];
   secondaryMuscleGroups?: string[];
   notes?: string;
-  bodyweightFactor: number;
   rpeMatrix?: RpeMatrix; // Present ⇒ custom override; absent ⇒ inherits the global matrix.
 }
 
@@ -200,7 +199,6 @@ export async function createExercise(input: ExerciseInput): Promise<string> {
       .filter(Boolean),
     secondaryMuscleGroups: secondary.length ? secondary : undefined,
     notes: input.notes?.trim() || undefined,
-    bodyweightFactor: input.bodyweightFactor,
     // Absent unless the user opted into a custom matrix; otherwise inherits global.
     rpeMatrix: input.rpeMatrix,
     created_at: Date.now(),
@@ -227,7 +225,6 @@ export async function updateExercise(
       .filter(Boolean),
     secondaryMuscleGroups: secondary.length ? secondary : undefined,
     notes: input.notes?.trim() || undefined,
-    bodyweightFactor: input.bodyweightFactor,
     rpeMatrix: input.rpeMatrix,
   });
 }

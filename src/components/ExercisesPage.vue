@@ -60,7 +60,6 @@ const formInitial = computed<ExerciseInput | undefined>(() => {
     primaryMuscleGroups: e.primaryMuscleGroups,
     secondaryMuscleGroups: e.secondaryMuscleGroups,
     notes: e.notes,
-    bodyweightFactor: e.bodyweightFactor,
     rpeMatrix: e.rpeMatrix,
   };
 });
@@ -135,7 +134,9 @@ const handleDelete = async () => {
       </div>
 
       <!-- Muscle chips -->
-      <div class="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+      <div
+        class="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none"
+      >
         <button
           v-if="hasActiveFilter"
           class="shrink-0 rounded-lg border border-border-light dark:border-border-dark px-3 py-1.5 text-xs font-semibold text-text-light dark:text-text-dark hover:bg-surface-light dark:hover:bg-surface-dark cursor-pointer transition-colors duration-150"

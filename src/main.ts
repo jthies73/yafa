@@ -2,7 +2,6 @@ import { createApp } from "vue";
 import "./style.css";
 import App from "./App.vue";
 import { seedDatabase } from "./db/seed";
-import { ensureSystemMeasurements } from "./db/measurements";
 import router from "./router";
 import { initializeFeatures, useFeatureFlags } from "./config/features";
 import { vNumpad } from "./directives/numpad";
@@ -28,11 +27,6 @@ async function bootstrap() {
     if (features.seedDatabase) {
       await seedDatabase();
     }
-
-    // Idempotent: seeds the system "Bodyweight" measurement type and migrates
-    // any legacy localStorage bodyweight into an entry. Runs for every user
-    // (fresh or existing), independent of the demo-seed feature flag.
-    await ensureSystemMeasurements();
 
     // Restore last active route from localStorage.
     const savedPage = localStorage.getItem(ACTIVE_PAGE_KEY);

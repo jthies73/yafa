@@ -43,11 +43,6 @@ export interface PrescriptionInput {
   state?: ProgressionState;
   matrix: RpeMatrix;
   week?: MesocycleWeek;
-  // Bodyweight contribution to every rep (bodyweight × the exercise's
-  // bodyweightFactor). The matrix and working e1RM are in TOTAL system load,
-  // so this is subtracted from the derived weight to leave the ADDED weight the
-  // lifter actually loads. Defaults to 0 ⇒ plain external-load behavior.
-  bodyweightLoad?: number;
 }
 
 const clampSets = (value: number): number => Math.max(1, Math.round(value));
@@ -59,7 +54,6 @@ export function prescribeExercise(
   input: PrescriptionInput,
 ): ExercisePrescription {
   const { exerciseId, config, state, matrix, week } = input;
-  const bodyweightLoad = input.bodyweightLoad ?? 0;
   const locked = config.lockedFields ?? [];
   const focus = week ? FOCUS_MODIFIERS[week.focus] : null;
   const modifiers = state?.resetModifiers ?? [];
@@ -82,15 +76,12 @@ export function prescribeExercise(
     return adjusted;
   };
 
-  // The matrix derives the TOTAL system load from the working e1RM; the lifter
-  // only loads the part above their bodyweight contribution, so subtract it and
-  // round to the bar. With bodyweightLoad 0 this is the plain loadable weight.
+  // The matrix derives the loadable weight from the working e1RM at the given
+  // reps/RPE, rounded to the bar.
   const weightFor = (reps: number, rpe: number): number | null =>
     state?.workingE1rm == null
       ? null
-      : roundToLoadable(
-          weightFromE1rm(matrix, state.workingE1rm, reps, rpe) - bodyweightLoad,
-        );
+      : roundToLoadable(weightFromE1rm(matrix, state.workingE1rm, reps, rpe));
 
   switch (config.progressionModel) {
     case "linear": {
@@ -157,16 +148,11 @@ export function prescribeExercise(
       );
       const topWeight = weightFor(topReps, topRpe);
       // Back-off load is re-derived from the top-set weight every session, so
-      // it automatically follows e1RM movement and intensity modifiers. The
-      // percentage drop applies to the TOTAL load actually lifted (bodyweight +
-      // added), then is re-expressed as added weight.
+      // it automatically follows e1RM movement and intensity modifiers.
       const backOffWeight =
         topWeight === null
           ? null
-          : roundToLoadable(
-              (bodyweightLoad + topWeight) * (1 - params.percentageDrop / 100) -
-                bodyweightLoad,
-            );
+          : roundToLoadable(topWeight * (1 - params.percentageDrop / 100));
       return {
         exerciseId,
         model: "topset_backoff",

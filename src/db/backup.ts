@@ -10,7 +10,6 @@ import type {
   MeasurementEntry,
   AnalyticsChartConfig,
 } from "./types";
-import { ensureSystemMeasurements } from "./measurements";
 
 /**
  * Full snapshot of the local database. Because YAFA is offline-only, this file
@@ -116,8 +115,4 @@ export async function importData(backup: BackupFile): Promise<void> {
       await db.analyticsCharts.bulkAdd(data.analyticsCharts ?? []);
     },
   );
-
-  // The imported set may lack the system Bodyweight type or change the latest
-  // entry — re-bootstrap and refresh the synchronous bodyweight cache.
-  await ensureSystemMeasurements();
 }

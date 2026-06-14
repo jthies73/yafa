@@ -1,9 +1,4 @@
-import type {
-  AnalyticsBucket,
-  Exercise,
-  Set as LoggedSet,
-  Workout,
-} from "../db/types";
+import type { AnalyticsBucket, Exercise, Workout } from "../db/types";
 import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
 import { impliedE1rm, isQualifyingSet } from "../engine/matrix";
 
@@ -160,63 +155,6 @@ function relabelMesocycles(
   points.forEach((p, i) => (p.label = `Meso ${indices[i] - min + 1}`));
 }
 
-// ---- Load resolution ----
-
-/**
- * Bodyweight on record at `ts`: the latest entry logged at-or-before it.
- * Falls back to the EARLIEST entry so workouts logged before the first
- * weigh-in still get a sensible estimate; null only when no bodyweight was
- * ever logged. Expects entries sorted ascending by timestamp.
- */
-export function bodyweightAt(
-  sorted: TimestampedValue[],
-  ts: number,
-): number | null {
-  if (!sorted.length) return null;
-  let latest: TimestampedValue | null = null;
-  for (const entry of sorted) {
-    if (entry.timestamp > ts) break;
-    latest = entry;
-  }
-  return (latest ?? sorted[0]).value;
-}
-
-/**
- * Load one rep of this set moved, for volume purposes. Bodyweight exercises
- * need a bodyweight on record: without one the moved load is unknowable, so
- * their volume contribution is 0 by definition — sets and reps still count
- * through their own metrics (see spec edge cases).
- */
-function volumeLoad(
-  exercise: Exercise,
-  set: LoggedSet,
-  bodyweightEntries: TimestampedValue[],
-): number {
-  const factor = exercise.bodyweightFactor ?? 0;
-  if (factor <= 0) return set.actualWeight;
-  const bodyweight = bodyweightAt(bodyweightEntries, set.timestamp);
-  if (bodyweight === null) return 0;
-  return set.actualWeight + bodyweight * factor;
-}
-
-/**
- * Total system load for e1RM purposes (added weight + bodyweight share),
- * mirroring how the engine lifts sets into the total-load frame
- * (engine/service.ts). Null when a bodyweight exercise has no bodyweight on
- * record — an e1RM estimated from added weight alone would be meaningless.
- */
-function totalLoad(
-  exercise: Exercise,
-  set: LoggedSet,
-  bodyweightEntries: TimestampedValue[],
-): number | null {
-  const factor = exercise.bodyweightFactor ?? 0;
-  if (factor <= 0) return set.actualWeight;
-  const bodyweight = bodyweightAt(bodyweightEntries, set.timestamp);
-  if (bodyweight === null) return null;
-  return set.actualWeight + bodyweight * factor;
-}
-
 /** How (and whether) an exercise contributes to the given scope. */
 function roleFor(
   scope: WorkoutScope,
@@ -258,7 +196,6 @@ export interface WorkoutSeriesOptions {
   bucket: AnalyticsBucket;
   workouts: Workout[];
   exercisesById: Map<string, Exercise>;
-  bodyweightEntries?: TimestampedValue[];
   mesocycle?: MesocycleSpec;
 }
 
@@ -266,10 +203,6 @@ export interface WorkoutSeriesOptions {
 export function computeWorkoutSeries(
   opts: WorkoutSeriesOptions,
 ): BucketPoint[] {
-  const bodyweightEntries = [...(opts.bodyweightEntries ?? [])].sort(
-    (a, b) => a.timestamp - b.timestamp,
-  );
-
   const buckets = new Map<string, BucketAcc>();
   const accFor = (slot: BucketSlot): BucketAcc => {
     let acc = buckets.get(slot.key);
@@ -316,17 +249,14 @@ export function computeWorkoutSeries(
       if (opts.metric === "e1rm") {
         const matrix = exercise.rpeMatrix ?? DEFAULT_RPE_MATRIX;
         for (const set of workoutExercise.sets) {
-          const load = totalLoad(exercise, set, bodyweightEntries);
-          if (load === null) continue;
           // Only honest near-limit sets (RPE ≥ 8, reps ≤ 10) imply a usable
           // e1RM; buckets without one are omitted, never interpolated.
-          const lifted: LoggedSet = { ...set, actualWeight: load };
-          if (!isQualifyingSet(lifted)) continue;
+          if (!isQualifyingSet(set)) continue;
           const e1rm = impliedE1rm(
             matrix,
-            lifted.actualWeight,
-            lifted.actualReps,
-            lifted.actualRpe!,
+            set.actualWeight,
+            set.actualReps,
+            set.actualRpe!,
           );
           // MAX, not mean: the peak estimated 1RM in a period is the
           // meaningful signal. Sessions mix top sets and back-offs at varying
@@ -335,9 +265,9 @@ export function computeWorkoutSeries(
           if (acc.e1rmMax === null || e1rm > acc.e1rmMax) {
             acc.e1rmMax = e1rm;
             acc.bestSet = {
-              weight: lifted.actualWeight,
-              reps: lifted.actualReps,
-              rpe: lifted.actualRpe,
+              weight: set.actualWeight,
+              reps: set.actualReps,
+              rpe: set.actualRpe,
             };
           }
         }
@@ -353,10 +283,7 @@ export function computeWorkoutSeries(
         } else if (opts.metric === "reps") {
           value += set.actualReps * role.multiplier;
         } else {
-          value +=
-            set.actualReps *
-            volumeLoad(exercise, set, bodyweightEntries) *
-            role.multiplier;
+          value += set.actualReps * set.actualWeight * role.multiplier;
         }
       }
       const key = `${exercise.name}|${role.role}`;
@@ -376,9 +303,7 @@ export function computeWorkoutSeries(
   const points: BucketPoint[] = [];
   for (const acc of buckets.values()) {
     // Omitted, never interpolated: a bucket exists only when it has data for
-    // the metric. (A volume bucket whose only sets are bodyweight work without
-    // a logged bodyweight DOES render as 0 — the work happened, its load is
-    // unknown — which is the one case where a zero bar is meaningful.)
+    // the metric.
     if (opts.metric === "e1rm" && acc.e1rmMax === null) continue;
     if (
       opts.metric !== "workouts" &&

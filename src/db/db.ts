@@ -65,6 +65,23 @@ export class YafaDatabase extends Dexie {
     this.version(5).stores({
       analyticsCharts: "id, order",
     });
+
+    // v6: bodyweight feature removed — drop the per-exercise bodyweightFactor
+    // and the measurement-type system flag (bodyweight is now an ordinary type).
+    this.version(6).upgrade(async (tx) => {
+      await tx
+        .table("exercises")
+        .toCollection()
+        .modify((e) => {
+          delete e.bodyweightFactor;
+        });
+      await tx
+        .table("measurementTypes")
+        .toCollection()
+        .modify((t) => {
+          delete t.isSystem;
+        });
+    });
   }
 }
 

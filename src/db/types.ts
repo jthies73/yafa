@@ -40,7 +40,6 @@ export interface Exercise {
   primaryMuscleGroups: string[];
   secondaryMuscleGroups?: string[];
   notes?: string;
-  bodyweightFactor: number; // Decimal representing % of bodyweight moved (e.g. 1.0 for pullups, 0.65 for pushups, 0.0 for barbell/dumbbell lifts)
   rpeMatrix?: RpeMatrix; // Present ⇒ custom override; absent ⇒ inherits the global matrix.
   created_at: number;
 }
@@ -182,9 +181,6 @@ export interface MeasurementType {
   id: string;
   name: string; // e.g. "Biceps", "Waist", "Bodyweight"
   category: MeasurementCategory;
-  // System types (currently only "Bodyweight") cannot be renamed, recategorised
-  // or deleted — they link into the engine (bodyweight load) and analytics.
-  isSystem: boolean;
   created_at: number;
 }
 

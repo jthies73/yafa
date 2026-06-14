@@ -3,7 +3,6 @@ import type { Exercise, Set as LoggedSet, Workout } from "../../db/types";
 import { DEFAULT_RPE_MATRIX } from "../../db/rpeMatrix";
 import { impliedE1rm } from "../../engine/matrix";
 import {
-  bodyweightAt,
   computeMeasurementSeries,
   computeWorkoutSeries,
   weekStart,
@@ -22,7 +21,6 @@ const makeExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
   id: uid("ex"),
   name: "Exercise",
   primaryMuscleGroups: ["Chest"],
-  bodyweightFactor: 0,
   created_at: 0,
   ...overrides,
 });
@@ -311,11 +309,10 @@ describe("workout counting", () => {
   });
 });
 
-describe("bodyweight exercise volume", () => {
+describe("exercise volume", () => {
   const pullup = makeExercise({
     name: "Pull Up",
     primaryMuscleGroups: ["Lats"],
-    bodyweightFactor: 1,
   });
   const exercisesById = byId(pullup);
   const workouts = [
@@ -327,19 +324,7 @@ describe("bodyweight exercise volume", () => {
     ]),
   ];
 
-  it("folds the bodyweight on record into the moved load", () => {
-    const points = computeWorkoutSeries({
-      scope: { kind: "exercise", exerciseId: pullup.id },
-      metric: "volume",
-      bucket: "session",
-      workouts,
-      exercisesById,
-      bodyweightEntries: [{ timestamp: TUE - 1000, value: 80 }],
-    });
-    expect(points[0].value).toBe((10 + 80) * 5);
-  });
-
-  it("yields zero volume without a bodyweight, while sets and reps still count", () => {
+  it("computes volume as reps × the logged weight", () => {
     const base = {
       scope: { kind: "exercise", exerciseId: pullup.id } as const,
       bucket: "session" as const,
@@ -347,22 +332,9 @@ describe("bodyweight exercise volume", () => {
       exercisesById,
     };
     expect(computeWorkoutSeries({ ...base, metric: "volume" })[0].value).toBe(
-      0,
+      10 * 5,
     );
     expect(computeWorkoutSeries({ ...base, metric: "sets" })[0].value).toBe(1);
     expect(computeWorkoutSeries({ ...base, metric: "reps" })[0].value).toBe(5);
-  });
-
-  it("backfills workouts logged before the first weigh-in from the earliest entry", () => {
-    expect(bodyweightAt([{ timestamp: TUE, value: 80 }], TUE - 1000)).toBe(80);
-    expect(
-      bodyweightAt(
-        [
-          { timestamp: TUE, value: 80 },
-          { timestamp: THU, value: 82 },
-        ],
-        NEXT_TUE,
-      ),
-    ).toBe(82);
   });
 });

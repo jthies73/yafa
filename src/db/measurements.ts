@@ -3,9 +3,9 @@ import type { MeasurementCategory, MeasurementEntry } from "./types";
 // ----------------------------------------------
 // Body measurements: types (what to track) + entries (timestamped values).
 //
-// Source of truth lives entirely in Dexie. The "Bodyweight" type is special:
-// it is the SINGLE source of truth for the lifter's bodyweight, which the
-// progression engine reads to calculate total system load.
+// Source of truth lives entirely in Dexie. "Bodyweight" is seeded as a sensible
+// default measurement on first boot, but is otherwise an ordinary, editable and
+// deletable type like any other.
 // ----------------------------------------------
 
 export const BODYWEIGHT_TYPE_ID = "bodyweight";
@@ -26,43 +26,6 @@ export async function latestEntry(
   return entries.reduce((a, b) => (b.timestamp > a.timestamp ? b : a));
 }
 
-/**
- * Boot-time idempotent bootstrap. Ensures the system "Bodyweight" type exists
- * (for both fresh and pre-existing databases), migrates any legacy localStorage
- * bodyweight into a seeded entry. Safe to run on every launch.
- */
-export async function ensureSystemMeasurements(): Promise<void> {
-  const existing = await db.measurementTypes.get(BODYWEIGHT_TYPE_ID);
-  if (!existing) {
-    await db.measurementTypes.add({
-      id: BODYWEIGHT_TYPE_ID,
-      name: "Bodyweight",
-      category: "WEIGHT",
-      isSystem: true,
-      created_at: Date.now(),
-    });
-  }
-
-  // Migrate a bodyweight set before measurements existed into a real entry, so
-  // the localStorage value and the entry history never disagree.
-  const entryCount = await db.measurementEntries
-    .where("measurementTypeId")
-    .equals(BODYWEIGHT_TYPE_ID)
-    .count();
-  if (entryCount === 0) {
-    const raw = Number(localStorage.getItem("yafa:bodyweight"));
-    const legacy = Number.isFinite(raw) && raw > 0 ? raw : 0;
-    if (legacy > 0) {
-      await db.measurementEntries.add({
-        id: uid(),
-        measurementTypeId: BODYWEIGHT_TYPE_ID,
-        value: legacy,
-        timestamp: Date.now(),
-      });
-    }
-  }
-}
-
 // ---- Measurement types ----
 
 export interface MeasurementTypeInput {
@@ -78,19 +41,15 @@ export async function createMeasurementType(
     id,
     name: input.name.trim(),
     category: input.category,
-    isSystem: false,
     created_at: Date.now(),
   });
   return id;
 }
 
-/**
- * Deletes a measurement type and all its entries. System types (Bodyweight) are
- * protected and silently ignored — the UI must not offer to delete them.
- */
+/** Deletes a measurement type and all its entries. */
 export async function deleteMeasurementType(id: string): Promise<void> {
   const type = await db.measurementTypes.get(id);
-  if (!type || type.isSystem) return;
+  if (!type) return;
 
   await db.transaction(
     "rw",
