@@ -1,5 +1,9 @@
 import { db } from "../db/db";
-import type { AnalyticsChartConfig, MeasurementCategory } from "../db/types";
+import type {
+  AnalyticsChartConfig,
+  MeasurementCategory,
+  Workout,
+} from "../db/types";
 import {
   computeMeasurementSeries,
   computeWorkoutSeries,
@@ -8,6 +12,7 @@ import {
   type WorkoutMetric,
   type WorkoutScope,
 } from "./compute";
+import { computeWorkoutSummary, type WorkoutSummary } from "./summary";
 
 // ----------------------------------------------
 // Analytics service: the only analytics layer that touches Dexie. Loads the
@@ -116,4 +121,27 @@ export async function buildChartSeries(
         ? "weight"
         : "count",
   };
+}
+
+/**
+ * Assembles the post-workout summary for a just-finished session. MUST be
+ * called BEFORE the workout is persisted and BEFORE applyWorkoutResults runs,
+ * so that `history` excludes the current session and PR comparisons use the
+ * pre-learning matrices consistently for both current and historical sets.
+ */
+export async function buildWorkoutSummary(
+  workout: Workout,
+  plannedCounts: Record<string, number>,
+): Promise<WorkoutSummary> {
+  const [workouts, exercises] = await Promise.all([
+    db.workouts.toArray(),
+    db.exercises.toArray(),
+  ]);
+
+  return computeWorkoutSummary({
+    workout,
+    history: workouts.filter((w) => w.id !== workout.id),
+    exercisesById: new Map(exercises.map((e) => [e.id, e])),
+    plannedCounts,
+  });
 }

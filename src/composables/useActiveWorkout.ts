@@ -5,9 +5,15 @@ import type {
   WorkoutExercise,
   Routine,
   Exercise,
+  RoutineExerciseConfig,
+  LinearProgressionParams,
+  DoubleProgressionParams,
+  TopSetProgressionParams,
   Set as LoggedSet,
 } from "../db/types";
 import { applyWorkoutResults, prescribeWorkout } from "../engine/service";
+import { buildWorkoutSummary } from "../analytics/service";
+import type { WorkoutSummary } from "../analytics/summary";
 import type { ExercisePrescription } from "../engine/prescription";
 
 export interface CalculatorSet {
@@ -17,8 +23,41 @@ export interface CalculatorSet {
   set: LoggedSet;
 }
 
+/** Planned working sets for one routine slot's config, before summing. */
+function configSetCount(config?: RoutineExerciseConfig): number {
+  if (!config) return 3;
+  const p = config.progressionParams;
+  if (config.progressionModel === "topset_backoff") {
+    return 1 + ((p as TopSetProgressionParams).backOffSets ?? 0);
+  }
+  return (
+    (p as LinearProgressionParams | DoubleProgressionParams).targetSets ?? 3
+  );
+}
+
+/**
+ * Planned working sets per exerciseId for adherence scoring, summed across
+ * duplicate routine slots. A live prescription (which periodization may have
+ * scaled) is authoritative; otherwise we fall back to the raw config count.
+ */
+function buildPlannedCounts(
+  r: Routine | null,
+  prescriptions: Record<string, ExercisePrescription>,
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const ex of r?.exercises ?? []) {
+    const prescribed = prescriptions[ex.exerciseId]?.sets.length;
+    counts[ex.exerciseId] =
+      (counts[ex.exerciseId] ?? 0) + (prescribed ?? configSetCount(ex.config));
+  }
+  return counts;
+}
+
 const activeWorkout = ref<Workout | null>(null);
 const routine = ref<Routine | null>(null);
+const plannedCounts = ref<Record<string, number>>({});
+const summary = ref<WorkoutSummary | null>(null);
+const showSummary = ref(false);
 const exercisesMap = ref<Record<string, Exercise>>({});
 // Engine prescriptions for the running workout, keyed by exerciseId. Duplicate
 // movements in a routine share one prescription, mirroring the engine's
@@ -35,11 +74,15 @@ const showSheet = ref(false);
 // the workout at finishWorkout() only.
 const calculatorSets = ref<CalculatorSet[]>([]);
 
+// Clears the running workout's state. The post-workout summary is intentionally
+// left untouched so it can outlive the session it describes (closeSummary owns
+// it); a discard clears it too via discardWorkout.
 function reset() {
   activeWorkout.value = null;
   routine.value = null;
   exercisesMap.value = {};
   prescriptions.value = {};
+  plannedCounts.value = {};
   trackerStats.value = { completed: 0, pending: 0 };
   calculatorSets.value = [];
   isMinimized.value = false;
@@ -74,6 +117,7 @@ export function useActiveWorkout() {
     }
 
     prescriptions.value = rx;
+    plannedCounts.value = buildPlannedCounts(r, rx);
     trackerStats.value = { completed: 0, pending: 0 };
     activeWorkout.value = {
       id: crypto.randomUUID(),
@@ -137,10 +181,36 @@ export function useActiveWorkout() {
         exercises: merged.filter((e) => e.sets.length),
       }),
     );
+    // Build the summary BEFORE persisting/learning: PR comparisons must see
+    // history without this session and use the pre-learning matrices. A failure
+    // here must never block saving the workout.
+    let nextSummary: WorkoutSummary | null = null;
+    try {
+      nextSummary = await buildWorkoutSummary(completed, plannedCounts.value);
+    } catch (error) {
+      console.error("YAFA: failed to build workout summary", error);
+    }
+
     await db.workouts.add(completed);
     // Post-session engine pass: matrix learning, e1RM/streak bookkeeping,
     // reset modifier decay. No-ops for exercises without logged sets.
     await applyWorkoutResults(completed);
+    reset();
+
+    // Surface the summary only when the session actually had logged sets.
+    if (nextSummary && completed.exercises.length) {
+      summary.value = nextSummary;
+      showSummary.value = true;
+    }
+  };
+
+  const closeSummary = () => {
+    summary.value = null;
+    showSummary.value = false;
+  };
+
+  const discardWorkout = () => {
+    closeSummary();
     reset();
   };
 
@@ -157,6 +227,13 @@ export function useActiveWorkout() {
     trackerStats: computed(() => trackerStats.value),
     calculatorSets: computed(() => calculatorSets.value),
     calculatorSetCount: computed(() => calculatorSets.value.length),
+    summary: computed(() => summary.value),
+    showSummary: computed({
+      get: () => showSummary.value,
+      set: (val) => {
+        showSummary.value = val;
+      },
+    }),
     isMinimized: computed({
       get: () => isMinimized.value,
       set: (val) => {
@@ -171,7 +248,8 @@ export function useActiveWorkout() {
     }),
     startWorkout,
     finishWorkout,
-    discardWorkout: reset,
+    discardWorkout,
+    closeSummary,
     maximize,
     syncExercises,
     syncProgress,

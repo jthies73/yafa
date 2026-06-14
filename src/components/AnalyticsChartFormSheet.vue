@@ -268,7 +268,10 @@ const confirmDeleteOpen = ref(false);
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Chart Name <span class="normal-case font-normal opacity-60 ml-1">(optional)</span>
+          Chart Name
+          <span class="normal-case font-normal opacity-60 ml-1"
+            >(optional)</span
+          >
         </label>
         <input
           v-model="chartName"

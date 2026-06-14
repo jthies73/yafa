@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppHeader from "./components/layout/AppHeader.vue";
 import WorkoutBottomSheet from "./components/WorkoutBottomSheet.vue";
+import WorkoutSummarySheet from "./components/summary/WorkoutSummarySheet.vue";
 import NumericKeypad from "./components/NumericKeypad.vue";
 import { useActiveWorkout } from "./composables/useActiveWorkout";
 
@@ -19,6 +20,7 @@ const { activeWorkout } = useActiveWorkout();
       <router-view />
     </main>
     <WorkoutBottomSheet />
+    <WorkoutSummarySheet />
     <NumericKeypad />
   </div>
 </template>
