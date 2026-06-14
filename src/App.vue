@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from "vue";
 import AppHeader from "./components/layout/AppHeader.vue";
 import WorkoutBottomSheet from "./components/WorkoutBottomSheet.vue";
 import WorkoutSummarySheet from "./components/summary/WorkoutSummarySheet.vue";
@@ -6,6 +7,15 @@ import NumericKeypad from "./components/NumericKeypad.vue";
 import { useActiveWorkout } from "./composables/useActiveWorkout";
 
 const { activeWorkout } = useActiveWorkout();
+
+onMounted(() => {
+  if (['development', 'production'].includes(import.meta.env.MODE)) {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+    if (baseUrl) {
+      fetch(`${baseUrl}/page-visits`, { method: 'POST' }).catch(() => {});
+    }
+  }
+});
 </script>
 
 <template>

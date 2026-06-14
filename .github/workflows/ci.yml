@@ -75,7 +75,10 @@ jobs:
           node-version: 22
           cache: yarn
       - run: yarn install --frozen-lockfile
-      - run: yarn build:production
+      - name: Build Production
+        run: yarn build:production
+        env:
+          VITE_ADMIN_BASE_URL: ${{ vars.PROD_ADMIN_BASE_URL || secrets.PROD_ADMIN_BASE_URL }}
       - uses: actions/upload-artifact@v4
         with:
           name: dist-production

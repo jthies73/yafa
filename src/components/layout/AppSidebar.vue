@@ -188,6 +188,15 @@ const isActive = (names: readonly string[] | string) => {
   const list = Array.isArray(names) ? names : [names];
   return list.includes(route.name as string);
 };
+
+const recordCoffeeClick = () => {
+  if (['development', 'production'].includes(import.meta.env.MODE)) {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+    if (baseUrl) {
+      fetch(`${baseUrl}/coffee-visits`, { method: 'POST' }).catch(() => {});
+    }
+  }
+};
 </script>
 
 <template>
@@ -532,10 +541,11 @@ const isActive = (names: readonly string[] | string) => {
     >
       <!-- Buy me a coffee -->
       <a
-        v-if="features.showBuyMeACoffee"
+        v-if="['development', 'staging'].includes(features.environment)"
         href="https://buymeacoffee.com/jthies73"
         target="_blank"
         rel="noopener noreferrer"
+        @click="recordCoffeeClick"
         class="flex items-center justify-between px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 dark:border-amber-500/15 text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-all duration-300 group cursor-pointer shadow-sm hover:shadow-amber-500/5"
       >
         <div class="flex items-center gap-3">
