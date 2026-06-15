@@ -1,8 +1,8 @@
 {
-  "latest": "0.5.7",
+  "latest": "0.5.8",
   "releases": [
     {
-      "version": "0.5.7",
+      "version": "0.5.8",
       "notes": "- Change deployment method to GitHub Container Registry."
     },
     {
