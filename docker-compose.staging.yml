@@ -1,5 +1,5 @@
 services:
-  yafa-pwa:
+  yafa-pwa-staging:
     image: ghcr.io/jthies73/yafa-pwa:staging
     ports:
       - "8081:80"
