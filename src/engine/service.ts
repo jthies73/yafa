@@ -15,7 +15,7 @@ import { QUALIFYING_MAX_REPS } from "./config";
 import {
   applyMatrixUpdates,
   impliedE1rm,
-  isQualifyingSet,
+  isInGridSet,
   peakImpliedE1rm,
 } from "./matrix";
 import {
@@ -234,15 +234,25 @@ export async function applyWorkoutResults(workout: Workout): Promise<void> {
       };
 
       let matrix = effectiveMatrix(exercise);
-      if (sets.some(isQualifyingSet)) {
-        const update = applyMatrixUpdates(matrix, next.observedE1rms, sets);
+      if (sets.some(isInGridSet)) {
+        const update = applyMatrixUpdates(
+          matrix,
+          next.observedE1rms,
+          sets,
+          next.workingE1rm,
+        );
         matrix = update.matrix;
         next.observedE1rms = update.observedE1rms;
         // Learning is per-exercise by definition, so the first update
-        // materializes the inherited global matrix as an exercise override.
-        await db.exercises.update(workoutExercise.exerciseId, {
-          rpeMatrix: matrix,
-        });
+        // materializes the inherited global matrix as an exercise override —
+        // but only when a cell actually moved, so a no-op session (e.g. only
+        // off-anchor sets with no working-e1RM baseline yet) leaves the
+        // exercise inheriting the global matrix.
+        if (update.changed) {
+          await db.exercises.update(workoutExercise.exerciseId, {
+            rpeMatrix: matrix,
+          });
+        }
       }
 
       if (next.workingE1rm === null) {

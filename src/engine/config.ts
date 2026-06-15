@@ -18,8 +18,10 @@ export const LOOKUP_REPS_MAX = 10;
 
 // ---- Matrix learning ----
 
-// Only honest, near-limit sets calibrate the matrix and the observed e1RM:
-// low-RPE or very-high-rep sets imply e1RMs with too much noise to learn from.
+// Only honest, near-limit sets calibrate the observed e1RM: low-RPE or
+// very-high-rep sets imply e1RMs with too much noise to estimate capacity from.
+// (Matrix CELLS still learn from every in-grid set — off-anchor sets nudge their
+// cell against the fixed working e1RM without touching the observed e1RM.)
 export const QUALIFYING_MIN_RPE = 8;
 export const QUALIFYING_MAX_REPS = 10;
 
