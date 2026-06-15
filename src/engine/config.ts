@@ -74,3 +74,17 @@ export const INTENSITY_RESET_MAGNITUDE = 0.1;
 // systemic/neurological, which clears more slowly than local muscular fatigue,
 // and because re-entry after a lasting e1RM cut should be gradual.
 export const INTENSITY_RESET_DECAY_SESSIONS = 5;
+
+// ---- Recalibration ----
+
+// When the e1RM a session actually demonstrated (its peak honest set) diverges
+// from the working e1RM by at least this fraction in EITHER direction, the
+// working scalar is treated as stale and a recalibration is offered. ±10%.
+export const RECALIBRATION_DIVERGENCE_THRESHOLD = 0.1;
+
+// How far a confirmed recalibration moves the working e1RM toward the
+// demonstrated value (0 = no move, 1 = full snap). Larger than the matrix EMA
+// because this is a deliberate, user-confirmed correction rather than passive
+// per-session learning — but short of a full snap so a single outlier session
+// can't fully rewrite the baseline.
+export const RECALIBRATION_BLEND = 2 / 3;

@@ -3,9 +3,16 @@ import { watch } from "vue";
 import AppBottomSheet from "../AppBottomSheet.vue";
 import SummaryHero from "./SummaryHero.vue";
 import PrHighlights from "./PrHighlights.vue";
+import RecalibrationPrompt from "./RecalibrationPrompt.vue";
 import { useActiveWorkout } from "../../composables/useActiveWorkout";
 
-const { summary, showSummary, closeSummary } = useActiveWorkout();
+const {
+  summary,
+  recalibrations,
+  showSummary,
+  closeSummary,
+  confirmRecalibrations,
+} = useActiveWorkout();
 
 // Dragging/ESC closes the sheet (open → false); release the held summary so
 // state never lingers between sessions.
@@ -34,6 +41,10 @@ watch(showSummary, (open) => {
     <div class="px-5 py-6 flex flex-col gap-6">
       <SummaryHero :summary="summary" />
       <PrHighlights :prs="summary.prs" />
+      <RecalibrationPrompt
+        :recalibrations="recalibrations"
+        @confirm="confirmRecalibrations"
+      />
     </div>
 
     <template #footer>

@@ -84,6 +84,34 @@ export function isQualifyingSet(set: LoggedSet): boolean {
   );
 }
 
+export interface PeakE1rm {
+  e1rm: number;
+  set: LoggedSet;
+}
+
+/**
+ * Peak implied e1RM across a set list, considering only honest near-limit
+ * (qualifying) sets — the single number that best represents the capacity a
+ * session demonstrated. null when no set qualifies.
+ */
+export function peakImpliedE1rm(
+  matrix: RpeMatrix,
+  sets: LoggedSet[],
+): PeakE1rm | null {
+  let best: PeakE1rm | null = null;
+  for (const set of sets) {
+    if (!isQualifyingSet(set)) continue;
+    const e1rm = impliedE1rm(
+      matrix,
+      set.actualWeight,
+      set.actualReps,
+      set.actualRpe!,
+    );
+    if (!best || e1rm > best.e1rm) best = { e1rm, set };
+  }
+  return best;
+}
+
 export interface MatrixUpdateResult {
   matrix: RpeMatrix;
   observedE1rms: number[];

@@ -11,10 +11,16 @@ import type {
   TopSetProgressionParams,
   Set as LoggedSet,
 } from "../db/types";
-import { applyWorkoutResults, prescribeWorkout } from "../engine/service";
+import {
+  applyRecalibrations,
+  applyWorkoutResults,
+  computeRecalibrations,
+  prescribeWorkout,
+} from "../engine/service";
 import { buildWorkoutSummary } from "../analytics/service";
 import type { WorkoutSummary } from "../analytics/summary";
 import type { ExercisePrescription } from "../engine/prescription";
+import type { RecalibrationProposal } from "../engine/recalibration";
 
 export interface CalculatorSet {
   exerciseId: string;
@@ -58,6 +64,10 @@ const routine = ref<Routine | null>(null);
 const plannedCounts = ref<Record<string, number>>({});
 const summary = ref<WorkoutSummary | null>(null);
 const showSummary = ref(false);
+// Proposed working-e1RM recalibrations for the just-finished session, awaiting
+// confirmation in the summary sheet. Held alongside `summary` (outliving the
+// session) and cleared by closeSummary/confirm, never by reset().
+const recalibrations = ref<RecalibrationProposal[]>([]);
 const exercisesMap = ref<Record<string, Exercise>>({});
 // Engine prescriptions for the running workout, keyed by exerciseId. Duplicate
 // movements in a routine share one prescription, mirroring the engine's
@@ -192,6 +202,14 @@ export function useActiveWorkout() {
     }
 
     await db.workouts.add(completed);
+    // Recalibration proposals must read the PRE-session working e1RM, so
+    // compute them before applyWorkoutResults advances/seeds the engine state.
+    let proposals: RecalibrationProposal[] = [];
+    try {
+      proposals = await computeRecalibrations(completed);
+    } catch (error) {
+      console.error("YAFA: failed to compute recalibrations", error);
+    }
     // Post-session engine pass: matrix learning, e1RM/streak bookkeeping,
     // reset modifier decay. No-ops for exercises without logged sets.
     await applyWorkoutResults(completed);
@@ -200,12 +218,22 @@ export function useActiveWorkout() {
     // Surface the summary only when the session actually had logged sets.
     if (nextSummary && completed.exercises.length) {
       summary.value = nextSummary;
+      recalibrations.value = proposals;
       showSummary.value = true;
     }
   };
 
+  // Persists the proposed recalibrations the user confirmed, then clears them
+  // so the prompt resolves. Normal progression stands for any left unconfirmed.
+  const confirmRecalibrations = async () => {
+    if (!recalibrations.value.length) return;
+    await applyRecalibrations(recalibrations.value);
+    recalibrations.value = [];
+  };
+
   const closeSummary = () => {
     summary.value = null;
+    recalibrations.value = [];
     showSummary.value = false;
   };
 
@@ -228,6 +256,7 @@ export function useActiveWorkout() {
     calculatorSets: computed(() => calculatorSets.value),
     calculatorSetCount: computed(() => calculatorSets.value.length),
     summary: computed(() => summary.value),
+    recalibrations: computed(() => recalibrations.value),
     showSummary: computed({
       get: () => showSummary.value,
       set: (val) => {
@@ -249,6 +278,7 @@ export function useActiveWorkout() {
     startWorkout,
     finishWorkout,
     discardWorkout,
+    confirmRecalibrations,
     closeSummary,
     maximize,
     syncExercises,

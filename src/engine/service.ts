@@ -17,7 +17,12 @@ import {
   impliedE1rm,
   isQualifyingSet,
   observedE1rm,
+  peakImpliedE1rm,
 } from "./matrix";
+import {
+  proposeRecalibrationE1rm,
+  type RecalibrationProposal,
+} from "./recalibration";
 import {
   mesocycleWeekIndex,
   resolveMesocycleWeek,
@@ -253,6 +258,79 @@ export async function applyWorkoutResults(workout: Workout): Promise<void> {
 
       next.updated_at = Date.now();
       await db.progressionStates.put(next);
+    }
+  });
+}
+
+/** Logged sets of a workout merged across duplicate slots of the same movement. */
+function setsByExerciseId(workout: Workout): Map<string, LoggedSet[]> {
+  const map = new Map<string, LoggedSet[]>();
+  for (const we of workout.exercises) {
+    const list = map.get(we.exerciseId) ?? [];
+    list.push(...we.sets);
+    map.set(we.exerciseId, list);
+  }
+  return map;
+}
+
+/**
+ * Recalibration proposals for a finished session: per exercise, compares the
+ * working e1RM the session was prescribed from against the peak e1RM the
+ * session actually demonstrated, proposing a correction when they diverge
+ * beyond tolerance. Read-only — proposals are surfaced for user confirmation
+ * (applyRecalibrations) rather than applied here.
+ *
+ * MUST run BEFORE applyWorkoutResults so it reads the PRE-session working e1RM
+ * and the pre-learning matrix (mirroring how the summary is built). Exercises
+ * still on their cold-start seed (no working e1RM yet) yield no proposal.
+ */
+export async function computeRecalibrations(
+  workout: Workout,
+): Promise<RecalibrationProposal[]> {
+  const proposals: RecalibrationProposal[] = [];
+  for (const [exerciseId, sets] of setsByExerciseId(workout)) {
+    const [exercise, state] = await Promise.all([
+      db.exercises.get(exerciseId),
+      db.progressionStates.get(exerciseId),
+    ]);
+    if (!exercise || !state) continue;
+    const peak = peakImpliedE1rm(effectiveMatrix(exercise), sets);
+    const proposedE1rm = proposeRecalibrationE1rm(
+      state.workingE1rm,
+      peak?.e1rm ?? null,
+    );
+    if (proposedE1rm === null) continue;
+    proposals.push({
+      exerciseId,
+      exerciseName: exercise.name,
+      currentE1rm: state.workingE1rm!,
+      sessionE1rm: peak!.e1rm,
+      proposedE1rm,
+    });
+  }
+  return proposals;
+}
+
+/**
+ * Applies user-confirmed recalibrations: snaps each exercise's working e1RM to
+ * the proposed value and clears its failure streak — a re-baselined scalar
+ * makes a streak counted against the old baseline meaningless. Matrix learning
+ * already ran in applyWorkoutResults; only the planning scalar is rewritten.
+ */
+export async function applyRecalibrations(
+  proposals: RecalibrationProposal[],
+): Promise<void> {
+  if (!proposals.length) return;
+  await db.transaction("rw", db.progressionStates, async () => {
+    for (const proposal of proposals) {
+      const state = await db.progressionStates.get(proposal.exerciseId);
+      if (!state) continue;
+      await db.progressionStates.put({
+        ...state,
+        workingE1rm: proposal.proposedE1rm,
+        failureStreak: 0,
+        updated_at: Date.now(),
+      });
     }
   });
 }

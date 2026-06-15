@@ -1,6 +1,6 @@
 import type { Exercise, Set as LoggedSet, Workout } from "../db/types";
 import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
-import { impliedE1rm, isQualifyingSet } from "../engine/matrix";
+import { peakImpliedE1rm } from "../engine/matrix";
 
 // ----------------------------------------------
 // Post-workout summary: pure metric + PR computation. Persistence-free (mirrors
@@ -110,24 +110,8 @@ function computeAdherence(
 }
 
 /** Peak implied e1RM across a set list, considering only honest near-limit sets. */
-function bestE1rm(
-  exercise: Exercise,
-  sets: LoggedSet[],
-): { e1rm: number; set: LoggedSet } | null {
-  const matrix = exercise.rpeMatrix ?? DEFAULT_RPE_MATRIX;
-  let best: { e1rm: number; set: LoggedSet } | null = null;
-  for (const set of sets) {
-    if (!isQualifyingSet(set)) continue;
-    const e1rm = impliedE1rm(
-      matrix,
-      set.actualWeight,
-      set.actualReps,
-      set.actualRpe!,
-    );
-    if (!best || e1rm > best.e1rm) best = { e1rm, set };
-  }
-  return best;
-}
+const bestE1rm = (exercise: Exercise, sets: LoggedSet[]) =>
+  peakImpliedE1rm(exercise.rpeMatrix ?? DEFAULT_RPE_MATRIX, sets);
 
 /** Detects the e1RM, rep and volume PRs a single movement earned this session. */
 function exercisePrs(
@@ -255,7 +239,11 @@ export function computeWorkoutSummary(input: SummaryInput): WorkoutSummary {
     const exercise = exercisesById.get(exerciseId);
     if (!exercise || !currentSets.length) continue;
     prs.push(
-      ...exercisePrs(exercise, currentSets, historyByExercise.get(exerciseId) ?? []),
+      ...exercisePrs(
+        exercise,
+        currentSets,
+        historyByExercise.get(exerciseId) ?? [],
+      ),
     );
   }
 
