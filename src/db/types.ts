@@ -149,10 +149,11 @@ export interface ResetModifier {
  *   `weightIncrement` on a successful session, down (lastingly) by an
  *   intensity reset. It is the single source of truth for prescriptions.
  * - `observedE1rms` holds the implied e1RMs of the last 10 qualifying sets
- *   (reps ≤ 10 AND RPE ≥ 8); their mean is the "observed e1RM". It is a
- *   DIAGNOSTIC only: it detects divergence from `workingE1rm` and serves as
- *   the re-baseline target when an intensity reset recalculates from recent
- *   performance. It never drives daily prescriptions directly.
+ *   (reps ≤ 10 AND RPE ≥ 8). It is INTERNAL to matrix learning: the rolling
+ *   mean is the reference baseline each qualifying set's demonstrated
+ *   percentage is measured against as the RPE matrix self-calibrates. It never
+ *   drives prescriptions and is not surfaced to the user — divergence between
+ *   demonstrated and working e1RM is reconciled by the recalibration flow.
  */
 export interface ProgressionState {
   exerciseId: string;

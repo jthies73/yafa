@@ -129,12 +129,6 @@ describe("linear progression state transitions", () => {
     expect(state.failureStreak).toBe(0);
   });
 
-  it("intensity reset snaps to the observed e1RM when it is below the flat cut", () => {
-    let state = makeState({ failureStreak: 2, observedE1rms: [85, 85] });
-    state = advanceProgression(LP_CONFIG, state, failSets());
-    expect(state.workingE1rm).toBeCloseTo(85);
-  });
-
   it("a set with changed weight is not a failure — streak does not accumulate", () => {
     // Reps short and RPE over, but user loaded 97.5 instead of 100
     const adjustedSets = () => [makeSet(4, 5, 9, 8, 97.5, 100)];

@@ -59,14 +59,7 @@ export function createIntensityResetModifier(): ResetModifier {
  * without it, the modifier would expire and prescriptions would return to the
  * exact loads that caused the failures, immediately re-triggering the reset.
  * The decaying modifier created alongside it only smooths the re-entry.
- *
- * When an observed e1RM exists we re-baseline to demonstrated recent capacity,
- * but never above the flat cut — a reset must not make prescriptions heavier.
  */
-export function intensityResetE1rm(
-  workingE1rm: number,
-  observed: number | null,
-): number {
-  const cut = workingE1rm * (1 - INTENSITY_RESET_E1RM_DROP);
-  return observed === null ? cut : Math.min(cut, observed);
+export function intensityResetE1rm(workingE1rm: number): number {
+  return workingE1rm * (1 - INTENSITY_RESET_E1RM_DROP);
 }

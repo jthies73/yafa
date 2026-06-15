@@ -16,7 +16,6 @@ import {
   applyMatrixUpdates,
   impliedE1rm,
   isQualifyingSet,
-  observedE1rm,
   peakImpliedE1rm,
 } from "./matrix";
 import {
@@ -88,7 +87,6 @@ export interface ExercisePreview {
   name: string;
   config?: RoutineExerciseConfig;
   workingE1rm: number | null;
-  observedE1rm: number | null;
   failureStreak: number;
   currentTargetReps?: number;
   resetEffects: ResetEffect[];
@@ -161,7 +159,6 @@ export async function previewWorkout(
       name: exercise.name,
       config: routineExercise.config,
       workingE1rm: state?.workingE1rm ?? null,
-      observedE1rm: state ? observedE1rm(state.observedE1rms) : null,
       failureStreak: state?.failureStreak ?? 0,
       currentTargetReps: state?.currentTargetReps,
       resetEffects: (state?.resetModifiers ?? [])

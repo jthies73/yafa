@@ -12,7 +12,6 @@ import {
   LP_FAILURE_RESET_TRIGGER,
   TOP_SET_FAILURE_RESET_TRIGGER,
 } from "./config";
-import { observedE1rm } from "./matrix";
 import { createIntensityResetModifier, intensityResetE1rm } from "./resets";
 
 // ----------------------------------------------
@@ -99,10 +98,7 @@ export function evaluateDouble(
 
 const applyIntensityReset = (state: ProgressionState): void => {
   if (state.workingE1rm !== null) {
-    state.workingE1rm = intensityResetE1rm(
-      state.workingE1rm,
-      observedE1rm(state.observedE1rms),
-    );
+    state.workingE1rm = intensityResetE1rm(state.workingE1rm);
   }
   state.resetModifiers = [
     ...state.resetModifiers,

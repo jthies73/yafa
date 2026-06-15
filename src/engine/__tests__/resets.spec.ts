@@ -41,13 +41,8 @@ describe("decaying reset modifiers", () => {
     expect(resetMultiplier(modifiers, "volume")).toBe(1);
   });
 
-  it("intensity reset re-baselines the working e1RM downward only", () => {
-    // No observed data: flat -10% cut.
-    expect(intensityResetE1rm(100, null)).toBeCloseTo(90);
-    // Observed below the cut: snap to demonstrated capacity.
-    expect(intensityResetE1rm(100, 85)).toBeCloseTo(85);
-    // Observed above the cut: never reduces the cut.
-    expect(intensityResetE1rm(100, 95)).toBeCloseTo(90);
-    expect(intensityResetE1rm(100, 120)).toBeCloseTo(90);
+  it("intensity reset applies a flat downward cut to the working e1RM", () => {
+    expect(intensityResetE1rm(100)).toBeCloseTo(90);
+    expect(intensityResetE1rm(200)).toBeCloseTo(180);
   });
 });
