@@ -18,58 +18,86 @@ const apply = () => {
   emit("confirm");
 };
 
-const divergenceLabel = (p: RecalibrationProposal): string => {
-  const pct = Math.round((p.sessionE1rm / p.currentE1rm - 1) * 100);
+// The change actually being applied (working → proposed), so the % matches the
+// new value shown beside it rather than the raw session divergence.
+const changePct = (p: RecalibrationProposal): number =>
+  Math.round((p.proposedE1rm / p.currentE1rm - 1) * 100);
+
+const changeLabel = (p: RecalibrationProposal): string => {
+  const pct = changePct(p);
   return `${pct > 0 ? "+" : ""}${pct}%`;
 };
 
 const isUp = (p: RecalibrationProposal): boolean =>
-  p.sessionE1rm >= p.currentE1rm;
+  p.proposedE1rm >= p.currentE1rm;
 </script>
 
 <template>
   <div
     v-if="recalibrations.length"
-    class="flex flex-col gap-2.5 rounded-xl border border-accent-border bg-accent-bg p-3.5"
+    class="flex flex-col gap-3 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-3.5"
   >
     <!-- Header -->
     <div class="flex flex-col gap-0.5">
       <span
-        class="text-[0.65rem] font-bold uppercase tracking-wider text-accent"
+        class="text-[0.65rem] font-semibold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50"
       >
         Recalibration
       </span>
-      <p class="text-xs text-text-light dark:text-text-dark opacity-70">
-        Your demonstrated strength has drifted from the working estimate. Apply
-        to re-baseline future prescriptions.
+      <p class="text-xs text-text-light dark:text-text-dark opacity-60">
+        Demonstrated strength has drifted from the working estimate. Apply to
+        re-baseline future prescriptions.
       </p>
     </div>
 
-    <!-- Per-exercise current → proposed -->
-    <div class="flex flex-col gap-2">
+    <!-- Per-exercise: new e1RM + signed change lead -->
+    <div class="flex flex-col">
       <div
         v-for="(p, i) in recalibrations"
         :key="i"
-        class="flex items-center gap-3"
+        class="flex items-center justify-between gap-3 py-2 border-t border-border-light dark:border-border-dark first:border-t-0"
       >
         <div class="min-w-0 flex-1">
           <p
-            class="text-sm font-bold text-text-h-light dark:text-text-h-dark truncate"
+            class="text-sm font-semibold text-text-h-light dark:text-text-h-dark truncate"
           >
             {{ p.exerciseName }}
           </p>
-          <p
-            class="text-xs font-mono text-text-light dark:text-text-dark opacity-60"
-          >
-            {{ fmtWeight(p.currentE1rm) }} → {{ fmtWeight(p.proposedE1rm) }}
+          <p class="text-xs text-text-light dark:text-text-dark opacity-50">
+            from {{ fmtWeight(p.currentE1rm) }}
           </p>
         </div>
-        <span
-          class="text-xs font-bold font-mono shrink-0"
-          :class="isUp(p) ? 'text-accent' : 'text-amber-500'"
-        >
-          {{ divergenceLabel(p) }}
-        </span>
+
+        <div class="flex items-center gap-2.5 shrink-0">
+          <span
+            class="text-base font-bold font-mono text-text-h-light dark:text-text-h-dark"
+          >
+            {{ fmtWeight(p.proposedE1rm) }}
+          </span>
+          <span
+            class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-xs font-bold font-mono"
+            :class="
+              isUp(p)
+                ? 'text-green-600 dark:text-green-400 bg-green-500/10'
+                : 'text-red-600 dark:text-red-400 bg-red-500/10'
+            "
+          >
+            <svg
+              viewBox="0 0 24 24"
+              class="w-3 h-3"
+              :class="{ 'rotate-180': !isUp(p) }"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 19V5" />
+              <path d="m5 12 7-7 7 7" />
+            </svg>
+            {{ changeLabel(p) }}
+          </span>
+        </div>
       </div>
     </div>
 
