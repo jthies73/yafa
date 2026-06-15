@@ -153,7 +153,8 @@ const resetLine = (r: ResetEffect): string =>
 
 const streakNotes = (e: ExercisePreview): string[] => {
   if (!e.config || e.failureStreak === 0) return [];
-  const trigger = FAILURE_TRIGGER[e.config.progressionModel] ?? LP_FAILURE_RESET_TRIGGER;
+  const trigger =
+    FAILURE_TRIGGER[e.config.progressionModel] ?? LP_FAILURE_RESET_TRIGGER;
   return [`Failure streak ${e.failureStreak}/${trigger}`];
 };
 

@@ -190,10 +190,10 @@ const isActive = (names: readonly string[] | string) => {
 };
 
 const recordCoffeeClick = () => {
-  if (['development', 'staging', 'production'].includes(import.meta.env.MODE)) {
+  if (["development", "staging", "production"].includes(import.meta.env.MODE)) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
     if (baseUrl) {
-      fetch(`${baseUrl}/coffee-visits`, { method: 'POST' }).catch(() => {});
+      fetch(`${baseUrl}/coffee-visits`, { method: "POST" }).catch(() => {});
     }
   }
 };
@@ -541,7 +541,11 @@ const recordCoffeeClick = () => {
     >
       <!-- Buy me a coffee -->
       <a
-        v-if="['development', 'staging', 'production'].includes(features.environment)"
+        v-if="
+          ['development', 'staging', 'production'].includes(
+            features.environment,
+          )
+        "
         href="https://buymeacoffee.com/jthies73"
         target="_blank"
         rel="noopener noreferrer"

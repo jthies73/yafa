@@ -91,7 +91,11 @@ describe("set failure condition", () => {
 
 describe("linear progression state transitions", () => {
   const successSets = () => [hitSet(5, 8), hitSet(5, 8), hitSet(5, 8)];
-  const failSets = () => [failSet(4, 5, 9, 8), failSet(4, 5, 9, 8), failSet(4, 5, 9, 8)];
+  const failSets = () => [
+    failSet(4, 5, 9, 8),
+    failSet(4, 5, 9, 8),
+    failSet(4, 5, 9, 8),
+  ];
 
   it("success adds the weight increment and clears the streak", () => {
     const state = advanceProgression(
@@ -171,7 +175,11 @@ describe("top set + back-off", () => {
   });
 
   it("fires the intensity reset on exactly the third consecutive top-set failure", () => {
-    const failedTopSet = () => [failSet(4, 5, 9, 8), hitSet(5, 8), hitSet(5, 8)];
+    const failedTopSet = () => [
+      failSet(4, 5, 9, 8),
+      hitSet(5, 8),
+      hitSet(5, 8),
+    ];
     let state = makeState();
     state = advanceProgression(TS_CONFIG, state, failedTopSet());
     state = advanceProgression(TS_CONFIG, state, failedTopSet());

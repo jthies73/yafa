@@ -9,13 +9,13 @@ import { useActiveWorkout } from "./composables/useActiveWorkout";
 const { activeWorkout } = useActiveWorkout();
 
 onMounted(() => {
-  if (['development', 'staging', 'production'].includes(import.meta.env.MODE)) {
+  if (["development", "staging", "production"].includes(import.meta.env.MODE)) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
     if (baseUrl) {
       fetch(`${baseUrl}/page-visits`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ path: window.location.pathname }),
       }).catch(() => {});

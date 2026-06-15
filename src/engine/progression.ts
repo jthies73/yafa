@@ -74,7 +74,11 @@ export function evaluateDouble(
 ): DoubleEvaluation {
   const current = state.currentTargetReps ?? params.minReps;
   if (!sets.length) {
-    return { weightProgressed: false, nextTargetReps: current, outcome: "success" };
+    return {
+      weightProgressed: false,
+      nextTargetReps: current,
+      outcome: "success",
+    };
   }
 
   const weightProgressed = sets.every((s) => s.actualReps >= params.maxReps);

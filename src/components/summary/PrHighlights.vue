@@ -18,7 +18,6 @@ const primary = computed(() =>
 );
 const volumePrs = computed(() => props.prs.filter((p) => p.type === "volume"));
 
-
 const headline = (p: PrResult): string =>
   p.type === "e1rm"
     ? fmtWeight(p.e1rm!)

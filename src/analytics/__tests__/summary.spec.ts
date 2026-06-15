@@ -108,9 +108,9 @@ describe("adherence", () => {
   });
 
   it("penalizes undershot reps", () => {
-    expect(score([makeSet(), makeSet(), makeSet({ actualReps: 3 })], 3)).toBeCloseTo(
-      (2 / 3) * 100,
-    );
+    expect(
+      score([makeSet(), makeSet(), makeSet({ actualReps: 3 })], 3),
+    ).toBeCloseTo((2 / 3) * 100);
   });
 
   it("penalizes RPE overshoot beyond +0.5, tolerates exactly +0.5", () => {
@@ -183,7 +183,10 @@ describe("PR detection", () => {
       },
     ]);
     const workout = makeWorkout(T0, [
-      { exerciseId: ex.id, sets: [makeSet({ actualWeight: 100, actualReps: 8 })] },
+      {
+        exerciseId: ex.id,
+        sets: [makeSet({ actualWeight: 100, actualReps: 8 })],
+      },
     ]);
     const summary = computeWorkoutSummary(
       baseInput({
@@ -203,7 +206,11 @@ describe("PR detection", () => {
         exerciseId: ex.id,
         sets: [
           makeSet({ actualReps: 5, actualWeight: 100, timestamp: T0 - DAY }),
-          makeSet({ actualReps: 5, actualWeight: 100, timestamp: T0 - DAY + 1 }),
+          makeSet({
+            actualReps: 5,
+            actualWeight: 100,
+            timestamp: T0 - DAY + 1,
+          }),
         ],
       },
     ]);

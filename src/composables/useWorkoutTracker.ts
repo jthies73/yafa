@@ -8,11 +8,7 @@ import type {
 } from "../db/types";
 import type { PrescribedSet } from "../engine/prescription";
 import { DEFAULT_TARGET_RPE } from "../engine/config";
-import {
-  impliedE1rm,
-  weightFromE1rm,
-  roundToLoadable,
-} from "../engine/matrix";
+import { impliedE1rm, weightFromE1rm, roundToLoadable } from "../engine/matrix";
 import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
 import { useActiveWorkout } from "./useActiveWorkout";
 
