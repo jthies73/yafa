@@ -92,7 +92,7 @@ describe("session metrics", () => {
   });
 });
 
-describe("adherence", () => {
+describe("adherence (effort-aware, pooled per set)", () => {
   const ex = makeExercise();
   const score = (sets: LoggedSet[], planned: number) =>
     computeWorkoutSummary(
@@ -107,29 +107,97 @@ describe("adherence", () => {
     expect(score([makeSet(), makeSet(), makeSet()], 3)).toBe(100);
   });
 
-  it("penalizes undershot reps", () => {
+  // Scenario A — load miscalibration: reps short but the RPE cap was respected.
+  it("excuses a rep shortfall when the RPE cap was met", () => {
     expect(
-      score([makeSet(), makeSet(), makeSet({ actualReps: 3 })], 3),
-    ).toBeCloseTo((2 / 3) * 100);
+      score([makeSet({ targetReps: 8, actualReps: 6, actualRpe: 8 })], 1),
+    ).toBe(100);
   });
 
-  it("penalizes RPE overshoot beyond +0.5, tolerates exactly +0.5", () => {
-    expect(score([makeSet({ targetRpe: 8, actualRpe: 8.5 })], 1)).toBe(100);
-    expect(score([makeSet({ targetRpe: 8, actualRpe: 9 })], 1)).toBe(0);
+  // Scenario B — ego lifting: reps hit, but RPE overshoots the cap.
+  it("penalizes RPE overshoot (15 per point)", () => {
+    expect(
+      score([makeSet({ targetReps: 8, actualReps: 8, actualRpe: 10 })], 1),
+    ).toBe(70);
   });
 
-  it("penalizes extra sets with completed as the denominator (overshoot)", () => {
+  // True failure: reps short AND RPE 10 — penalized on the RPE axis only.
+  it("scores a true failure set on RPE alone, never double-hitting reps", () => {
+    expect(
+      score([makeSet({ targetReps: 8, actualReps: 5, actualRpe: 10 })], 1),
+    ).toBe(70);
+  });
+
+  // Sandbag: reps short with effort left in reserve (under the cap).
+  it("penalizes a rep shortfall when effort was left in reserve", () => {
+    expect(
+      score([makeSet({ targetReps: 8, actualReps: 3, actualRpe: 6 })], 1),
+    ).toBe(75); // 100 − 5 reps × 5
+  });
+
+  // The lighter sets the engine prescribes after a failure land under the RPE
+  // target by design — they must not be penalized for being easy.
+  it("does not penalize a set that is easier than prescribed", () => {
+    expect(
+      score([makeSet({ targetReps: 8, actualReps: 8, actualRpe: 6 })], 1),
+    ).toBe(100);
+  });
+
+  // Back-off / blank RPE: no RPE data → scored on reps only.
+  it("scores a set without RPE on reps only", () => {
+    expect(
+      score(
+        [
+          makeSet({
+            targetReps: 8,
+            actualReps: 6,
+            targetRpe: undefined,
+            actualRpe: undefined,
+          }),
+        ],
+        1,
+      ),
+    ).toBe(90); // 100 − 2 reps × 5
+  });
+
+  // Scenario C — a skipped set scores 0 against the prescribed denominator.
+  it("counts a skipped set as 0 over the prescribed denominator", () => {
+    expect(score([makeSet(), makeSet()], 3)).toBeCloseTo(200 / 3);
+  });
+
+  // Scenario D — extra sets dock the pooled score by 10 each (junk volume).
+  it("docks 10 points per extra set beyond the prescription", () => {
     const sets = [
       makeSet({ timestamp: T0 + 1 }),
       makeSet({ timestamp: T0 + 2 }),
       makeSet({ timestamp: T0 + 3 }),
       makeSet({ timestamp: T0 + 4 }),
     ];
-    expect(score(sets, 3)).toBe(75);
+    expect(score(sets, 3)).toBe(90);
   });
 
-  it("penalizes missed sets with planned as the denominator (undershoot)", () => {
-    expect(score([makeSet(), makeSet()], 3)).toBeCloseTo((2 / 3) * 100);
+  it("scores 100 when nothing was prescribed (freeform session)", () => {
+    expect(score([makeSet(), makeSet()], 0)).toBe(100);
+  });
+
+  it("pools per-set scores across exercises against total prescribed", () => {
+    const a = makeExercise({ name: "A" });
+    const b = makeExercise({ name: "B" });
+    const summary = computeWorkoutSummary(
+      baseInput({
+        workout: makeWorkout(T0, [
+          { exerciseId: a.id, sets: [makeSet(), makeSet()] }, // 2/2 perfect
+          { exerciseId: b.id, sets: [makeSet()] }, // 1/2 — second skipped → 0
+        ]),
+        exercisesById: new Map([
+          [a.id, a],
+          [b.id, b],
+        ]),
+        plannedCounts: { [a.id]: 2, [b.id]: 2 },
+      }),
+    );
+    // (100 + 100 + 100 + 0) / 4 = 75
+    expect(summary.adherence.score).toBe(75);
   });
 });
 

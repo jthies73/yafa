@@ -16,9 +16,9 @@ export interface SetCounts {
 }
 
 export interface AdherenceResult {
-  score: number; // 0..100
-  adherentSets: number;
-  evaluatedSets: number; // max(planned, completed) — the score denominator
+  score: number; // 0..100, session-level (pooled across prescribed sets)
+  prescribedSets: number; // the score denominator: total prescribed sets
+  extraSets: number; // sets logged beyond prescription (each −EXTRA_SET_PENALTY)
 }
 
 export type PrType = "e1rm" | "rep" | "volume";
@@ -54,6 +54,13 @@ export interface SummaryInput {
 
 const EPSILON = 1e-6;
 
+// Adherence penalties (points). The RPE cap is the binding constraint, so RPE
+// overshoot costs the most; a rep shortfall is graded and milder; rogue volume
+// (extra sets) docks the pooled score because it disrupts fatigue management.
+const RPE_PENALTY_PER_POINT = 15; // per 1.0 RPE over the cap
+const REP_PENALTY_PER_REP = 5; // per rep short, when effort was left in reserve
+const EXTRA_SET_PENALTY = 10; // per set beyond the prescription
+
 /** All logged sets of one movement, merged across duplicate exercise slots. */
 function setsByExercise(workout: Workout): Map<string, LoggedSet[]> {
   const map = new Map<string, LoggedSet[]>();
@@ -69,44 +76,59 @@ const sessionVolume = (sets: LoggedSet[]): number =>
   sets.reduce((sum, s) => sum + s.actualReps * s.actualWeight, 0);
 
 /**
- * A set is non-adherent if it is extra (beyond the planned count for its
- * exercise), undershoots target reps, or overshoots target RPE by more than
- * 0.5. Missing RPE/target data can never make a set non-adherent on that axis.
+ * 0–100 adherence score for one completed set. Effort-aware: the RPE cap is the
+ * binding constraint, so only RPE OVERSHOOT is penalized — a set that is easier
+ * than prescribed (including the lighter loads the engine prescribes after a
+ * failure) is never punished. A rep shortfall is excused when the lifter reached
+ * the RPE cap (load/fatigue explains it, e.g. autoregulation or a true failure);
+ * it counts only when effort was left in reserve. Missing RPE → reps only.
  */
-function isAdherent(set: LoggedSet, isExtra: boolean): boolean {
-  if (isExtra) return false;
-  if (set.actualReps < set.targetReps) return false;
-  if (
-    set.targetRpe != null &&
-    set.actualRpe != null &&
-    set.actualRpe > set.targetRpe + 0.5
-  )
-    return false;
-  return true;
+function setScore(set: LoggedSet): number {
+  const hasRpe = set.targetRpe != null && set.actualRpe != null;
+  const rpePenalty = hasRpe
+    ? Math.max(0, set.actualRpe! - set.targetRpe!) * RPE_PENALTY_PER_POINT
+    : 0;
+  const capReached = hasRpe && set.actualRpe! >= set.targetRpe!;
+  const repShort = Math.max(0, set.targetReps - set.actualReps);
+  const repPenalty = capReached ? 0 : repShort * REP_PENALTY_PER_REP;
+  return Math.max(0, 100 - rpePenalty - repPenalty);
 }
 
+/**
+ * Session adherence, pooled across every prescribed set. For each exercise the
+ * earliest `planned` completed sets are scored; sets beyond that are extra (junk
+ * volume); prescribed-but-unlogged sets contribute 0 implicitly because the
+ * denominator is the total prescribed count — which includes fully-skipped
+ * exercises that never appear in `current`. Each extra set then docks the pooled
+ * score by EXTRA_SET_PENALTY. With nothing prescribed there is nothing to
+ * deviate from, so the session scores 100.
+ */
 function computeAdherence(
   current: Map<string, LoggedSet[]>,
   plannedCounts: Record<string, number>,
 ): AdherenceResult {
-  let adherentSets = 0;
-  let completed = 0;
+  const prescribedSets = Object.values(plannedCounts).reduce(
+    (a, b) => a + b,
+    0,
+  );
+
+  let scoreSum = 0;
+  let extraSets = 0;
   for (const [exerciseId, sets] of current) {
     const planned = plannedCounts[exerciseId] ?? 0;
     // Earliest sets fill the plan; anything past the planned count is extra.
     const ordered = [...sets].sort((a, b) => a.timestamp - b.timestamp);
     ordered.forEach((set, i) => {
-      completed += 1;
-      if (isAdherent(set, i >= planned)) adherentSets += 1;
+      if (i < planned) scoreSum += setScore(set);
+      else extraSets += 1;
     });
   }
-  const planned = Object.values(plannedCounts).reduce((a, b) => a + b, 0);
-  const evaluatedSets = Math.max(planned, completed);
-  return {
-    adherentSets,
-    evaluatedSets,
-    score: evaluatedSets === 0 ? 100 : (adherentSets / evaluatedSets) * 100,
-  };
+
+  if (prescribedSets === 0) return { score: 100, prescribedSets: 0, extraSets };
+
+  const base = scoreSum / prescribedSets;
+  const score = Math.max(0, base - extraSets * EXTRA_SET_PENALTY);
+  return { score, prescribedSets, extraSets };
 }
 
 /** Peak implied e1RM across a set list, considering only honest near-limit sets. */
