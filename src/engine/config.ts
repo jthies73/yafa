@@ -59,8 +59,7 @@ export const LOADABLE_INCREMENT_KG = 2.5;
 
 export const LP_FAILURE_RESET_TRIGGER = 3; // consecutive LP failures
 export const TOP_SET_FAILURE_RESET_TRIGGER = 3; // consecutive flagged top-set sessions
-export const DOUBLE_REGRESSION_RESET_TRIGGER = 2; // consecutive rep regressions at same weight
-export const DOUBLE_PLATEAU_RESET_TRIGGER = 4; // consecutive identical-rep sessions at same weight
+export const DOUBLE_FAILURE_RESET_TRIGGER = 3; // consecutive failures in double progression
 
 // ---- Reset shape ----
 
@@ -68,14 +67,10 @@ export const DOUBLE_PLATEAU_RESET_TRIGGER = 4; // consecutive identical-rep sess
 // e1RM is available to re-baseline to).
 export const INTENSITY_RESET_E1RM_DROP = 0.1;
 
-// Initial magnitudes of the decaying corrective modifiers.
+// Initial magnitude of the decaying corrective intensity modifier.
 export const INTENSITY_RESET_MAGNITUDE = 0.1;
-export const VOLUME_RESET_MAGNITUDE = 0.3;
 
-// Decay windows. Intensity decays over a LONGER window than volume because the
-// fatigue it answers is systemic/neurological, which clears more slowly than
-// the local muscular fatigue behind a volume reset — and because re-entry
-// after a lasting e1RM cut should be gradual rather than snapping straight
-// back to near-limit RPEs.
-export const VOLUME_RESET_DECAY_SESSIONS = 3;
+// Decay window. Intensity decays slowly because the fatigue it answers is
+// systemic/neurological, which clears more slowly than local muscular fatigue,
+// and because re-entry after a lasting e1RM cut should be gradual.
 export const INTENSITY_RESET_DECAY_SESSIONS = 5;

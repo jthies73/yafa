@@ -39,8 +39,6 @@ export function freshProgressionState(exerciseId: string): ProgressionState {
     workingE1rm: null,
     observedE1rms: [],
     failureStreak: 0,
-    regressionStreak: 0,
-    plateauStreak: 0,
     resetModifiers: [],
     updated_at: Date.now(),
   };
@@ -87,8 +85,6 @@ export interface ExercisePreview {
   workingE1rm: number | null;
   observedE1rm: number | null;
   failureStreak: number;
-  regressionStreak: number;
-  plateauStreak: number;
   currentTargetReps?: number;
   resetEffects: ResetEffect[];
   prescription: ExercisePrescription | null; // null without a config
@@ -162,8 +158,6 @@ export async function previewWorkout(
       workingE1rm: state?.workingE1rm ?? null,
       observedE1rm: state ? observedE1rm(state.observedE1rms) : null,
       failureStreak: state?.failureStreak ?? 0,
-      regressionStreak: state?.regressionStreak ?? 0,
-      plateauStreak: state?.plateauStreak ?? 0,
       currentTargetReps: state?.currentTargetReps,
       resetEffects: (state?.resetModifiers ?? [])
         .filter((m) => !isExpired(m))

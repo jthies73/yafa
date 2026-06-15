@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { DEFAULT_RPE_MATRIX } from "../../db/rpeMatrix";
 import type { ProgressionState, RoutineExerciseConfig } from "../../db/types";
 import { prescribeExercise } from "../prescription";
-import { createVolumeResetModifier } from "../resets";
+import { createIntensityResetModifier } from "../resets";
 
 const makeState = (
   overrides: Partial<ProgressionState> = {},
@@ -11,8 +11,6 @@ const makeState = (
   workingE1rm: 100,
   observedE1rms: [],
   failureStreak: 0,
-  regressionStreak: 0,
-  plateauStreak: 0,
   resetModifiers: [],
   updated_at: 0,
   ...overrides,
@@ -100,7 +98,7 @@ describe("prescription pipeline", () => {
     expect(peaking.sets[0].rpe).toBe(10); // 9.5 × 1.05 snapped and capped
   });
 
-  it("a fresh volume reset trims sets and reps of a double progression", () => {
+  it("a fresh intensity reset reduces prescribed weight for double progression", () => {
     const config: RoutineExerciseConfig = {
       progressionModel: "double",
       progressionParams: {
@@ -110,19 +108,24 @@ describe("prescription pipeline", () => {
         weightIncrement: 2.5,
       },
     };
-    const { sets } = prescribeExercise({
+    const baseline = prescribeExercise({
+      exerciseId: "ex",
+      config,
+      state: makeState({ currentTargetReps: 10 }),
+      matrix: DEFAULT_RPE_MATRIX,
+    });
+    const withReset = prescribeExercise({
       exerciseId: "ex",
       config,
       state: makeState({
         currentTargetReps: 10,
-        resetModifiers: [createVolumeResetModifier()],
+        resetModifiers: [createIntensityResetModifier()],
       }),
       matrix: DEFAULT_RPE_MATRIX,
     });
-    // ×0.7 at full strength: sets 3→2, reps 10→7; weight stays matrix-derived.
-    expect(sets).toHaveLength(2);
-    expect(sets[0].reps).toBe(7);
-    expect(sets[0].weight).toBe(72.5); // 100 × matrix[7][8] (0.72) → loadable
+    // Intensity reset at full strength applies a ×0.9 multiplier to the e1RM,
+    // so the prescribed weight should be lower than the baseline.
+    expect(withReset.sets[0].weight).toBeLessThan(baseline.sets[0].weight!);
   });
 
   it("prescribes structure but no weight before a working e1RM is seeded", () => {

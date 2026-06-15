@@ -7,6 +7,13 @@ import type {
   WorkoutExercise,
 } from "../db/types";
 import type { PrescribedSet } from "../engine/prescription";
+import { DEFAULT_TARGET_RPE } from "../engine/config";
+import {
+  impliedE1rm,
+  weightFromE1rm,
+  roundToLoadable,
+} from "../engine/matrix";
+import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
 import { useActiveWorkout } from "./useActiveWorkout";
 
 export interface SetEntry {
@@ -176,17 +183,79 @@ export function useWorkoutTracker() {
     return i === firstIncomplete ? "current" : "upcoming";
   };
 
+  /**
+   * True when a completed entry meets the failure condition: reps short of the
+   * prescription, RPE over target, and the prescribed weight was used (not
+   * adjusted by the lifter). A null prescription weight means no weight was
+   * prescribed yet (first session), so we conservatively skip the check.
+   */
+  function entryFailed(entry: SetEntry): boolean {
+    if (!entry.target || entry.target.weight === null) return false;
+    const actualReps = parseInt(entry.reps, 10);
+    const actualRpe = parseFloat(entry.rpe);
+    const actualWeight = parseFloat(entry.weight);
+    const targetRpe = entry.target.rpe ?? DEFAULT_TARGET_RPE;
+    return (
+      !isNaN(actualReps) &&
+      actualReps < entry.target.reps &&
+      !isNaN(actualRpe) &&
+      actualRpe > targetRpe &&
+      !isNaN(actualWeight) &&
+      Math.abs(actualWeight - entry.target.weight) < 1e-9
+    );
+  }
+
+  /**
+   * Derives the corrected weight for each remaining unprescribed set by:
+   * 1. Computing the implied e1RM from the failed set via the exercise's RPE matrix.
+   * 2. Looking up the weight that achieves each upcoming set's target reps/rpe at
+   *    that e1RM — so back-offs and straight sets are each adjusted to their own target.
+   * 3. Rounding to the nearest loadable increment and capping: a failed set should
+   *    never cause an upward adjustment.
+   * Sets without a prescription target are skipped (no target reps/rpe to look up).
+   */
+  function reduceUpcomingWeights(
+    card: ExerciseCard,
+    fromIndex: number,
+    failedEntry: SetEntry,
+  ): void {
+    const matrix =
+      exercisesMap.value[card.exerciseId]?.rpeMatrix ?? DEFAULT_RPE_MATRIX;
+    const actualReps = parseInt(failedEntry.reps, 10);
+    const actualRpe = parseFloat(failedEntry.rpe);
+    const actualWeight = parseFloat(failedEntry.weight);
+    const e1rm = impliedE1rm(matrix, actualWeight, actualReps, actualRpe);
+
+    for (let i = fromIndex + 1; i < card.sets.length; i++) {
+      const upcoming = card.sets[i];
+      if (isDone(upcoming) || !upcoming.target) continue;
+      const targetRpe = upcoming.target.rpe ?? DEFAULT_TARGET_RPE;
+      const adjusted = roundToLoadable(
+        weightFromE1rm(matrix, e1rm, upcoming.target.reps, targetRpe),
+      );
+      // Only apply if it reduces the weight.
+      if (upcoming.target.weight !== null && adjusted >= upcoming.target.weight)
+        continue;
+      upcoming.weight = String(adjusted);
+    }
+  }
+
   const completeSet = (card: ExerciseCard, i: number) => {
     const set = card.sets[i];
     set.done = true;
     set.completedAt ??= Date.now();
+    if (entryFailed(set)) reduceUpcomingWeights(card, i, set);
   };
 
   const toggleSet = (card: ExerciseCard, i: number) => {
     const set = card.sets[i];
     set.done = !set.done;
-    if (set.done) set.completedAt ??= Date.now();
-    else set.completedAt = null;
+    if (set.done) {
+      set.completedAt ??= Date.now();
+      if (entryFailed(set)) reduceUpcomingWeights(card, i, set);
+    } else {
+      set.completedAt = null;
+    }
   };
 
   const addCardFor = (id: string, name: string) => {

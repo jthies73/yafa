@@ -3,8 +3,6 @@ import {
   INTENSITY_RESET_MAGNITUDE,
   INTENSITY_RESET_DECAY_SESSIONS,
   INTENSITY_RESET_E1RM_DROP,
-  VOLUME_RESET_MAGNITUDE,
-  VOLUME_RESET_DECAY_SESSIONS,
 } from "./config";
 
 // ----------------------------------------------
@@ -51,15 +49,6 @@ export function createIntensityResetModifier(): ResetModifier {
     kind: "intensity",
     initialMagnitude: INTENSITY_RESET_MAGNITUDE,
     decaySessions: INTENSITY_RESET_DECAY_SESSIONS,
-    sessionsElapsed: 0,
-  };
-}
-
-export function createVolumeResetModifier(): ResetModifier {
-  return {
-    kind: "volume",
-    initialMagnitude: VOLUME_RESET_MAGNITUDE,
-    decaySessions: VOLUME_RESET_DECAY_SESSIONS,
     sessionsElapsed: 0,
   };
 }

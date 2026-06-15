@@ -3,10 +3,16 @@ import { ref, watch } from "vue";
 import type { ProgressionModelType } from "../db/types";
 import { FOCUS_META } from "../config/periodization";
 import {
-  DOUBLE_PLATEAU_RESET_TRIGGER,
-  DOUBLE_REGRESSION_RESET_TRIGGER,
+  DOUBLE_FAILURE_RESET_TRIGGER,
   LP_FAILURE_RESET_TRIGGER,
+  TOP_SET_FAILURE_RESET_TRIGGER,
 } from "../engine/config";
+
+const FAILURE_TRIGGER: Record<string, number> = {
+  linear: LP_FAILURE_RESET_TRIGGER,
+  topset_backoff: TOP_SET_FAILURE_RESET_TRIGGER,
+  double: DOUBLE_FAILURE_RESET_TRIGGER,
+};
 import type { PrescribedSet } from "../engine/prescription";
 import {
   previewWorkout,
@@ -146,21 +152,9 @@ const resetLine = (r: ResetEffect): string =>
   } left`;
 
 const streakNotes = (e: ExercisePreview): string[] => {
-  if (!e.config) return [];
-  const notes: string[] = [];
-  if (e.config.progressionModel === "double") {
-    if (e.regressionStreak > 0)
-      notes.push(
-        `Regression streak ${e.regressionStreak}/${DOUBLE_REGRESSION_RESET_TRIGGER}`,
-      );
-    if (e.plateauStreak > 0)
-      notes.push(
-        `Plateau streak ${e.plateauStreak}/${DOUBLE_PLATEAU_RESET_TRIGGER}`,
-      );
-  } else if (e.failureStreak > 0) {
-    notes.push(`Failure streak ${e.failureStreak}/${LP_FAILURE_RESET_TRIGGER}`);
-  }
-  return notes;
+  if (!e.config || e.failureStreak === 0) return [];
+  const trigger = FAILURE_TRIGGER[e.config.progressionModel] ?? LP_FAILURE_RESET_TRIGGER;
+  return [`Failure streak ${e.failureStreak}/${trigger}`];
 };
 
 const e1rmLine = (e: ExercisePreview): string => {

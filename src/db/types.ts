@@ -158,12 +158,8 @@ export interface ProgressionState {
   exerciseId: string;
   workingE1rm: number | null; // null until seeded from the first logged session
   observedE1rms: number[];
-  failureStreak: number; // linear + top-set: consecutive failed sessions
-  regressionStreak: number; // double: consecutive rep regressions at same weight
-  plateauStreak: number; // double: consecutive identical-rep sessions at same weight
+  failureStreak: number; // consecutive failed sessions (all progression models)
   currentTargetReps?: number; // double: rep goal advancing from minReps to maxReps
-  lastSessionReps?: number; // double: previous session's total reps (comparison basis)
-  lastSessionWeight?: number; // double: the weight those reps were achieved at
   resetModifiers: ResetModifier[];
   updated_at: number;
 }
