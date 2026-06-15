@@ -9,6 +9,8 @@ const props = defineProps<{
   exerciseName: string;
   /** Fold the sets section away (used while the card is being dragged). */
   collapsed?: boolean;
+  /** Per-set flag: whether a re-prescription proposal is available. */
+  proposalFlags?: boolean[];
 }>();
 
 const emit = defineEmits<{
@@ -18,6 +20,7 @@ const emit = defineEmits<{
   (e: "complete", index: number): void;
   (e: "add-set"): void;
   (e: "toggle-set", index: number): void;
+  (e: "open-proposal", index: number, rect: DOMRect): void;
 }>();
 
 const rowRefs = ref<Record<number, InstanceType<typeof WorkoutSetRow> | null>>(
@@ -139,10 +142,14 @@ defineExpose({
             :index="setIndex + 1"
             :state="setState(setIndex)"
             :target="set.target"
+            :has-proposal="proposalFlags?.[setIndex] ?? false"
             @toggle="emit('toggle-set', setIndex)"
             @complete="emit('complete', setIndex)"
             @edit-rpe="emit('edit-rpe', setIndex)"
             @delete="emit('request-delete-set', setIndex)"
+            @open-proposal="
+              (rect: DOMRect) => emit('open-proposal', setIndex, rect)
+            "
           />
 
           <!-- Add set -->

@@ -14,6 +14,8 @@ const props = defineProps<{
   state: "finished" | "current" | "upcoming";
   /** Engine prescription backing this row — shown as placeholder targets. */
   target?: PrescribedSet;
+  /** A re-prescription is available — surfaces a green dot on the index. */
+  hasProposal?: boolean;
 }>();
 
 const { display: displayWeight } = useWeightUnit();
@@ -36,7 +38,14 @@ const emit = defineEmits<{
   (e: "complete"): void;
   (e: "edit-rpe"): void;
   (e: "delete"): void;
+  (e: "open-proposal", rect: DOMRect): void;
 }>();
+
+const indexEl = ref<HTMLButtonElement | null>(null);
+function openProposal() {
+  if (indexEl.value)
+    emit("open-proposal", indexEl.value.getBoundingClientRect());
+}
 
 const reps = defineModel<string>("reps", { default: "" });
 const weight = defineModel<string>("weight", { default: "" });
@@ -134,8 +143,22 @@ async function onWeightKeydown(e: KeyboardEvent) {
 
 <template>
   <div class="flex items-center gap-2.5">
-    <!-- Set index -->
+    <!-- Set index — clickable with a green dot when a re-prescription is offered -->
+    <button
+      v-if="hasProposal"
+      ref="indexEl"
+      type="button"
+      class="relative w-5 shrink-0 text-center text-xs font-mono font-bold text-text-h-light dark:text-text-h-dark cursor-pointer"
+      title="Suggested adjustment"
+      @click="openProposal"
+    >
+      {{ index }}
+      <span
+        class="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-green-500"
+      />
+    </button>
     <span
+      v-else
       class="w-5 shrink-0 text-center text-xs font-mono font-bold text-text-light dark:text-text-dark opacity-50"
     >
       {{ index }}

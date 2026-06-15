@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from "vue";
+import { ref, computed, nextTick, onMounted, onUnmounted } from "vue";
 import type { Exercise } from "../db/types";
 import { createExercise, type ExerciseInput } from "../db/repository";
 import { useWorkoutTracker } from "../composables/useWorkoutTracker";
 import { useSortableList } from "../composables/useSortableList";
+import type { SetAdjustment } from "../engine/adjustment";
 import WorkoutTrackerCard from "./WorkoutTrackerCard.vue";
 import ExercisePickerSheet from "./ExercisePickerSheet.vue";
 import ExerciseFormSheet from "./ExerciseFormSheet.vue";
 import RpeSheet from "./RpeSheet.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
+import SetProposalPopover from "./SetProposalPopover.vue";
 
 const {
   cards,
@@ -18,10 +20,78 @@ const {
   deleteExercise,
   completeSet,
   toggleSet,
+  proposalFor,
+  applyProposal,
   addCardFor,
   reorderCards,
   setValid,
 } = useWorkoutTracker();
+
+// ── Prescription adjustment proposals ─────────────────────────────────────────
+// A green dot offers a re-prescription of the next set based on the previous
+// set's outcome. Dismissed proposals are remembered by signature so they re-show
+// only if the predecessor changes (producing a different proposal).
+const dismissed = ref<Record<string, string>>({});
+const sig = (p: SetAdjustment) => `${p.weight}|${p.reps}`;
+
+const proposalFlags = computed(() =>
+  cards.value.map((card) =>
+    card.sets.map((set, i) => {
+      const p = proposalFor(card, i);
+      return !!p && dismissed.value[set.id] !== sig(p);
+    }),
+  ),
+);
+
+const proposalLoc = ref<{ cardIndex: number; setIndex: number } | null>(null);
+const proposalRect = ref<DOMRect | null>(null);
+const proposalOpen = ref(false);
+
+const activeProposal = computed(() => {
+  const loc = proposalLoc.value;
+  return loc ? proposalFor(cards.value[loc.cardIndex], loc.setIndex) : null;
+});
+const activeTarget = computed(() => {
+  const loc = proposalLoc.value;
+  return loc
+    ? (cards.value[loc.cardIndex]?.sets[loc.setIndex]?.target ?? null)
+    : null;
+});
+
+const openProposal = (cardIndex: number, setIndex: number, rect: DOMRect) => {
+  proposalLoc.value = { cardIndex, setIndex };
+  proposalRect.value = rect;
+  proposalOpen.value = true;
+};
+const closeProposal = () => {
+  proposalOpen.value = false;
+  proposalLoc.value = null;
+};
+const applyActiveProposal = () => {
+  const loc = proposalLoc.value;
+  if (loc) applyProposal(cards.value[loc.cardIndex], loc.setIndex);
+  closeProposal();
+};
+const dismissActiveProposal = () => {
+  const loc = proposalLoc.value;
+  const p = activeProposal.value;
+  const set = loc ? cards.value[loc.cardIndex]?.sets[loc.setIndex] : null;
+  if (set && p) dismissed.value[set.id] = sig(p);
+  closeProposal();
+};
+
+// The anchor rect goes stale on scroll/resize, so close rather than drift.
+const onViewportChange = () => {
+  if (proposalOpen.value) closeProposal();
+};
+onMounted(() => {
+  window.addEventListener("scroll", onViewportChange, true);
+  window.addEventListener("resize", onViewportChange);
+});
+onUnmounted(() => {
+  window.removeEventListener("scroll", onViewportChange, true);
+  window.removeEventListener("resize", onViewportChange);
+});
 
 // ── Reorder exercises (drag by the card handle) ───────────────────────────────
 const cardsListEl = ref<HTMLElement | null>(null);
@@ -148,12 +218,17 @@ const onSelectRpe = (rpe: string) => {
         :card="card"
         :exercise-name="exerciseName(card.exerciseId)"
         :collapsed="dragging"
+        :proposal-flags="proposalFlags[cardIndex]"
         @request-delete-exercise="requestDeleteExercise(cardIndex)"
         @request-delete-set="requestDeleteSet(cardIndex, $event)"
         @edit-rpe="editRpe(cardIndex, $event)"
         @complete="onComplete(cardIndex, $event)"
         @add-set="addSet(card)"
         @toggle-set="toggleSet(card, $event)"
+        @open-proposal="
+          (setIndex: number, rect: DOMRect) =>
+            openProposal(cardIndex, setIndex, rect)
+        "
       />
     </div>
 
@@ -199,5 +274,15 @@ const onSelectRpe = (rpe: string) => {
     :message="confirmMessage"
     confirm-label="Delete"
     @confirm="onConfirmDelete"
+  />
+
+  <SetProposalPopover
+    :open="proposalOpen"
+    :anchor-rect="proposalRect"
+    :current="activeTarget"
+    :proposal="activeProposal"
+    @apply="applyActiveProposal"
+    @dismiss="dismissActiveProposal"
+    @close="closeProposal"
   />
 </template>
