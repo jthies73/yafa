@@ -158,11 +158,13 @@ const streakNotes = (e: ExercisePreview): string[] => {
   return [`Failure streak ${e.failureStreak}/${trigger}`];
 };
 
-const e1rmLine = (e: ExercisePreview): string => {
-  if (e.observedE1rm !== null) return fmtWeight(e.observedE1rm);
-  if (e.workingE1rm !== null) return fmtWeight(e.workingE1rm);
-  return "Not calibrated";
-};
+// The working e1RM is the planning scalar every prescribed weight derives from,
+// so it is the honest "calculation input" to show here. The observed e1RM (the
+// rolling diagnostic) is intentionally not shown: when it drifts from the
+// working e1RM, that divergence is surfaced and actioned in the post-workout
+// recalibration prompt instead.
+const e1rmLine = (e: ExercisePreview): string =>
+  e.workingE1rm !== null ? fmtWeight(e.workingE1rm) : "Not calibrated";
 </script>
 
 <template>

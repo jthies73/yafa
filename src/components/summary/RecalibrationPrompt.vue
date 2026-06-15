@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useWeightUnit } from "../../composables/useWeightUnit";
 import type { RecalibrationProposal } from "../../engine/recalibration";
 
-const props = defineProps<{ recalibrations: RecalibrationProposal[] }>();
+defineProps<{ recalibrations: RecalibrationProposal[] }>();
 const emit = defineEmits<{ confirm: [] }>();
 
 const { format: fmtWeight } = useWeightUnit();
