@@ -88,6 +88,7 @@ export const LOCKABLE_FIELDS: Record<ProgressionModelType, string[]> = {
   linear: ["targetSets", "targetReps", "targetRpe"],
   double: ["targetSets"],
   topset_backoff: ["topSetTargetReps", "backOffSets", "topSetTargetRpe"],
+  none: ["targetSets", "targetReps", "targetRpe"],
 };
 
 /** Display/selection order for the focuses. */

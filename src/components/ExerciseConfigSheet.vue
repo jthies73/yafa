@@ -69,6 +69,7 @@ const PROGRESSION_MODELS: { value: ProgressionModelType; label: string }[] = [
   { value: "linear", label: "Linear" },
   { value: "double", label: "Double" },
   { value: "topset_backoff", label: "Top Set" },
+  { value: "none", label: "None" },
 ];
 
 const DEFAULT_PARAMS: Record<ProgressionModelType, Record<string, number>> = {
@@ -81,6 +82,7 @@ const DEFAULT_PARAMS: Record<ProgressionModelType, Record<string, number>> = {
     percentageDrop: 10,
     weightIncrement: 2.5,
   },
+  none: { targetSets: 3, targetReps: 8, targetRpe: 8 },
 };
 
 // Reset form state every time the sheet opens, based on current props
@@ -508,6 +510,87 @@ const save = async () => {
             @blur="commitIncrement"
           />
         </div>
+      </div>
+
+      <!-- No progression params -->
+      <div v-else-if="configModel === 'none'" class="flex flex-col gap-4">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between gap-1 min-h-[18px]">
+              <label
+                class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+              >
+                Sets
+              </label>
+              <LockToggle
+                v-if="periodizationEnabled"
+                :locked="isLocked('targetSets')"
+                @toggle="toggleLock('targetSets')"
+              />
+            </div>
+            <input
+              v-model.number="configParams.targetSets"
+              v-numpad
+              v-keynav
+              type="number"
+              min="1"
+              max="20"
+              step="1"
+              class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2.5 text-sm font-mono text-text-h-light dark:text-text-h-dark focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50"
+            />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between gap-1 min-h-[18px]">
+              <label
+                class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+              >
+                Reps
+              </label>
+              <LockToggle
+                v-if="periodizationEnabled"
+                :locked="isLocked('targetReps')"
+                @toggle="toggleLock('targetReps')"
+              />
+            </div>
+            <input
+              v-model.number="configParams.targetReps"
+              v-numpad
+              v-keynav
+              type="number"
+              min="1"
+              max="100"
+              step="1"
+              class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2.5 text-sm font-mono text-text-h-light dark:text-text-h-dark focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50"
+            />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between gap-1 min-h-[18px]">
+              <label
+                class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+              >
+                Target RPE
+              </label>
+              <LockToggle
+                v-if="periodizationEnabled"
+                :locked="isLocked('targetRpe')"
+                @toggle="toggleLock('targetRpe')"
+              />
+            </div>
+            <input
+              v-model.number="configParams.targetRpe"
+              v-numpad
+              v-keynav
+              type="number"
+              min="5"
+              max="10"
+              step="0.5"
+              class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2.5 text-sm font-mono text-text-h-light dark:text-text-h-dark focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50"
+            />
+          </div>
+        </div>
+        <p class="text-xs text-text-light dark:text-text-dark opacity-55">
+          Weight targets are derived from your e1RM but won't auto-increment after sessions.
+        </p>
       </div>
 
       <!-- Notes -->

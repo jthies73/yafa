@@ -2,6 +2,7 @@ import type {
   DoubleProgressionParams,
   LinearProgressionParams,
   MesocycleWeek,
+  NoneProgressionParams,
   ProgressionModelType,
   ProgressionState,
   RoutineExerciseConfig,
@@ -171,6 +172,27 @@ export function prescribeExercise(
             role: "backoff" as const,
           })),
         ],
+      };
+    }
+
+    case "none": {
+      const params = config.progressionParams as NoneProgressionParams;
+      const sets = clampSets(adjust(params.targetSets, "volume", "targetSets"));
+      const reps = clampReps(adjust(params.targetReps, "volume", "targetReps"));
+      const rpe = clampRpe(
+        adjust(params.targetRpe ?? DEFAULT_TARGET_RPE, "intensity", "targetRpe"),
+      );
+      const weight = weightFor(reps, rpe);
+      return {
+        exerciseId,
+        model: "none",
+        workingE1rm: state?.workingE1rm ?? null,
+        sets: Array.from({ length: sets }, () => ({
+          reps,
+          rpe,
+          weight,
+          role: "straight" as const,
+        })),
       };
     }
   }

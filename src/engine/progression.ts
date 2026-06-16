@@ -171,6 +171,9 @@ export function advanceProgression(
       next.currentTargetReps = evaluation.nextTargetReps;
       break;
     }
+
+    case "none":
+      break;
   }
 
   return next;

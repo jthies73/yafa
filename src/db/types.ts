@@ -24,12 +24,19 @@ export interface TopSetProgressionParams {
   weightIncrement: number;
 }
 
+export interface NoneProgressionParams {
+  targetSets: number;
+  targetReps: number;
+  targetRpe?: number;
+}
+
 export type ProgressionParams =
   | LinearProgressionParams
   | DoubleProgressionParams
-  | TopSetProgressionParams;
+  | TopSetProgressionParams
+  | NoneProgressionParams;
 
-export type ProgressionModelType = "linear" | "double" | "topset_backoff";
+export type ProgressionModelType = "linear" | "double" | "topset_backoff" | "none";
 
 // Record<reps, Record<rpe, percentage_of_1rm>> — percentages stored as decimals (0..1).
 export type RpeMatrix = Record<number, Record<number, number>>;
