@@ -1,14 +1,11 @@
 import { ref, computed } from "vue";
 import { db } from "../db/db";
+import { getConfigSetCount } from "../utils/progression";
 import type {
   Workout,
   WorkoutExercise,
   Routine,
   Exercise,
-  RoutineExerciseConfig,
-  LinearProgressionParams,
-  DoubleProgressionParams,
-  TopSetProgressionParams,
   Set as LoggedSet,
 } from "../db/types";
 import {
@@ -29,18 +26,6 @@ export interface CalculatorSet {
   set: LoggedSet;
 }
 
-/** Planned working sets for one routine slot's config, before summing. */
-function configSetCount(config?: RoutineExerciseConfig): number {
-  if (!config) return 3;
-  const p = config.progressionParams;
-  if (config.progressionModel === "topset_backoff") {
-    return 1 + ((p as TopSetProgressionParams).backOffSets ?? 0);
-  }
-  return (
-    (p as LinearProgressionParams | DoubleProgressionParams).targetSets ?? 3
-  );
-}
-
 /**
  * Planned working sets per exerciseId for adherence scoring, summed across
  * duplicate routine slots. A live prescription (which periodization may have
@@ -54,7 +39,7 @@ function buildPlannedCounts(
   for (const ex of r?.exercises ?? []) {
     const prescribed = prescriptions[ex.exerciseId]?.sets.length;
     counts[ex.exerciseId] =
-      (counts[ex.exerciseId] ?? 0) + (prescribed ?? configSetCount(ex.config));
+      (counts[ex.exerciseId] ?? 0) + (prescribed ?? getConfigSetCount(ex.config));
   }
   return counts;
 }

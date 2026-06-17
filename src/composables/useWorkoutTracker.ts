@@ -1,8 +1,6 @@
 import { ref, watch } from "vue";
+import { getConfigSetCount } from "../utils/progression";
 import type {
-  LinearProgressionParams,
-  DoubleProgressionParams,
-  TopSetProgressionParams,
   Set as LoggedSet,
   WorkoutExercise,
 } from "../db/types";
@@ -94,15 +92,7 @@ export function useWorkoutTracker() {
   const addedNames = ref<Record<string, string>>({});
 
   function plannedSetCount(index: number): number {
-    const config = routine.value?.exercises[index]?.config;
-    if (!config) return 3;
-    const p = config.progressionParams;
-    if (config.progressionModel === "topset_backoff") {
-      return 1 + ((p as TopSetProgressionParams).backOffSets ?? 0);
-    }
-    return (
-      (p as LinearProgressionParams | DoubleProgressionParams).targetSets ?? 3
-    );
+    return getConfigSetCount(routine.value?.exercises[index]?.config);
   }
 
   function rebuild() {
