@@ -2,17 +2,6 @@
 import { ref, watch } from "vue";
 import type { ProgressionModelType } from "../db/types";
 import { FOCUS_META } from "../config/periodization";
-import {
-  DOUBLE_FAILURE_RESET_TRIGGER,
-  LP_FAILURE_RESET_TRIGGER,
-  TOP_SET_FAILURE_RESET_TRIGGER,
-} from "../engine/config";
-
-const FAILURE_TRIGGER: Record<string, number> = {
-  linear: LP_FAILURE_RESET_TRIGGER,
-  topset_backoff: TOP_SET_FAILURE_RESET_TRIGGER,
-  double: DOUBLE_FAILURE_RESET_TRIGGER,
-};
 import type { PrescribedSet } from "../engine/prescription";
 import {
   previewWorkout,
@@ -156,13 +145,6 @@ const resetLine = (r: ResetEffect): string =>
   )} — ${r.sessionsRemaining} session${
     r.sessionsRemaining === 1 ? "" : "s"
   } left`;
-
-const streakNotes = (e: ExercisePreview): string[] => {
-  if (!e.config || e.failureStreak === 0) return [];
-  const trigger =
-    FAILURE_TRIGGER[e.config.progressionModel] ?? LP_FAILURE_RESET_TRIGGER;
-  return [`Failure streak ${e.failureStreak}/${trigger}`];
-};
 
 // The working e1RM is the planning scalar every prescribed weight derives from,
 // so it is the honest "calculation input" to show here. The observed e1RM (the
@@ -346,13 +328,6 @@ const e1rmLine = (e: ExercisePreview): string =>
               class="font-semibold text-amber-600 dark:text-amber-400"
             >
               {{ resetLine(r) }}
-            </p>
-            <p
-              v-for="note in streakNotes(e)"
-              :key="note"
-              class="font-semibold text-red-500 dark:text-red-400"
-            >
-              {{ note }}
             </p>
             <p
               v-if="e.workingE1rm === null"

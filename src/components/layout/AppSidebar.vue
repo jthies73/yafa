@@ -549,8 +549,8 @@ const recordCoffeeClick = () => {
         href="https://buymeacoffee.com/jthies73"
         target="_blank"
         rel="noopener noreferrer"
-        @click="recordCoffeeClick"
         class="flex items-center justify-between px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 dark:border-amber-500/15 text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-all duration-300 group cursor-pointer shadow-sm hover:shadow-amber-500/5"
+        @click="recordCoffeeClick"
       >
         <div class="flex items-center gap-3">
           <svg

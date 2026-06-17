@@ -1,62 +1,35 @@
 import type { RpeMatrix } from "../db/types";
-import { matrixPct, weightFromE1rm } from "./matrix";
-import { RPE_MIN, RPE_MAX, LOOKUP_REPS_MIN, LOOKUP_REPS_MAX } from "./config";
 
-// Pure solvers — all weights in kg.
+// Solvers — STUBBED. The e1RM/matrix math behind the manual calculator has been
+// removed and will be rewritten later. These return 0 so the calculator UI stays
+// inert (but compiling) until then. All weights in kg.
 
 /** Weight (kg) for a given e1RM, rep count, and RPE. */
 export function solveWeight(
-  matrix: RpeMatrix,
-  e1rm: number,
-  reps: number,
-  rpe: number,
+  _matrix: RpeMatrix,
+  _e1rm: number,
+  _reps: number,
+  _rpe: number,
 ): number {
-  return weightFromE1rm(matrix, e1rm, reps, rpe);
+  return 0;
 }
 
-/**
- * Rep count (1–10) that best fits the observed total load at the given RPE.
- * Ties resolve to the lower rep count.
- */
+/** Rep count that best fits the observed total load at the given RPE. */
 export function solveReps(
-  matrix: RpeMatrix,
-  e1rm: number,
-  totalWeight: number,
-  rpe: number,
+  _matrix: RpeMatrix,
+  _e1rm: number,
+  _totalWeight: number,
+  _rpe: number,
 ): number {
-  const target = totalWeight / e1rm;
-  let best = LOOKUP_REPS_MIN;
-  let bestDiff = Infinity;
-  for (let r = LOOKUP_REPS_MIN; r <= LOOKUP_REPS_MAX; r++) {
-    const diff = Math.abs(matrixPct(matrix, r, rpe) - target);
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      best = r;
-    }
-  }
-  return best;
+  return 0;
 }
 
-/**
- * RPE (6–10 in 0.5 steps) that best fits the observed total load at the given rep count.
- * Ties resolve to the lower RPE.
- */
+/** RPE that best fits the observed total load at the given rep count. */
 export function solveRpe(
-  matrix: RpeMatrix,
-  e1rm: number,
-  totalWeight: number,
-  reps: number,
+  _matrix: RpeMatrix,
+  _e1rm: number,
+  _totalWeight: number,
+  _reps: number,
 ): number {
-  const target = totalWeight / e1rm;
-  let best = RPE_MIN;
-  let bestDiff = Infinity;
-  for (let i = RPE_MIN * 2; i <= RPE_MAX * 2; i++) {
-    const rpe = i / 2;
-    const diff = Math.abs(matrixPct(matrix, reps, rpe) - target);
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      best = rpe;
-    }
-  }
-  return best;
+  return 0;
 }

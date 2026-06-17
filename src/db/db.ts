@@ -4,8 +4,6 @@ import type {
   Routine,
   Plan,
   Workout,
-  ProgressionState,
-  Recalibration,
   MeasurementType,
   MeasurementEntry,
   AnalyticsChartConfig,
@@ -16,8 +14,6 @@ export class YafaDatabase extends Dexie {
   routines!: Table<Routine, string>;
   plans!: Table<Plan, string>;
   workouts!: Table<Workout, string>;
-  progressionStates!: Table<ProgressionState, string>;
-  recalibrations!: Table<Recalibration, [string, string]>;
   measurementTypes!: Table<MeasurementType, string>;
   measurementEntries!: Table<MeasurementEntry, string>;
   analyticsCharts!: Table<AnalyticsChartConfig, string>;
@@ -96,6 +92,13 @@ export class YafaDatabase extends Dexie {
       .upgrade(async (tx) => {
         await tx.table("progressionStates").clear();
       });
+
+    // v8: core engine teardown. The progression engine and its persisted state
+    // are removed pending a rewrite, so both engine tables are dropped.
+    this.version(8).stores({
+      progressionStates: null,
+      recalibrations: null,
+    });
   }
 }
 

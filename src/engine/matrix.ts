@@ -1,81 +1,59 @@
 import type { RpeMatrix, Set as LoggedSet } from "../db/types";
-import {
-  RPE_MIN,
-  RPE_MAX,
-  LOOKUP_REPS_MIN,
-  LOOKUP_REPS_MAX,
-  QUALIFYING_MIN_RPE,
-  QUALIFYING_MAX_REPS,
-  MATRIX_SMOOTHING_KERNEL,
-  LOADABLE_INCREMENT_KG,
-} from "./config";
 
 // ----------------------------------------------
-// RPE matrix + e1RM subsystem: pure lookup and derivation against a FIXED table.
-// The matrix is never learned/mutated by the engine; a per-exercise override is
-// user-authored only (setMatrixCell, via the matrix editor). Persistence-free so
-// it can be tested in isolation.
+// RPE matrix + e1RM math — STUBBED. The lookup/derivation/learning logic has
+// been removed and will be rewritten later. The exported surface is kept so
+// analytics, the manual calculator, and the RPE-matrix editor still compile;
+// every function is inert (finite, no-op) for now.
 // ----------------------------------------------
 
-/** Clamp an RPE into the matrix grid and snap it to the 0.5 step. */
+/** Snap an RPE to the 0.5 grid (identity passthrough while stubbed). */
 export function snapRpe(rpe: number): number {
-  const clamped = Math.min(RPE_MAX, Math.max(RPE_MIN, rpe));
-  return Math.round(clamped * 2) / 2;
+  return rpe;
 }
 
-/** Clamp a rep count to the rows the matrix actually has (1–10). */
+/** Clamp a rep count to the matrix rows (identity passthrough while stubbed). */
 export function clampLookupReps(reps: number): number {
-  return Math.min(LOOKUP_REPS_MAX, Math.max(LOOKUP_REPS_MIN, Math.round(reps)));
+  return reps;
 }
 
-/** Percentage of e1RM the matrix assigns to (reps, rpe), grid-clamped. */
+/** Percentage of e1RM at (reps, rpe). Stubbed to 1 (keeps derived values finite). */
 export function matrixPct(
-  matrix: RpeMatrix,
-  reps: number,
-  rpe: number,
+  _matrix: RpeMatrix,
+  _reps: number,
+  _rpe: number,
 ): number {
-  return matrix[clampLookupReps(reps)][snapRpe(rpe)];
+  return 1;
 }
 
-/** The e1RM a set implies, given the matrix's current calibration. */
+/** The e1RM a set implies. Stubbed to 0. */
 export function impliedE1rm(
-  matrix: RpeMatrix,
-  weight: number,
-  reps: number,
-  rpe: number,
+  _matrix: RpeMatrix,
+  _weight: number,
+  _reps: number,
+  _rpe: number,
 ): number {
-  return weight / matrixPct(matrix, reps, rpe);
+  return 0;
 }
 
-/** Matrix-derived weight for an e1RM at (reps, rpe), rounded to 0.1. */
+/** Matrix-derived weight for an e1RM at (reps, rpe). Stubbed to 0. */
 export function weightFromE1rm(
-  matrix: RpeMatrix,
-  e1rm: number,
-  reps: number,
-  rpe: number,
+  _matrix: RpeMatrix,
+  _e1rm: number,
+  _reps: number,
+  _rpe: number,
 ): number {
-  return Math.round(e1rm * matrixPct(matrix, reps, rpe) * 10) / 10;
+  return 0;
 }
 
-/** Round a weight to what can physically be put on the bar. */
-export function roundToLoadable(
-  weight: number,
-  increment: number = LOADABLE_INCREMENT_KG,
-): number {
-  return Math.round(weight / increment) * increment;
+/** Round a weight to what can be loaded (identity passthrough while stubbed). */
+export function roundToLoadable(weight: number, _increment?: number): number {
+  return weight;
 }
 
-/**
- * Whether a set is an honest, near-limit set trusted to estimate demonstrated
- * capacity. Applies to every set — top set or back-off alike.
- */
-export function isQualifyingSet(set: LoggedSet): boolean {
-  return (
-    (set.actualRpe ?? 0) >= QUALIFYING_MIN_RPE &&
-    set.actualReps >= 1 &&
-    set.actualReps <= QUALIFYING_MAX_REPS &&
-    set.actualWeight > 0
-  );
+/** Whether a set is honest/near-limit. Stubbed to false. */
+export function isQualifyingSet(_set: LoggedSet): boolean {
+  return false;
 }
 
 export interface PeakE1rm {
@@ -83,72 +61,20 @@ export interface PeakE1rm {
   set: LoggedSet;
 }
 
-/**
- * Peak implied e1RM across a set list, considering only honest near-limit
- * (qualifying) sets — the single number that best represents the capacity a
- * session demonstrated. null when no set qualifies.
- */
+/** Peak implied e1RM across a set list. Stubbed to null (no qualifying sets). */
 export function peakImpliedE1rm(
-  matrix: RpeMatrix,
-  sets: LoggedSet[],
+  _matrix: RpeMatrix,
+  _sets: LoggedSet[],
 ): PeakE1rm | null {
-  let best: PeakE1rm | null = null;
-  for (const set of sets) {
-    if (!isQualifyingSet(set)) continue;
-    const e1rm = impliedE1rm(
-      matrix,
-      set.actualWeight,
-      set.actualReps,
-      set.actualRpe!,
-    );
-    if (!best || e1rm > best.e1rm) best = { e1rm, set };
-  }
-  return best;
+  return null;
 }
 
-const cloneMatrix = (matrix: RpeMatrix): RpeMatrix => {
-  const out: RpeMatrix = {};
-  for (const reps of Object.keys(matrix)) {
-    out[Number(reps)] = { ...matrix[Number(reps)] };
-  }
-  return out;
-};
-
-/** Bleed a kernel-weighted fraction of a cell's delta into its ±1.0 RPE row neighbors. */
-const smoothNeighbors = (
-  matrix: RpeMatrix,
-  reps: number,
-  rpe: number,
-  delta: number,
-): void => {
-  for (const { offset, factor } of MATRIX_SMOOTHING_KERNEL) {
-    for (const direction of [-1, 1]) {
-      const neighborRpe = rpe + direction * offset;
-      if (neighborRpe >= RPE_MIN && neighborRpe <= RPE_MAX) {
-        matrix[reps][neighborRpe] += delta * factor;
-      }
-    }
-  }
-};
-
-/**
- * Direct (user-edit) cell write with the same neighbor smoothing the
- * post-session learning applies: the edited cell takes exactly the given
- * value, and the cells within ±1.0 RPE absorb a kernel-weighted fraction of
- * the change — so a manual edit bends the curve locally instead of leaving a
- * step in it. Pure: returns a fresh matrix.
- */
+/** Direct cell edit. Stubbed to return the matrix unchanged. */
 export function setMatrixCell(
   matrix: RpeMatrix,
-  reps: number,
-  rpe: number,
-  value: number,
+  _reps: number,
+  _rpe: number,
+  _value: number,
 ): RpeMatrix {
-  const next = cloneMatrix(matrix);
-  const row = clampLookupReps(reps);
-  const col = snapRpe(rpe);
-  const delta = value - next[row][col];
-  next[row][col] = value;
-  smoothNeighbors(next, row, col, delta);
-  return next;
+  return matrix;
 }

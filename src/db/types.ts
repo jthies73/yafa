@@ -134,58 +134,9 @@ export interface Workout {
   exercises: WorkoutExercise[];
 }
 
-// ----------------------------------------------
-// Progression Engine State
-// ----------------------------------------------
-
-// The single active deload's decaying corrective layer. Its strength tapers
-// linearly to zero over `decaySessions` post-trigger sessions
-// (effective = initialMagnitude × (1 − sessionsElapsed / decaySessions)), after
-// which it is dropped. At most one deload is active at a time — a fresh failure
-// cascade replaces it rather than stacking a second modifier.
-export interface DeloadState {
-  e1rmAtTrigger: number; // the working e1RM when the deload fired (telemetry)
-  initialMagnitude: number; // fraction removed at full strength (0.1 ⇒ −10%)
-  decaySessions: number;
-  sessionsElapsed: number;
-}
-
-/**
- * Per-exercise engine state. This is NOT an independently-mutated source of
- * truth: it is a memoized CHECKPOINT of folding the exercise's logged history
- * (engine/fold.ts) through the single ordered reducer. It is recomputed whenever
- * `contentHash` no longer matches its inputs (config, logged sets, matrix,
- * confirmed recalibrations), so it can never drift out of sync with history —
- * editing or deleting a past workout retro-corrects it on the next derive.
- *
- * `e1rm` is the single strength scalar: every weight prescription derives from
- * it via the RPE matrix. It moves only through the reducer (progression
- * increment, deload cut, passive blend toward demonstrated reality, or a
- * user-confirmed recalibration snap).
- */
-export interface ProgressionState {
-  exerciseId: string;
-  e1rm: number | null; // null until seeded from the first logged session
-  trend: number[]; // rolling window of recent demonstrated e1RMs (smoothing + analytics)
-  failureStreak: number; // consecutive failed sessions (all progression models)
-  currentTargetReps?: number; // double: rep goal advancing from minReps to maxReps
-  deload: DeloadState | null;
-  lastWorkoutId: string | null; // newest workout folded into this checkpoint
-  contentHash: string; // hash of the fold inputs; mismatch ⇒ recompute
-  updated_at: number;
-}
-
-/**
- * A user-confirmed recalibration: ground truth that the working e1RM of
- * `exerciseId` was deliberately snapped to `e1rm` at the session `workoutId`.
- * The fold reads these as inputs and replays the snap, so a confirmed
- * recalibration survives any later full recompute.
- */
-export interface Recalibration {
-  exerciseId: string;
-  workoutId: string;
-  e1rm: number;
-}
+// NOTE: Per-exercise engine state (ProgressionState/DeloadState) and confirmed
+// recalibrations (Recalibration) were removed with the core engine teardown.
+// They will be reintroduced when the engine is rewritten.
 
 // ----------------------------------------------
 // Body Measurements
