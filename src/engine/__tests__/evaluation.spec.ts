@@ -29,7 +29,7 @@ const prescription = (
   exerciseId: "ex",
   model,
   sets,
-  workingE1rm: 126,
+  c1rm: 126,
 });
 
 const straight = (

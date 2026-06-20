@@ -36,12 +36,12 @@ YAFA's workout engine is highly modular, separating concerns into independently 
 
 To decouple physiological variance from prescribed weights, YAFA tracks two distinct estimated one-rep max (e1RM) values per exercise:
 
-- **`working_e1rm`**: A persistent planning scalar. Every weight prescription is computed from this. It increases by `weight_increment` on a successful session and is reduced by an intensity reset. It is the absolute source of truth for daily prescriptions.
-- **`observed_e1rm`**: A rolling average of implied e1RMs from the last 10 qualifying sets (reps ≤ 10 AND RPE ≥ 8). This is a **diagnostic only**—used to detect divergence from `working_e1rm` and as a re-baseline target during an intensity reset. It is _never_ used directly for daily prescriptions.
+- **`c1rm`**: A persistent planning scalar. Every weight prescription is computed from this. It increases by `weight_increment` on a successful session and is reduced by an intensity reset. It is the absolute source of truth for daily prescriptions.
+- **`observed_e1rm`**: A rolling average of implied e1RMs from the last 10 qualifying sets (reps ≤ 10 AND RPE ≥ 8). This is a **diagnostic only**—used to detect divergence from `c1rm` and as a re-baseline target during an intensity reset. It is _never_ used directly for daily prescriptions.
 
 ### Matrix-Derived Weights & Updates
 
-Weight is always calculated as: `weight = working_e1rm × rpe_matrix[reps][rpe]` (rounded to loadable increments). `weight_increment` is the amount added to `working_e1rm` on a successful session, not a direct load delta.
+Weight is always calculated as: `weight = c1rm × rpe_matrix[reps][rpe]` (rounded to loadable increments). `weight_increment` is the amount added to `c1rm` on a successful session, not a direct load delta.
 
 The RPE matrix maps `(reps, rpe)` to a percentage of e1RM (axes: reps 1–10, RPE 6.0–10.0 in 0.5 steps). Post-session, the matrix is updated dynamically for qualifying sets:
 
@@ -56,7 +56,7 @@ For each exercise in a workout, prescriptions are calculated dynamically:
 1. **Resolve base targets** from the progression model.
 2. **Apply Mesocycle Modifiers** (multiplicative). Deload weeks are simply treated as normal weeks with modifiers that make the goal easy. Modifiers are only applied to fields not locked in the `ExerciseConfigSheet`.
 3. **Apply Active Reset Modifiers** (decaying fatigue modifiers) multiplicatively.
-4. **Compute weight** from the matrix using `working_e1rm` and the final reps/RPE.
+4. **Compute weight** from the matrix using `c1rm` and the final reps/RPE.
 5. **Top Set + Back-Off**: Compute top set, then recalculate back-off loads from the top-set weight every session.
 
 All targets are clamped to sensible limits (sets ≥ 1, reps ≥ 1, RPE ≤ 10).
@@ -65,13 +65,13 @@ All targets are clamped to sensible limits (sets ≥ 1, reps ≥ 1, RPE ≤ 10).
 
 ## 📈 Progression Models
 
-Each exercise is assigned a single progression model that dictates how `working_e1rm` adapts.
+Each exercise is assigned a single progression model that dictates how `c1rm` adapts.
 
 ### 1. Linear Progression (LP)
 
 - **Application**: Main compound lifts during strength peaking.
 - **Outcome logic**:
-  - **Progress**: `actual_reps >= target_reps` AND `actual_rpe <= target_rpe` across all sets → `working_e1rm += weight_increment`; zero the failure streak.
+  - **Progress**: `actual_reps >= target_reps` AND `actual_rpe <= target_rpe` across all sets → `c1rm += weight_increment`; zero the failure streak.
   - **Failure**: `actual_reps < target_reps` OR `(actual_rpe - 1) > target_rpe` → increment failure streak.
   - **Hold**: Anything in between → no change.
 
@@ -79,14 +79,14 @@ Each exercise is assigned a single progression model that dictates how `working_
 
 - **Application**: Hypertrophy-focused accessory movements.
 - **Outcome logic**:
-  - If `actual_reps >= max_reps` across all sets → `working_e1rm += weight_increment`; reset current target reps to `min_reps`.
+  - If `actual_reps >= max_reps` across all sets → `c1rm += weight_increment`; reset current target reps to `min_reps`.
   - Otherwise advance target reps toward `max_reps`.
   - Tracks regression and plateau streaks based on the previous session's reps at the same weight.
 
 ### 3. Top Set + Back-Off
 
 - **Application**: Primary strength lifts requiring high-intensity exposure.
-- **Outcome logic**: Only the **top set** drives progression and fatigue evaluation. If top-set targets are met at or below target RPE → `working_e1rm += weight_increment`; zero the failure streak. Back-off sets are never evaluated for progression, but still feed the RPE matrix updates.
+- **Outcome logic**: Only the **top set** drives progression and fatigue evaluation. If top-set targets are met at or below target RPE → `c1rm += weight_increment`; zero the failure streak. Back-off sets are never evaluated for progression, but still feed the RPE matrix updates.
 
 ---
 
@@ -102,10 +102,10 @@ A reset zeroes the relevant streak counter and applies corrective modifiers to e
 
 ### Decaying Modifier Queue
 
-Instead of permanent structural changes (outside of `working_e1rm` drops), resets apply as corrective multipliers that taper linearly to zero over a configurable number of sessions.
+Instead of permanent structural changes (outside of `c1rm` drops), resets apply as corrective multipliers that taper linearly to zero over a configurable number of sessions.
 
-- **Intensity Reset**: Causes a LASTING reduction of `working_e1rm` (e.g., -10% or snapped to `observed_e1rm`) to clear systemic fatigue, PLUS a decaying intensity modifier to ramp back in gently.
-- **Volume Reset**: Applies a decaying volume modifier only (reduces sets/reps). No change to `working_e1rm` or weight.
+- **Intensity Reset**: Causes a LASTING reduction of `c1rm` (e.g., -10% or snapped to `observed_e1rm`) to clear systemic fatigue, PLUS a decaying intensity modifier to ramp back in gently.
+- **Volume Reset**: Applies a decaying volume modifier only (reduces sets/reps). No change to `c1rm` or weight.
 - **Decay Windows**: Intensity decays over a longer window (≈5 sessions) than volume (≈3 sessions) because neurological/systemic fatigue takes longer to clear than local muscular fatigue.
 
 ---

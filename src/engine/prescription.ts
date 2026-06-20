@@ -42,7 +42,7 @@ export interface ExercisePrescription {
   exerciseId: string;
   model: ProgressionModelType;
   sets: PrescribedSet[];
-  workingE1rm: number | null; // carries the c1RM (field name kept for back-compat)
+  c1rm: number | null;
 }
 
 export interface PrescriptionInput {
@@ -69,7 +69,7 @@ export function prescribeExercise(
   };
 
   const sets = buildSets(model, params, input.doubleRepCursor, load);
-  return { exerciseId: input.exerciseId, model, sets, workingE1rm: c1rm };
+  return { exerciseId: input.exerciseId, model, sets, c1rm };
 }
 
 function buildSets(

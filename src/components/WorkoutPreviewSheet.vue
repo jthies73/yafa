@@ -154,13 +154,13 @@ const resetLine = (r: ResetEffect): string =>
     r.sessionsRemaining === 1 ? "" : "s"
   } left`;
 
-// The working e1RM is the planning scalar every prescribed weight derives from,
+// The c1RM is the planning scalar every prescribed weight derives from,
 // so it is the honest "calculation input" to show here. The observed e1RM (the
 // rolling diagnostic) is intentionally not shown: when it drifts from the
-// working e1RM, that divergence is surfaced and actioned in the post-workout
+// c1RM, that divergence is surfaced and actioned in the post-workout
 // recalibration prompt instead.
-const e1rmLine = (e: ExercisePreview): string =>
-  e.workingE1rm !== null ? fmtWeight(e.workingE1rm) : "Not calibrated";
+const c1rmLine = (e: ExercisePreview): string =>
+  e.c1rm !== null ? fmtWeight(e.c1rm) : "Not calibrated";
 </script>
 
 <template>
@@ -313,10 +313,10 @@ const e1rmLine = (e: ExercisePreview): string =>
             </div>
             <div class="flex items-center justify-between gap-3">
               <span class="text-text-light dark:text-text-dark opacity-60"
-                >e1RM</span
+                >c1RM</span
               >
               <span class="font-mono text-text-h-light dark:text-text-h-dark">
-                {{ e1rmLine(e) }}
+                {{ c1rmLine(e) }}
               </span>
             </div>
             <div
@@ -338,7 +338,7 @@ const e1rmLine = (e: ExercisePreview): string =>
               {{ resetLine(r) }}
             </p>
             <p
-              v-if="e.workingE1rm === null"
+              v-if="e.c1rm === null"
               class="text-text-light dark:text-text-dark opacity-60 italic"
             >
               First session calibrates this exercise — weights appear next time.

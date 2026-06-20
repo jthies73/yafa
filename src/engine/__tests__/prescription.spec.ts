@@ -36,7 +36,7 @@ describe("prescribeExercise — linear", () => {
       weight: roundToLoadable(weightFromE1rm(M, 120, 5, 8)),
       role: "straight",
     });
-    expect(p.workingE1rm).toBe(120);
+    expect(p.c1rm).toBe(120);
   });
 
   it("cold start: weight null, reps/rpe present", () => {
@@ -50,7 +50,7 @@ describe("prescribeExercise — linear", () => {
     });
     expect(p.sets.every((s) => s.weight === null)).toBe(true);
     expect(p.sets[0].reps).toBe(5);
-    expect(p.workingE1rm).toBeNull();
+    expect(p.c1rm).toBeNull();
   });
 
   it("caps the load at the ceiling but keeps the displayed RPE at target", () => {

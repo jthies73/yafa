@@ -61,7 +61,7 @@ export interface ExercisePreview {
   exerciseId: string;
   name: string;
   config?: RoutineExerciseConfig;
-  workingE1rm: number | null; // the c1RM anchor (field name kept for the UI)
+  c1rm: number | null;
   failureStreak: number;
   currentTargetReps?: number;
   resetEffects: ResetEffect[];
@@ -235,7 +235,7 @@ export async function previewWorkout(
       exerciseId: re.exerciseId,
       name: exercise.name,
       config: re.config,
-      workingE1rm: state.c1rm,
+      c1rm: state.c1rm,
       failureStreak: state.regressionStreak,
       currentTargetReps: state.doubleRepCursor,
       resetEffects: hadReset
