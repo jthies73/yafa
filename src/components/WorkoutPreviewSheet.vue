@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import type { ProgressionModelType } from "../db/types";
+import type { ProgressionModelType, WeightIncrementUnit } from "../db/types";
 import { FOCUS_META } from "../config/periodization";
+import { normalizeProgressionParams } from "../config/progression";
 import type { PrescribedSet } from "../engine/prescription";
 import {
   previewWorkout,
@@ -107,23 +108,28 @@ const groupLine = (g: SetGroup): string => {
 
 const baseConfigLine = (e: ExercisePreview): string => {
   if (!e.config) return "";
-  const p = e.config.progressionParams as unknown as Record<string, number>;
-  // weightIncrement is stored in kg; show it in the active unit.
-  const inc = `+${displayWeight(p.weightIncrement, 2)} ${weightUnit.value}`;
+  // Normalize so RPE/ceiling/unit are guaranteed present even for configs saved
+  // before those fields existed (see config/progression.ts).
+  const p = normalizeProgressionParams(
+    e.config.progressionModel,
+    e.config.progressionParams,
+  ) as unknown as Record<string, number | WeightIncrementUnit>;
+  // The increment is a kg amount unless the unit is percent (a % of c1RM), which
+  // is unit-less and never converted to the display weight unit.
+  const inc =
+    p.incrementUnit === "percent"
+      ? `+${p.weightIncrement}%`
+      : `+${displayWeight(Number(p.weightIncrement), 2)} ${weightUnit.value}`;
   switch (e.config.progressionModel) {
     case "linear":
-      return `${p.targetSets} × ${p.targetReps}${
-        p.targetRpe != null ? ` @ RPE ${p.targetRpe}` : ""
-      } | ${inc}`;
+      return `${p.targetSets} × ${p.targetReps} @ RPE ${p.targetRpe} | ${inc}`;
     case "double":
-      return `${p.targetSets} × ${p.minReps}–${p.maxReps} | ${inc}`;
+      return `${p.targetSets} × ${p.minReps}–${p.maxReps} @ RPE ${p.targetRpe} | ${inc}`;
     case "topset_backoff":
-      return `Top ${p.topSetTargetReps} @ RPE ${p.topSetTargetRpe} | ${p.backOffSets} back-off −${p.percentageDrop}% | ${inc}`;
+      return `Top ${p.topSetTargetReps} @ RPE ${p.topSetTargetRpe} | ${p.backOffSets} × ${p.backOffReps} back-off −${p.percentageDrop}% | ${inc}`;
     case "none":
       // No auto-increment — weights are derived from the e1RM but never advanced.
-      return `${p.targetSets} × ${p.targetReps}${
-        p.targetRpe != null ? ` @ RPE ${p.targetRpe}` : ""
-      }`;
+      return `${p.targetSets} × ${p.targetReps} @ RPE ${p.targetRpe}`;
   }
 };
 
@@ -131,9 +137,11 @@ const FIELD_LABELS: Record<string, string> = {
   targetSets: "Sets",
   targetReps: "Reps",
   targetRpe: "RPE",
+  rpeCeiling: "RPE cap",
   topSetTargetReps: "Reps",
   topSetTargetRpe: "RPE",
   backOffSets: "Back-offs",
+  backOffReps: "Back-off reps",
 };
 
 const lockedLine = (e: ExercisePreview): string =>

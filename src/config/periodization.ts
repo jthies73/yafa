@@ -63,10 +63,19 @@ export const FOCUS_META: Record<PeriodizationFocus, FocusMeta> = {
  * advancement). Shared between the config sheet UI and the workout engine so
  * the two cannot disagree about what a lock protects.
  */
+// rpeCeiling is intentionally absent everywhere: it is a fixed safety guardrail
+// (caps the prescribed load), not a periodized target, so the mesocycle never
+// touches it and there is nothing for the user to lock. The increment value/unit
+// are likewise omitted — they tune progression, not the per-workout targets.
 export const LOCKABLE_FIELDS: Record<ProgressionModelType, string[]> = {
   linear: ["targetSets", "targetReps", "targetRpe"],
-  double: ["targetSets"],
-  topset_backoff: ["topSetTargetReps", "backOffSets", "topSetTargetRpe"],
+  double: ["targetSets", "targetRpe"],
+  topset_backoff: [
+    "topSetTargetReps",
+    "backOffSets",
+    "backOffReps",
+    "topSetTargetRpe",
+  ],
   none: ["targetSets", "targetReps", "targetRpe"],
 };
 
