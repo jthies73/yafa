@@ -3,7 +3,7 @@ import { ref, computed, watch } from "vue";
 import { db } from "../db/db";
 import type { Exercise, Set as LoggedSet, RpeMatrix } from "../db/types";
 import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
-import { createExercise, type ExerciseInput } from "../db/repository";
+import { createExercise, type ExerciseInput, getProgressionState } from "../db/repository";
 import {
   guardRepsKey,
   guardWeightKey,
@@ -31,17 +31,22 @@ const matrix = computed<RpeMatrix>(
   () => selected.value?.rpeMatrix ?? DEFAULT_RPE_MATRIX,
 );
 
-// The persisted working e1RM was removed with the engine teardown; until the
-// engine is rewritten the calculator anchors only to this session's logged sets.
-const sessionE1rm = computed(() => {
-  if (!selected.value) return null;
-  const sets = calculatorSets.value.filter(
-    (cs) => cs.exerciseId === selected.value!.id,
-  );
-  return sets.length ? sets[sets.length - 1].e1rm : null;
+// The calculator anchors to the most recent logged set in this session,
+// falling back to the persisted c1RM from the database.
+const dbC1rm = ref<number | null>(null);
+
+watch(selected, async (ex) => {
+  dbC1rm.value = null;
+  if (!ex) return;
+  try {
+    const state = await getProgressionState(ex.id);
+    dbC1rm.value = state.c1rm;
+  } catch (err) {
+    console.error("Failed to load progression state:", err);
+  }
 });
 
-const effectiveE1rm = computed(() => sessionE1rm.value);
+const effectiveE1rm = computed(() => dbC1rm.value);
 
 const onSelect = (exercise: Exercise) => {
   selected.value = exercise;
