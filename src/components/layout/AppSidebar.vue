@@ -6,6 +6,7 @@ import { useAppUpdate } from "../../composables/useAppUpdate";
 import UpdateSheet from "../UpdateSheet.vue";
 import ImportExportSheet from "../ImportExportSheet.vue";
 import FeedbackSheet from "../FeedbackSheet.vue";
+import { api } from "../../utils/api";
 
 defineProps<{ isDark: boolean }>();
 defineEmits<{ (e: "toggle-theme"): void }>();
@@ -197,12 +198,7 @@ const isActive = (names: readonly string[] | string) => {
 };
 
 const recordCoffeeClick = () => {
-  if (["development", "staging", "production"].includes(import.meta.env.MODE)) {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL;
-    if (baseUrl) {
-      fetch(`${baseUrl}/coffee-visits`, { method: "POST" }).catch(() => {});
-    }
-  }
+  api.recordCoffeeVisit();
 };
 </script>
 

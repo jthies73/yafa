@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import AppBottomSheet from "./AppBottomSheet.vue";
+import { api } from "../utils/api";
 
 const open = defineModel<boolean>("open", { required: true });
 
@@ -29,29 +30,11 @@ const sendFeedback = async () => {
   message.value = null;
 
   try {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL;
-    if (!baseUrl) {
-      throw new Error("API base URL is not configured.");
-    }
-
-    const payload = {
-      type: type.value,
-      email: email.value.trim() || null,
-      message: messageText.value.trim(),
-    };
-
-    const res = await fetch(`${baseUrl}/feedback`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(errText || `Server returned status ${res.status}`);
-    }
+    await api.sendFeedback(
+      type.value,
+      email.value.trim() || null,
+      messageText.value.trim(),
+    );
 
     status.value = "done";
     message.value = "Thank you! Your feedback has been recorded.";

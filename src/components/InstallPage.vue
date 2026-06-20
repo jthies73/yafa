@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { detectPlatform, isStandalone, type OS } from "../utils/platform";
+import { api } from "../utils/api";
 
 // Each instruction step; `glyph` (when set) renders a framed placeholder
 // showing the actual control the user is looking for, with `caption` describing
@@ -25,12 +26,7 @@ onMounted(() => {
   mql = window.matchMedia("(display-mode: standalone)");
   mql.addEventListener("change", onDisplayModeChange);
 
-  if (["development", "staging", "production"].includes(import.meta.env.MODE)) {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL;
-    if (baseUrl) {
-      fetch(`${baseUrl}/install-visits`, { method: "POST" }).catch(() => {});
-    }
-  }
+  api.recordInstallVisit();
 });
 onUnmounted(() => mql?.removeEventListener("change", onDisplayModeChange));
 
