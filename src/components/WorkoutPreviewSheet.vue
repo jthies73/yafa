@@ -326,12 +326,6 @@ const intensityArrow = computed<ArrowConfig | null>(() => {
             >
               {{ resetLine(r) }}
             </p>
-            <p
-              v-if="e.c1rm === null"
-              class="text-text-light dark:text-text-dark opacity-60 italic"
-            >
-              First session calibrates this exercise — weights appear next time.
-            </p>
           </div>
         </div>
       </template>
