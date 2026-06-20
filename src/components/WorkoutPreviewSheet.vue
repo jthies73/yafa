@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import type { ProgressionModelType, WeightIncrementUnit } from "../db/types";
+import { ref, watch, computed } from "vue";
+import type { ProgressionModelType } from "../db/types";
 import { FOCUS_META } from "../config/periodization";
-import { normalizeProgressionParams } from "../config/progression";
 import type { PrescribedSet } from "../engine/prescription";
 import {
   previewWorkout,
@@ -11,11 +10,11 @@ import {
   type WorkoutPreview,
 } from "../engine/service";
 import AppBottomSheet from "./AppBottomSheet.vue";
+import ModifierArrow from "./ModifierArrow.vue";
 import { useWeightUnit } from "../composables/useWeightUnit";
 
 const {
   label: weightUnit,
-  display: displayWeight,
   format: fmtWeight,
 } = useWeightUnit();
 
@@ -106,32 +105,6 @@ const groupLine = (g: SetGroup): string => {
   return parts.join(" ");
 };
 
-const baseConfigLine = (e: ExercisePreview): string => {
-  if (!e.config) return "";
-  // Normalize so RPE/ceiling/unit are guaranteed present even for configs saved
-  // before those fields existed (see config/progression.ts).
-  const p = normalizeProgressionParams(
-    e.config.progressionModel,
-    e.config.progressionParams,
-  ) as unknown as Record<string, number | WeightIncrementUnit>;
-  // The increment is a kg amount unless the unit is percent (a % of c1RM), which
-  // is unit-less and never converted to the display weight unit.
-  const inc =
-    p.incrementUnit === "percent"
-      ? `+${p.weightIncrement}%`
-      : `+${displayWeight(Number(p.weightIncrement), 2)} ${weightUnit.value}`;
-  switch (e.config.progressionModel) {
-    case "linear":
-      return `${p.targetSets} × ${p.targetReps} @ RPE ${p.targetRpe} | ${inc}`;
-    case "double":
-      return `${p.targetSets} × ${p.minReps}–${p.maxReps} @ RPE ${p.targetRpe} | ${inc}`;
-    case "topset_backoff":
-      return `Top ${p.topSetTargetReps} @ RPE ${p.topSetTargetRpe} | ${p.backOffSets} × ${p.backOffReps} back-off −${p.percentageDrop}% | ${inc}`;
-    case "none":
-      // No auto-increment — weights are derived from the e1RM but never advanced.
-      return `${p.targetSets} × ${p.targetReps} @ RPE ${p.targetRpe}`;
-  }
-};
 
 const FIELD_LABELS: Record<string, string> = {
   targetSets: "Sets",
@@ -161,6 +134,20 @@ const resetLine = (r: ResetEffect): string =>
 // recalibration prompt instead.
 const c1rmLine = (e: ExercisePreview): string =>
   e.c1rm !== null ? fmtWeight(e.c1rm) : "Not calibrated";
+
+const volumeDirection = computed(() => {
+  const focus = preview.value?.mesocycle?.focus;
+  if (focus === "hypertrophy") return "up";
+  if (focus === "peaking" || focus === "deload") return "down";
+  return null;
+});
+
+const intensityDirection = computed(() => {
+  const focus = preview.value?.mesocycle?.focus;
+  if (focus === "peaking") return "up";
+  if (focus === "hypertrophy" || focus === "deload") return "down";
+  return null;
+});
 </script>
 
 <template>
@@ -218,21 +205,21 @@ const c1rmLine = (e: ExercisePreview): string =>
             <span class="text-text-light dark:text-text-dark opacity-60"
               >Volume</span
             >
-            <span
-              class="font-mono font-semibold text-text-h-light dark:text-text-h-dark"
-            >
-              {{ fmtMult(preview.mesocycle.modifiers.volume) }}
-            </span>
+            <ModifierArrow
+              v-if="volumeDirection"
+              :direction="volumeDirection"
+            />
+            <span v-else class="font-mono text-sm text-text-light dark:text-text-dark opacity-40">—</span>
           </div>
           <div class="flex items-center justify-between gap-3 text-xs">
             <span class="text-text-light dark:text-text-dark opacity-60"
               >Intensity</span
             >
-            <span
-              class="font-mono font-semibold text-text-h-light dark:text-text-h-dark"
-            >
-              {{ fmtMult(preview.mesocycle.modifiers.intensity) }}
-            </span>
+            <ModifierArrow
+              v-if="intensityDirection"
+              :direction="intensityDirection"
+            />
+            <span v-else class="font-mono text-sm text-text-light dark:text-text-dark opacity-40">—</span>
           </div>
           <div class="flex items-center justify-between gap-3 text-xs">
             <span class="text-text-light dark:text-text-dark opacity-60">
@@ -303,14 +290,6 @@ const c1rmLine = (e: ExercisePreview): string =>
             v-if="e.config"
             class="border-t border-border-light dark:border-border-dark pt-2 flex flex-col gap-1 text-xs"
           >
-            <div class="flex items-center justify-between gap-3">
-              <span class="text-text-light dark:text-text-dark opacity-60"
-                >Base config</span
-              >
-              <span class="font-mono text-text-h-light dark:text-text-h-dark">
-                {{ baseConfigLine(e) }}
-              </span>
-            </div>
             <div class="flex items-center justify-between gap-3">
               <span class="text-text-light dark:text-text-dark opacity-60"
                 >c1RM</span

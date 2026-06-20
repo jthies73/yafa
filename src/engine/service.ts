@@ -14,7 +14,6 @@ import type {
   Workout,
 } from "../db/types";
 import { normalizeProgressionParams } from "../config/progression";
-import { FOCUS_META } from "../config/periodization";
 import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
 import { getProgressionState, putProgressionState } from "../db/repository";
 import { RESET_DROP } from "./constants";
@@ -72,7 +71,6 @@ export interface MesocyclePosition {
   weekIndex: number; // 0-based, within the cycle
   weekCount: number;
   focus: PeriodizationFocus;
-  modifiers: { volume: number; intensity: number };
   workoutsThisWeek: number;
 }
 
@@ -140,12 +138,6 @@ async function mesocyclePosition(
     weekIndex: absWeek % len,
     weekCount: len,
     focus,
-    // Display multipliers from the canonical curve (visualization only — the real
-    // shifts are applied to targets via mesoModifiers, not as a load multiplier).
-    modifiers: {
-      volume: FOCUS_META[focus].volume,
-      intensity: FOCUS_META[focus].intensity,
-    },
     workoutsThisWeek: inWeek.filter((w) =>
       plan.routineIds.includes(w.routineId),
     ).length,

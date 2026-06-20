@@ -15,7 +15,7 @@ describe("focusModifiers", () => {
   it("returns the tuned deltas per focus", () => {
     expect(focusModifiers("strength")).toEqual({
       rpeDelta: 0.5,
-      repDelta: -1,
+      repDelta: -2,
       setDelta: 0,
     });
     expect(focusModifiers("deload")).toEqual({
@@ -52,7 +52,7 @@ describe("applyMesoToParams", () => {
       focusModifiers("strength"),
     ) as LinearProgressionParams;
     expect(out.targetRpe).toBe(8.5); // 8 + 0.5
-    expect(out.targetReps).toBe(4); // 5 − 1
+    expect(out.targetReps).toBe(3); // 5 − 2
     expect(out.targetSets).toBe(3); // setDelta 0
   });
 
