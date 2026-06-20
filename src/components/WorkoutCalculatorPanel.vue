@@ -3,7 +3,11 @@ import { ref, computed, watch } from "vue";
 import { db } from "../db/db";
 import type { Exercise, Set as LoggedSet, RpeMatrix } from "../db/types";
 import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
-import { createExercise, type ExerciseInput, getProgressionState } from "../db/repository";
+import {
+  createExercise,
+  type ExerciseInput,
+  getProgressionState,
+} from "../db/repository";
 import {
   guardRepsKey,
   guardWeightKey,
@@ -187,7 +191,10 @@ watch(calc, (c) => {
   if (!c || !missing.value) return;
 
   if (missing.value === "rpe") {
-    if (actualRpeChip.value === null || actualRpeChip.value === lastPrefilledRpe) {
+    if (
+      actualRpeChip.value === null ||
+      actualRpeChip.value === lastPrefilledRpe
+    ) {
       actualRpeChip.value = c.rpe;
       lastPrefilledRpe = c.rpe;
     }
@@ -201,7 +208,10 @@ watch(calc, (c) => {
       actualText.value = String(c.reps);
       lastPrefilledReps = String(c.reps);
     }
-    if (actualRpeChip.value === null || actualRpeChip.value === lastPrefilledRpe) {
+    if (
+      actualRpeChip.value === null ||
+      actualRpeChip.value === lastPrefilledRpe
+    ) {
       actualRpeChip.value = c.rpe;
       lastPrefilledRpe = c.rpe;
     }
@@ -511,12 +521,12 @@ const onLogSet = () => {
       </div>
 
       <!-- Actual confirmation -->
-      <div
-        v-if="!allFilled && calc"
-        class="flex flex-col gap-4"
-      >
+      <div v-if="!allFilled && calc" class="flex flex-col gap-4">
         <!-- Actual Reps -->
-        <div v-if="missing === 'reps' || missing === 'weight'" class="flex flex-col gap-1.5">
+        <div
+          v-if="missing === 'reps' || missing === 'weight'"
+          class="flex flex-col gap-1.5"
+        >
           <label
             class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
           >
@@ -535,7 +545,10 @@ const onLogSet = () => {
         </div>
 
         <!-- Actual RPE -->
-        <div v-if="missing === 'rpe' || missing === 'weight'" class="flex flex-col gap-1.5">
+        <div
+          v-if="missing === 'rpe' || missing === 'weight'"
+          class="flex flex-col gap-1.5"
+        >
           <label
             class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
           >

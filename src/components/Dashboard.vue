@@ -50,7 +50,8 @@ const statsFor = (routineId: string): RoutineWeekStats =>
 
 // A routine only "lights up" once its weekly target is set and reached.
 const targetMet = (routine: Routine): boolean =>
-  !!routine.weeklyTarget && statsFor(routine.id).thisWeek >= routine.weeklyTarget;
+  !!routine.weeklyTarget &&
+  statsFor(routine.id).thisWeek >= routine.weeklyTarget;
 
 // Total sessions logged across the active plan's routines this calendar week.
 const weekTotal = computed(() =>
@@ -308,7 +309,9 @@ watch(
               </div>
               <div class="flex items-center gap-2.5 shrink-0 ml-3">
                 <span
-                  v-if="routine.weeklyTarget || statsFor(routine.id).thisWeek > 0"
+                  v-if="
+                    routine.weeklyTarget || statsFor(routine.id).thisWeek > 0
+                  "
                   class="px-2 py-0.5 rounded-md text-xs font-bold"
                   :class="
                     targetMet(routine)

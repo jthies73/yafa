@@ -6,7 +6,11 @@ const getBaseUrl = (): string | null => {
   return import.meta.env.VITE_API_BASE_URL || null;
 };
 
-async function apiPost(endpoint: string, body?: any, force = false): Promise<any> {
+async function apiPost(
+  endpoint: string,
+  body?: any,
+  force = false,
+): Promise<any> {
   if (!force && !isTrackedEnv) return;
   const baseUrl = getBaseUrl();
   if (!baseUrl) {

@@ -18,7 +18,8 @@ onMounted(() => {
   // (Crucial for iOS Safari which doesn't support the 'appinstalled' event)
   if (isStandalone() && !localStorage.getItem("pwa_install_recorded")) {
     const platform = detectPlatform().os;
-    api.recordPwaInstall(platform)
+    api
+      .recordPwaInstall(platform)
       .then(() => {
         localStorage.setItem("pwa_install_recorded", "true");
       })
@@ -29,7 +30,8 @@ onMounted(() => {
   window.addEventListener("appinstalled", () => {
     if (!localStorage.getItem("pwa_install_recorded")) {
       const platform = detectPlatform().os;
-      api.recordPwaInstall(platform)
+      api
+        .recordPwaInstall(platform)
         .then(() => {
           localStorage.setItem("pwa_install_recorded", "true");
         })
