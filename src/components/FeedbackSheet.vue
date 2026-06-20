@@ -75,7 +75,7 @@ const close = () => {
   >
     <div class="flex flex-col gap-5 px-5 py-5 select-none">
       <p class="text-sm text-text-light dark:text-text-dark opacity-70">
-        Have feedback, a feature request, or found a bug? Let us know!
+        Have feedback, a feature request, or found a bug? Let me know!
       </p>
 
       <!-- Success State -->
