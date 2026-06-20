@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { DEFAULT_RPE_MATRIX } from "../../db/rpeMatrix";
 import { proposeSetAdjustment } from "../adjustment";
+import { roundToLoadable } from "../matrix";
 
 const M = DEFAULT_RPE_MATRIX;
 
@@ -18,7 +19,20 @@ describe("proposeSetAdjustment", () => {
     expect(adj!.rpe).toBe(8);
   });
 
-  it("returns null when the previous set was at/easier than target", () => {
+  it("re-anchors UP when the previous set was easier than target", () => {
+    // Prev 100×5 @ 6 (well under target RPE 8) → demonstrated capacity is higher.
+    const adj = proposeSetAdjustment(
+      M,
+      { weight: 100, reps: 5, rpe: 6 },
+      { reps: 5, rpe: 8, weight: 100 },
+    );
+    expect(adj).not.toBeNull();
+    expect(adj!.weight).toBeGreaterThan(100);
+    expect(adj!.rpe).toBe(8);
+  });
+
+  it("returns null when the result sits within the tolerance band", () => {
+    // Prev on target → derived weight ≈ prescribed → nothing meaningful to change.
     expect(
       proposeSetAdjustment(
         M,
@@ -26,23 +40,22 @@ describe("proposeSetAdjustment", () => {
         { reps: 5, rpe: 8, weight: 100 },
       ),
     ).toBeNull();
-    expect(
-      proposeSetAdjustment(
-        M,
-        { weight: 100, reps: 5, rpe: 7 },
-        { reps: 5, rpe: 8, weight: 100 },
-      ),
-    ).toBeNull();
   });
 
-  it("returns null for a cold-start or free-entry target", () => {
-    expect(
-      proposeSetAdjustment(
-        M,
-        { weight: 100, reps: 5, rpe: 9.5 },
-        { reps: 5, rpe: 8, weight: null },
-      ),
-    ).toBeNull();
+  it("cold-start fill: derives a weight when the target has none yet", () => {
+    // The governing first set's effort fills a remaining null-weight set.
+    const adj = proposeSetAdjustment(
+      M,
+      { weight: 100, reps: 5, rpe: 8 },
+      { reps: 5, rpe: 8, weight: null },
+    );
+    expect(adj).not.toBeNull();
+    expect(adj!.weight).toBeGreaterThan(0);
+    expect(adj!.reps).toBe(5);
+    expect(adj!.rpe).toBe(8);
+  });
+
+  it("returns null for a back-off (null-RPE) target", () => {
     expect(
       proposeSetAdjustment(
         M,
@@ -76,6 +89,7 @@ describe("proposeSetAdjustment", () => {
       { reps: 5, rpe: 8, weight: 100 },
     );
     expect(adj).not.toBeNull();
-    expect(Number.isInteger(adj!.weight / 2.5)).toBe(true);
+    // Idempotent rounding ⇒ the proposed weight already sits on the loadable grid.
+    expect(roundToLoadable(adj!.weight)).toBe(adj!.weight);
   });
 });

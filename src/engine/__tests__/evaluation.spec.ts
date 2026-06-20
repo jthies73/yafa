@@ -72,20 +72,20 @@ describe("evaluate — linear", () => {
     expect(evaluate("linear", LINEAR, presc, sets)).toBe("hold");
   });
 
-  it("tolerance: within ±1.25 kg counts as the prescribed weight, beyond does not", () => {
+  it("tolerance: within ±2.5 kg counts as the prescribed weight, beyond does not", () => {
     expect(
       evaluate("linear", LINEAR, presc, [
         set(),
         set(),
-        set({ actualWeight: 101.25, actualRpe: 9.5 }),
+        set({ actualWeight: 102, actualRpe: 9.5 }),
       ]),
     ).toBe("regression");
-    // 1.5 kg off → not "at prescribed" → can't be the keyed regression → hold.
+    // 3.5 kg off → not "at prescribed" → can't be the keyed regression → hold.
     expect(
       evaluate("linear", LINEAR, presc, [
         set(),
         set(),
-        set({ actualWeight: 98.5, actualRpe: 9.5 }),
+        set({ actualWeight: 96.5, actualRpe: 9.5 }),
       ]),
     ).toBe("hold");
   });

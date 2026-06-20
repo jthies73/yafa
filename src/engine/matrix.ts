@@ -158,17 +158,38 @@ export interface PeakE1rm {
 }
 
 /**
+ * A relaxed gate used ONLY as a seeding fallback: an honest set with a real RPE,
+ * reps and load but without the RPE ≥ 8 near-limit requirement. A sub-limit set
+ * under-states true capacity, so seeding from it is conservative (the safe
+ * direction) — and it lets a first session that never reached RPE 8 still anchor a
+ * c1RM instead of staying anchorless.
+ */
+function isUsableSet(set: LoggedSet): boolean {
+  return (
+    set.actualRpe != null &&
+    set.actualReps >= 1 &&
+    set.actualReps <= QUALIFYING_MAX_REPS &&
+    set.actualWeight > 0
+  );
+}
+
+/**
  * The highest implied e1RM across a set list (peak, not mean — the best honest
  * set tracks capacity; averaging mixed-intent sets means nothing). Null when no
- * set qualifies. Stable tie-break: the first set achieving the max wins.
+ * set is eligible. Stable tie-break: the first set achieving the max wins.
+ *
+ * `allowSubThreshold` widens the gate from "qualifying" (RPE ≥ 8) to "usable" (any
+ * real RPE) — pass it for the cold-start seed fallback, never for analytics.
  */
 export function peakImpliedE1rm(
   matrix: RpeMatrix,
   sets: LoggedSet[],
+  allowSubThreshold = false,
 ): PeakE1rm | null {
+  const eligible = allowSubThreshold ? isUsableSet : isQualifyingSet;
   let best: PeakE1rm | null = null;
   for (const set of sets) {
-    if (!isQualifyingSet(set)) continue;
+    if (!eligible(set)) continue;
     const e1rm = impliedE1rm(
       matrix,
       set.actualWeight,

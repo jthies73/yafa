@@ -340,8 +340,12 @@ export async function applyWorkoutResults(
       const matrix = exercise.rpeMatrix ?? DEFAULT_RPE_MATRIX;
 
       // Cold start: seed the anchor from the best qualifying set, no progression.
+      // Fall back to the best USABLE set (any real RPE) so a first session that
+      // never reached RPE 8 still anchors a c1RM from its limited data.
       if (state.c1rm == null) {
-        const seeded = peakImpliedE1rm(matrix, sets)?.e1rm ?? null;
+        const seeded =
+          (peakImpliedE1rm(matrix, sets) ?? peakImpliedE1rm(matrix, sets, true))
+            ?.e1rm ?? null;
         await putProgressionState({
           ...state,
           c1rm: seeded,

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { DEFAULT_RPE_MATRIX } from "../../db/rpeMatrix";
-import { impliedE1rm } from "../matrix";
+import { impliedE1rm, roundToLoadable } from "../matrix";
 import { solveReps, solveRpe, solveWeight } from "../calculator";
 
 const M = DEFAULT_RPE_MATRIX;
@@ -11,9 +11,9 @@ describe("solveWeight", () => {
     expect(solveWeight(M, e1rm, 5, 8)).toBe(100);
   });
 
-  it("returns a loadable (2.5 kg) weight", () => {
+  it("returns a loadable weight", () => {
     const w = solveWeight(M, 137, 3, 8);
-    expect(Number.isInteger(w / 2.5)).toBe(true);
+    expect(roundToLoadable(w)).toBe(w); // already on the loadable grid
   });
 
   it("returns 0 for a non-positive e1RM", () => {

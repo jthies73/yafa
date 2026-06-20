@@ -77,11 +77,16 @@ describe("impliedE1rm / weightFromE1rm", () => {
 });
 
 describe("roundToLoadable", () => {
-  it("rounds to 2.5 kg by default", () => {
-    expect(roundToLoadable(101.2)).toBe(100);
-    expect(roundToLoadable(101.3)).toBe(102.5);
-    expect(roundToLoadable(103.74)).toBe(102.5);
-    expect(roundToLoadable(103.76)).toBe(105);
+  it("rounds to the given increment", () => {
+    expect(roundToLoadable(101.2, 2.5)).toBe(100);
+    expect(roundToLoadable(101.3, 2.5)).toBe(102.5);
+    expect(roundToLoadable(103.74, 2.5)).toBe(102.5);
+    expect(roundToLoadable(103.76, 2.5)).toBe(105);
+  });
+
+  it("defaults to a fine 0.1 kg increment (precise targets)", () => {
+    expect(roundToLoadable(101.23)).toBe(101.2);
+    expect(roundToLoadable(101.27)).toBe(101.3);
   });
 
   it("honors a custom increment", () => {
@@ -95,7 +100,7 @@ describe("roundToLoadable", () => {
 
   it("clears floating-point dust", () => {
     expect(roundToLoadable(102.5)).toBe(102.5);
-    expect(Number.isInteger(roundToLoadable(100) / 2.5)).toBe(true);
+    expect(roundToLoadable(100)).toBe(100);
   });
 });
 
@@ -139,6 +144,14 @@ describe("peakImpliedE1rm", () => {
 
   it("ignores non-qualifying sets and returns null when none qualify", () => {
     expect(peakImpliedE1rm(M, [makeSet({ actualRpe: 6 })])).toBeNull();
+  });
+
+  it("allowSubThreshold widens the gate to any real-RPE set (seed fallback)", () => {
+    const subLimit = makeSet({ actualWeight: 80, actualReps: 5, actualRpe: 6 });
+    expect(peakImpliedE1rm(M, [subLimit])).toBeNull(); // strict gate
+    const peak = peakImpliedE1rm(M, [subLimit], true);
+    expect(peak?.set).toBe(subLimit);
+    expect(peak!.e1rm).toBeGreaterThan(0);
   });
 });
 

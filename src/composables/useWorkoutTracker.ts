@@ -170,13 +170,47 @@ export function useWorkoutTracker() {
     const set = card.sets[i];
     set.done = true;
     set.completedAt ??= Date.now();
+    fillColdStartFromGovernor(card);
   };
 
   const toggleSet = (card: ExerciseCard, i: number) => {
     const set = card.sets[i];
     set.done = !set.done;
     set.completedAt = set.done ? (set.completedAt ?? Date.now()) : null;
+    if (set.done) fillColdStartFromGovernor(card);
   };
+
+  /**
+   * Cold-start governor fill: a first-ever exercise prescribes every set with a
+   * null weight (free entry). Once the FIRST set is logged it GOVERNS — its
+   * demonstrated e1RM populates the remaining still-empty sets so the lifter isn't
+   * guessing a weight on every set. Idempotent and non-destructive: only fills
+   * pending sets that still have no prescribed weight, so it never clobbers a set
+   * the lifter already filled or edited, and is a no-op on a normal (anchored)
+   * prescription. Established-target divergence stays a user-confirmed green-dot
+   * proposal (applyProposal) — only the truly empty cold-start sets auto-fill.
+   */
+  function fillColdStartFromGovernor(card: ExerciseCard): void {
+    const gov = card.sets[0];
+    if (!gov || !isDone(gov)) return;
+    const gReps = parseInt(gov.reps, 10);
+    const gWeight = parseFloat(gov.weight);
+    const gRpe = parseFloat(gov.rpe);
+    if (!(gReps >= 1) || !(gWeight > 0) || isNaN(gRpe)) return;
+
+    const matrix =
+      exercisesMap.value[card.exerciseId]?.rpeMatrix ?? DEFAULT_RPE_MATRIX;
+    for (let j = 1; j < card.sets.length; j++) {
+      const s = card.sets[j];
+      if (isDone(s) || !s.target || s.target.weight != null) continue;
+      const proposal = proposeSetAdjustment(
+        matrix,
+        { weight: gWeight, reps: gReps, rpe: gRpe },
+        { reps: s.target.reps, rpe: s.target.rpe, weight: s.target.weight },
+      );
+      if (proposal) applyAdjustmentToSet(s, proposal);
+    }
+  }
 
   /**
    * Proposed re-prescription for the set at `setIndex`, derived from the
@@ -210,14 +244,13 @@ export function useWorkoutTracker() {
   }
 
   /**
-   * Applies a confirmed proposal: rewrites the set's prescription target (so it
-   * becomes the adherence baseline) and prefills the inputs, mirroring how a
+   * Writes a re-prescription onto a set: rewrites its prescription target (so it
+   * becomes the new adherence baseline) and prefills the inputs, mirroring how a
    * freshly prescribed row starts. The held RPE is preserved (null stays null).
+   * Shared by the user-confirmed green-dot path and the cold-start governor fill.
    */
-  function applyProposal(card: ExerciseCard, setIndex: number): void {
-    const proposal = proposalFor(card, setIndex);
-    const set = card.sets[setIndex];
-    if (!proposal || !set?.target) return;
+  function applyAdjustmentToSet(set: SetEntry, proposal: SetAdjustment): void {
+    if (!set.target) return;
     set.target = {
       ...set.target,
       reps: proposal.reps,
@@ -228,6 +261,13 @@ export function useWorkoutTracker() {
     set.weight = String(proposal.weight);
     if (proposal.rpe != null) set.rpe = String(proposal.rpe);
     set.represcribed = true; // mark the row as adjusted for the UI indicator
+  }
+
+  /** Applies the green-dot proposal the user confirmed for a specific set. */
+  function applyProposal(card: ExerciseCard, setIndex: number): void {
+    const proposal = proposalFor(card, setIndex);
+    const set = card.sets[setIndex];
+    if (proposal && set) applyAdjustmentToSet(set, proposal);
   }
 
   const addCardFor = (id: string, name: string) => {

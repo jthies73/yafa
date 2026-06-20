@@ -97,11 +97,27 @@ describe("seedC1rmFromHistory", () => {
     expect(seed).toBeCloseTo(110 / M[5][8], 4); // peak from the heavier session
   });
 
-  it("returns null when no set qualifies", () => {
+  it("falls back to the best usable set when none qualify (limited data)", () => {
+    // Only sub-limit (RPE 6) work — still seeds, conservatively, rather than null.
     const sessions = groupSessionsFor(
       [
         workout("w1", 100, [
-          { exerciseId: "squat", sets: [set({ actualRpe: 6 })] },
+          {
+            exerciseId: "squat",
+            sets: [set({ actualWeight: 100, actualReps: 5, actualRpe: 6 })],
+          },
+        ]),
+      ],
+      "squat",
+    );
+    expect(seedC1rmFromHistory(M, sessions)).toBeCloseTo(100 / M[5][6], 4);
+  });
+
+  it("returns null when no set is even usable (no RPE)", () => {
+    const sessions = groupSessionsFor(
+      [
+        workout("w1", 100, [
+          { exerciseId: "squat", sets: [set({ actualRpe: undefined })] },
         ]),
       ],
       "squat",

@@ -53,11 +53,18 @@ export function groupAllSessions(
   return map;
 }
 
-/** The peak honest e1RM across a set of sessions — the cold-start c1RM seed. */
+/**
+ * The peak honest e1RM across a set of sessions — the cold-start c1RM seed.
+ * Prefers qualifying (RPE ≥ 8) sets, but falls back to the best usable set so even
+ * a history of sub-limit work still establishes an anchor.
+ */
 export function seedC1rmFromHistory(
   matrix: RpeMatrix,
   sessions: ExerciseSession[],
 ): number | null {
   const allSets = sessions.flatMap((s) => s.sets);
-  return peakImpliedE1rm(matrix, allSets)?.e1rm ?? null;
+  return (
+    (peakImpliedE1rm(matrix, allSets) ??
+      peakImpliedE1rm(matrix, allSets, true))?.e1rm ?? null
+  );
 }

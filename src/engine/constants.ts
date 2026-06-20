@@ -23,14 +23,21 @@ export const RESET_DROP = 0.1;
 
 // --- Calibration / matrix mechanics ---
 
-/** Granularity prescribed weights round to (a 2.5 kg jump = smallest plate pair). */
-export const LOADABLE_INCREMENT_KG = 2.5;
 /**
- * Tolerance band for the "weight == prescribed" clause in the regression rules.
- * A logged set within ±1.25 kg of the prescribed weight counts as "at" it, so
- * rounding/microplate noise never hides a genuine regression.
+ * Granularity prescribed weights round to. Fine (0.1 kg) so the rendered target is
+ * a precise number rather than snapped to a plate pair — the user sees the exact
+ * intended load and decides how to make it on their equipment. The coarser
+ * PRESCRIBED_WEIGHT_TOLERANCE_KG band below is what absorbs real-world plate
+ * rounding when judging whether a logged set hit the prescription.
  */
-export const PRESCRIBED_WEIGHT_TOLERANCE_KG = 1.25;
+export const LOADABLE_INCREMENT_KG = 0.1;
+/**
+ * Tolerance band for the "weight == prescribed" clause in the regression rules and
+ * the trivial-diff filter on in-session proposals. A logged set within ±2.5 kg of
+ * the prescribed weight counts as "at" it, so plate-rounding noise never hides a
+ * genuine regression nor surfaces a pointless re-prescription.
+ */
+export const PRESCRIBED_WEIGHT_TOLERANCE_KG = 2.5;
 
 /**
  * A set only implies a usable e1RM when it is honest and near-limit: RPE ≥ 8 and
