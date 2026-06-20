@@ -1,23 +1,31 @@
 <script setup lang="ts">
-// A simple colored arrow for target shifts: up/green = increase, down/red = decrease.
-// It accepts a 'direction' prop: 'up' or 'down'.
-defineProps<{
+import { computed } from "vue";
+
+// A simple colored arrow for target shifts.
+// It accepts a 'direction' prop: 'up' or 'down', an optional 'count' prop (1 or 2), and optional 'color'.
+interface Props {
   direction: "up" | "down";
-}>();
+  count?: number; // 1 or 2
+  color?: "green" | "red";
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  count: 1,
+});
+
+const colorClass = computed(() => {
+  const c = props.color ?? (props.direction === "up" ? "red" : "green");
+  return c === "green"
+    ? "text-green-600 dark:text-green-400"
+    : "text-red-600 dark:text-red-400";
+});
 </script>
 
 <template>
-  <span
-    class="inline-flex items-center justify-center"
-    :class="
-      direction === 'up'
-        ? 'text-green-600 dark:text-green-400'
-        : 'text-red-600 dark:text-red-400'
-    "
-  >
-    <!-- Up arrow (standard Lucide arrow-up svg centered) -->
+  <span class="inline-flex items-center gap-0.5" :class="colorClass">
     <svg
-      v-if="direction === 'up'"
+      v-for="i in count"
+      :key="i"
       xmlns="http://www.w3.org/2000/svg"
       width="14"
       height="14"
@@ -29,25 +37,15 @@ defineProps<{
       stroke-linejoin="round"
       class="align-middle"
     >
-      <line x1="12" y1="19" x2="12" y2="5"></line>
-      <polyline points="5 12 12 5 19 12"></polyline>
-    </svg>
-    <!-- Down arrow (standard Lucide arrow-down svg centered) -->
-    <svg
-      v-else
-      xmlns="http://www.w3.org/2000/svg"
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      class="align-middle"
-    >
-      <line x1="12" y1="5" x2="12" y2="19"></line>
-      <polyline points="19 12 12 19 5 12"></polyline>
+      <template v-if="direction === 'up'">
+        <line x1="12" y1="19" x2="12" y2="5"></line>
+        <polyline points="5 12 12 5 19 12"></polyline>
+      </template>
+      <template v-else>
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <polyline points="19 12 12 19 5 12"></polyline>
+      </template>
     </svg>
   </span>
 </template>
+

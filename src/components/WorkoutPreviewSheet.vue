@@ -134,18 +134,28 @@ const resetLine = (r: ResetEffect): string =>
 // recalibration prompt instead.
 const c1rmLine = (e: ExercisePreview): string =>
   e.c1rm !== null ? fmtWeight(e.c1rm) : "Not calibrated";
+interface ArrowConfig {
+  direction: "up" | "down";
+  count: number;
+}
 
-const volumeDirection = computed(() => {
+const volumeArrow = computed<ArrowConfig | null>(() => {
   const focus = preview.value?.mesocycle?.focus;
-  if (focus === "hypertrophy") return "up";
-  if (focus === "peaking" || focus === "deload") return "down";
+  if (!focus) return null;
+  if (focus === "hypertrophy") return { direction: "up", count: 1 };
+  if (focus === "strength") return { direction: "down", count: 1 };
+  if (focus === "peaking") return { direction: "down", count: 1 };
+  if (focus === "deload") return { direction: "down", count: 2 };
   return null;
 });
 
-const intensityDirection = computed(() => {
+const intensityArrow = computed<ArrowConfig | null>(() => {
   const focus = preview.value?.mesocycle?.focus;
-  if (focus === "peaking") return "up";
-  if (focus === "hypertrophy" || focus === "deload") return "down";
+  if (!focus) return null;
+  if (focus === "hypertrophy") return { direction: "down", count: 1 };
+  if (focus === "strength") return { direction: "up", count: 1 };
+  if (focus === "peaking") return { direction: "up", count: 2 };
+  if (focus === "deload") return { direction: "down", count: 2 };
   return null;
 });
 </script>
@@ -206,20 +216,20 @@ const intensityDirection = computed(() => {
               >Volume</span
             >
             <ModifierArrow
-              v-if="volumeDirection"
-              :direction="volumeDirection"
+              v-if="volumeArrow"
+              :direction="volumeArrow.direction"
+              :count="volumeArrow.count"
             />
-            <span v-else class="font-mono text-sm text-text-light dark:text-text-dark opacity-40">—</span>
           </div>
           <div class="flex items-center justify-between gap-3 text-xs">
             <span class="text-text-light dark:text-text-dark opacity-60"
               >Intensity</span
             >
             <ModifierArrow
-              v-if="intensityDirection"
-              :direction="intensityDirection"
+              v-if="intensityArrow"
+              :direction="intensityArrow.direction"
+              :count="intensityArrow.count"
             />
-            <span v-else class="font-mono text-sm text-text-light dark:text-text-dark opacity-40">—</span>
           </div>
           <div class="flex items-center justify-between gap-3 text-xs">
             <span class="text-text-light dark:text-text-dark opacity-60">
