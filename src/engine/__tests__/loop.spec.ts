@@ -10,7 +10,14 @@ import type {
 } from "../../db/types";
 import { prescribeExercise, type ExercisePrescription } from "../prescription";
 import { evaluate } from "../evaluation";
-import { consumeReset, initState, seedC1rm, step } from "../state";
+import {
+  catchUpC1rm,
+  consumeReset,
+  initState,
+  seedC1rm,
+  smoothE1rm,
+  step,
+} from "../state";
 import { peakImpliedE1rm } from "../matrix";
 
 // End-to-end progression loop, composed from the pure modules exactly as
@@ -101,6 +108,40 @@ describe("loop — linear success increments c1RM", () => {
     const r = runSession(start, "linear", LINEAR, { reps: 5, rpe: 8 }, "w1");
     expect(r.outcome).toBe("success");
     expect(r.state.c1rm).toBe(102.5);
+  });
+});
+
+// Mirrors service.applyWorkoutResults: one c1RM decision per session. A large
+// deviation from smoothed demonstrated capacity catches up fast and REPLACES the
+// increment (never both → no same-session up-then-down), gated past ±10%.
+describe("loop — large deviation catches up, replacing the increment", () => {
+  const finalC1rm = (
+    preStep: number,
+    estimate: number | null,
+    stepped: number,
+  ) => {
+    const caught = catchUpC1rm(preStep, estimate);
+    return caught !== preStep ? caught : stepped; // catch-up wins, else the step stands
+  };
+
+  it("a success uses the caught-up anchor instead of the small increment", () => {
+    const start = { ...initState("ex", 0), c1rm: 100 };
+    const r = runSession(start, "linear", LINEAR, { reps: 5, rpe: 8 }, "w1");
+    expect(r.outcome).toBe("success");
+    expect(r.state.c1rm).toBe(102.5); // step alone would only +increment
+
+    // Demonstrated capacity sits a sustained +30% above the anchor.
+    const estimate = smoothE1rm([130, 130, 130]);
+    const final = finalC1rm(start.c1rm!, estimate, r.state.c1rm!);
+    expect(final).toBeCloseTo(121, 6); // 100 + (130-100)*0.7, ONE move
+    expect(final).not.toBe(102.5); // the increment was replaced, not added to
+  });
+
+  it("a small deviation does not fire — the normal increment stands", () => {
+    const start = { ...initState("ex", 0), c1rm: 100 };
+    const r = runSession(start, "linear", LINEAR, { reps: 5, rpe: 8 }, "w1");
+    const estimate = smoothE1rm([104, 104, 104]); // +4%, within the ±10% threshold
+    expect(finalC1rm(start.c1rm!, estimate, r.state.c1rm!)).toBe(102.5);
   });
 });
 

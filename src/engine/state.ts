@@ -6,10 +6,10 @@ import type {
 } from "../db/types";
 import type { ProgressionOutcome } from "./evaluation";
 import {
+  CATCHUP_CLOSE_FRACTION,
+  CATCHUP_THRESHOLD,
   E1RM_EWMA_ALPHA,
   E1RM_OUTLIER_BAND,
-  RECONCILE_DEADBAND,
-  RECONCILE_NUDGE_FRACTION,
   REGRESSION_RESET_TRIGGER,
   RESET_DROP,
 } from "./constants";
@@ -152,13 +152,14 @@ export function step(
 }
 
 // ----------------------------------------------
-// c1RM reconciliation (robust EWMA). The deterministic step above is the primary
-// driver; this is a slow corrective overlay that keeps the anchor from drifting
-// away from demonstrated capacity over many sessions. Two pure pieces:
+// c1RM catch-up (robust EWMA). The deterministic step above is the primary driver;
+// this only engages when the anchor is STRONGLY deviated from demonstrated capacity
+// — the case progression rules alone would take many sessions to close. Two pieces:
 //   1. smoothE1rm — an exponentially-weighted moving average of the e1RM series
 //      with a per-step outlier clamp, so a single fluke set can't yank the estimate.
-//   2. reconcileC1rm — nudges the c1RM a fraction of the way toward the estimate,
-//      but only once the gap exceeds a deadband (small drift is left alone).
+//   2. catchUpC1rm — past a LARGE threshold, jumps most of the way toward the
+//      estimate in one move (small drift is left to the step). The caller applies it
+//      INSTEAD of the increment, so the two never collide in one session.
 // At steady state a scalar Kalman filter reduces to exactly this EWMA; this is the
 // chosen, schema-free form of it.
 // ----------------------------------------------
@@ -183,14 +184,15 @@ export function smoothE1rm(observations: number[]): number | null {
 }
 
 /**
- * Nudge the c1RM toward a smoothed e1RM estimate. No-op unless the relative gap
- * exceeds the deadband; then it closes a fraction of the gap (gradual convergence,
- * not a snap). Kept UNROUNDED like every other c1RM transition. Null/zero inputs
- * pass the anchor through unchanged.
+ * Catch the c1RM up to a smoothed e1RM estimate. Returns the anchor UNCHANGED
+ * unless the relative gap exceeds the (large) threshold; then it closes most of the
+ * gap in one move (fast convergence, not a per-session nibble). Returning the input
+ * unchanged is the caller's signal that catch-up did not fire. Kept UNROUNDED like
+ * every other c1RM transition. Null/zero inputs pass the anchor through unchanged.
  */
-export function reconcileC1rm(c1rm: number, estimate: number | null): number {
+export function catchUpC1rm(c1rm: number, estimate: number | null): number {
   if (estimate == null || c1rm <= 0) return c1rm;
   const gap = estimate - c1rm;
-  if (Math.abs(gap) / c1rm <= RECONCILE_DEADBAND) return c1rm;
-  return c1rm + gap * RECONCILE_NUDGE_FRACTION;
+  if (Math.abs(gap) / c1rm <= CATCHUP_THRESHOLD) return c1rm;
+  return c1rm + gap * CATCHUP_CLOSE_FRACTION;
 }

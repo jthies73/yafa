@@ -8,9 +8,9 @@ import {
   advanceDoubleCursor,
   applyIncrement,
   applyReset,
+  catchUpC1rm,
   consumeReset,
   initState,
-  reconcileC1rm,
   seedC1rm,
   smoothE1rm,
   step,
@@ -188,20 +188,20 @@ describe("smoothE1rm", () => {
   });
 });
 
-describe("reconcileC1rm", () => {
-  it("is a no-op within the deadband or without an estimate", () => {
-    expect(reconcileC1rm(100, null)).toBe(100);
-    expect(reconcileC1rm(100, 103)).toBe(100); // 3% < 5% deadband
-    expect(reconcileC1rm(0, 200)).toBe(0); // no anchor
+describe("catchUpC1rm", () => {
+  it("is a no-op within the threshold or without an estimate", () => {
+    expect(catchUpC1rm(100, null)).toBe(100);
+    expect(catchUpC1rm(100, 108)).toBe(100); // 8% < 10% threshold
+    expect(catchUpC1rm(0, 200)).toBe(0); // no anchor
   });
 
-  it("nudges a fraction of the gap toward the estimate when it drifts up", () => {
-    // gap 20, beyond deadband → close 25% → 105.
-    expect(reconcileC1rm(100, 120)).toBeCloseTo(105, 6);
+  it("closes most of the gap in one move when it deviates up", () => {
+    // gap 20, beyond threshold → close 70% → 114.
+    expect(catchUpC1rm(100, 120)).toBeCloseTo(114, 6);
   });
 
-  it("nudges downward too", () => {
-    // gap −20 → 100 + (−20)*0.25 = 95.
-    expect(reconcileC1rm(100, 80)).toBeCloseTo(95, 6);
+  it("catches up downward too", () => {
+    // gap −20 → 100 + (−20)*0.7 = 86.
+    expect(catchUpC1rm(100, 80)).toBeCloseTo(86, 6);
   });
 });

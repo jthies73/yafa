@@ -47,20 +47,22 @@ export const PRESCRIBED_WEIGHT_TOLERANCE_KG = 2.5;
 export const QUALIFYING_MIN_RPE = 8;
 export const QUALIFYING_MAX_REPS = 10;
 
-// --- c1RM reconciliation (HEURISTIC — explicitly tunable) ---
+// --- c1RM catch-up (HEURISTIC — explicitly tunable) ---
 //
 // The deterministic step (success/hold/regression) is the PRIMARY driver of the
-// c1RM. Reconciliation is a slow corrective overlay: it smooths the calculated
-// e1RM (a robust EWMA with an outlier clamp) and, only when that estimate has
-// drifted from the c1RM beyond a deadband, nudges the c1RM a fraction of the way
-// toward it. This deliberately relaxes the "e1RM never feeds c1RM" rule — here
-// e1RM is a slow bias on the anchor, never a replacement for it. A scalar Kalman
-// filter degenerates to exactly this EWMA at steady state, without the per-anchor
+// c1RM. Catch-up is a corrective that engages ONLY when the anchor is strongly
+// deviated from demonstrated capacity — the case progression rules alone would
+// take many sessions to close. It smooths the calculated e1RM (a robust EWMA with
+// an outlier clamp) and, past a LARGE threshold, jumps most of the way toward it
+// in one move, REPLACING that session's increment (never both → the two can't
+// collide). This deliberately relaxes the "e1RM never feeds c1RM" rule, but only
+// as a rare large correction, never an every-session bias. A scalar Kalman filter
+// degenerates to exactly this EWMA at steady state, without the per-anchor
 // covariance state (and Dexie schema) it would cost; this is that, made explicit.
 export const E1RM_EWMA_ALPHA = 0.25; // smoothing: weight given to each new e1RM
 export const E1RM_OUTLIER_BAND = 0.2; // clip one observation's pull to ±20% of est
-export const RECONCILE_DEADBAND = 0.05; // ignore drift within ±5% of the c1RM
-export const RECONCILE_NUDGE_FRACTION = 0.25; // close 25% of the gap per reconcile
+export const CATCHUP_THRESHOLD = 0.1; // only engage past ±10% deviation from demonstrated
+export const CATCHUP_CLOSE_FRACTION = 0.7; // close most of the gap in one move (fast catch-up)
 
 // --- RPE matrix grid bounds (mirror src/db/rpeMatrix.ts) ---
 
@@ -90,8 +92,8 @@ export const MESO_RPE_DELTA: Record<PeriodizationFocus, number> = {
 /** Reps added to the rep target — negative trims reps as intensity rises. */
 export const MESO_REP_DELTA: Record<PeriodizationFocus, number> = {
   hypertrophy: 1,
-  strength: -1,
-  peaking: -2,
+  strength: -2,
+  peaking: -3,
   deload: 0,
 };
 

@@ -26,7 +26,7 @@ import {
 } from "./mesocycle";
 import { prescribeExercise, type ExercisePrescription } from "./prescription";
 import { evaluate } from "./evaluation";
-import { consumeReset, reconcileC1rm, smoothE1rm, step } from "./state";
+import { catchUpC1rm, consumeReset, smoothE1rm, step } from "./state";
 import { peakImpliedE1rm } from "./matrix";
 import { groupSessionsFor, qualifyingE1rmSeries } from "./sessions";
 
@@ -388,38 +388,36 @@ export async function applyWorkoutResults(
         finishedAt,
       );
 
+      // One c1RM move per session. A LARGE deviation from smoothed demonstrated
+      // capacity catches up fast and REPLACES the increment (so the two can never
+      // collide as an up-then-down in the same finish); otherwise the deterministic
+      // step stands. Skipped on a regression so the 3-strike reset owns the
+      // sustained downside. `step` still runs for streak/reset/cursor bookkeeping.
+      const estimate =
+        outcome !== "regression"
+          ? smoothE1rm(
+              qualifyingE1rmSeries(
+                matrix,
+                groupSessionsFor([...priorWorkouts, workout], exerciseId),
+              ),
+            )
+          : null;
+      const caught = catchUpC1rm(state.c1rm, estimate);
+      const fired = caught !== state.c1rm;
+
       changes.push({
         exerciseId,
         exerciseName: exercise.name,
-        reason: outcome === "success" ? "increment" : outcome,
+        reason: fired
+          ? "recalibrate"
+          : outcome === "success"
+            ? "increment"
+            : outcome,
         before: state.c1rm,
-        after: next.c1rm,
+        after: fired ? caught : next.c1rm,
         resetArmed: next.resetPending,
       });
-
-      // Reconcile: nudge the c1RM toward the smoothed e1RM when it has drifted.
-      // Skipped on a regression so it never softens the deload signal. Surfaced as
-      // its own automatic CalibrationChange when it actually moves the anchor.
-      let finalC1rm = next.c1rm;
-      if (outcome !== "regression" && next.c1rm != null) {
-        const sessions = groupSessionsFor(
-          [...priorWorkouts, workout],
-          exerciseId,
-        );
-        const estimate = smoothE1rm(qualifyingE1rmSeries(matrix, sessions));
-        const reconciled = reconcileC1rm(next.c1rm, estimate);
-        if (reconciled !== next.c1rm) {
-          finalC1rm = reconciled;
-          changes.push({
-            exerciseId,
-            exerciseName: exercise.name,
-            reason: "recalibrate",
-            before: next.c1rm,
-            after: reconciled,
-          });
-        }
-      }
-      await putProgressionState({ ...next, c1rm: finalC1rm });
+      await putProgressionState({ ...next, c1rm: fired ? caught : next.c1rm });
     }
   });
   return changes;
