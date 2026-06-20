@@ -99,28 +99,28 @@ const inputClass =
       <!-- kg / % unit toggle -->
       <button
         type="button"
-        class="flex items-center border border-border-light dark:border-border-dark rounded-lg overflow-hidden bg-black/5 dark:bg-white/5 w-24 cursor-pointer select-none shrink-0"
+        class="flex gap-1 p-1 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl w-24 cursor-pointer select-none shrink-0"
         role="switch"
         :aria-checked="unit === 'percent'"
         aria-label="Toggle increment unit"
         @click="toggleUnit"
       >
         <span
-          class="flex-1 text-center py-1.5 text-xs font-semibold transition-colors duration-150"
+          class="flex-1 text-center py-1.5 text-xs font-bold rounded-lg transition-colors duration-150"
           :class="
             unit === 'kg'
-              ? 'bg-accent text-bg-dark font-bold'
-              : 'text-text-h-light dark:text-text-h-dark hover:bg-surface-light-hover/40 dark:hover:bg-surface-dark-hover/40'
+              ? 'bg-accent text-bg-dark'
+              : 'text-text-light dark:text-text-dark'
           "
         >
           {{ weightUnit }}
         </span>
         <span
-          class="flex-1 text-center py-1.5 text-xs font-semibold transition-colors duration-150"
+          class="flex-1 text-center py-1.5 text-xs font-bold rounded-lg transition-colors duration-150"
           :class="
             unit === 'percent'
-              ? 'bg-accent text-bg-dark font-bold'
-              : 'text-text-h-light dark:text-text-h-dark hover:bg-surface-light-hover/40 dark:hover:bg-surface-dark-hover/40'
+              ? 'bg-accent text-bg-dark'
+              : 'text-text-light dark:text-text-dark'
           "
         >
           %
