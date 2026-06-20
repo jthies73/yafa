@@ -5,14 +5,19 @@ import WorkoutBottomSheet from "./components/WorkoutBottomSheet.vue";
 import WorkoutSummarySheet from "./components/summary/WorkoutSummarySheet.vue";
 import NumericKeypad from "./components/NumericKeypad.vue";
 import { useActiveWorkout } from "./composables/useActiveWorkout";
-import { detectPlatform } from "./utils/platform";
+import { detectPlatform, isStandalone } from "./utils/platform";
 
 const { activeWorkout } = useActiveWorkout();
 
 onMounted(() => {
-  if (["development", "staging", "production"].includes(import.meta.env.MODE)) {
+  const isTrackedEnv = ["development", "staging", "production"].includes(
+    import.meta.env.MODE,
+  );
+
+  if (isTrackedEnv) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
     if (baseUrl) {
+      // 1. Record page visit
       fetch(`${baseUrl}/page-visits`, {
         method: "POST",
         headers: {
@@ -20,15 +25,10 @@ onMounted(() => {
         },
         body: JSON.stringify({ path: window.location.pathname }),
       }).catch(() => {});
-    }
-  }
 
-  window.addEventListener("appinstalled", () => {
-    if (
-      ["development", "staging", "production"].includes(import.meta.env.MODE)
-    ) {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL;
-      if (baseUrl) {
+      // 2. Record PWA install if running in standalone mode for the first time
+      // (Crucial for iOS Safari which doesn't support the 'appinstalled' event)
+      if (isStandalone() && !localStorage.getItem("pwa_install_recorded")) {
         const platform = detectPlatform().os;
         fetch(`${baseUrl}/pwa-installs`, {
           method: "POST",
@@ -36,7 +36,36 @@ onMounted(() => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ platform }),
-        }).catch(() => {});
+        })
+          .then((res) => {
+            if (res.ok) {
+              localStorage.setItem("pwa_install_recorded", "true");
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }
+
+  // Real-time appinstalled listener (supported by Chrome / Android)
+  window.addEventListener("appinstalled", () => {
+    if (isTrackedEnv) {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      if (baseUrl && !localStorage.getItem("pwa_install_recorded")) {
+        const platform = detectPlatform().os;
+        fetch(`${baseUrl}/pwa-installs`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ platform }),
+        })
+          .then((res) => {
+            if (res.ok) {
+              localStorage.setItem("pwa_install_recorded", "true");
+            }
+          })
+          .catch(() => {});
       }
     }
   });
