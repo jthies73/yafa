@@ -6,6 +6,7 @@ import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
 import { setMatrixCell } from "../engine/matrix";
 import ConfirmDialog from "./ConfirmDialog.vue";
 import RpeMatrixTable from "./RpeMatrixTable.vue";
+import InfoIcon from "./InfoIcon.vue";
 
 const props = defineProps<{
   exerciseId?: string;
@@ -66,12 +67,17 @@ defineExpose({ persist });
 <template>
   <div v-if="matrix" class="flex flex-col gap-1.5">
     <div class="flex items-center justify-between gap-2">
-      <label
-        class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-      >
-        RPE Matrix
-        <span class="normal-case font-normal opacity-60 ml-1">(% of e1RM)</span>
-      </label>
+      <span class="flex min-w-0 items-center gap-1">
+        <label
+          class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+        >
+          RPE Matrix
+          <span class="normal-case font-normal opacity-60 ml-1"
+            >(% of e1RM)</span
+          >
+        </label>
+        <InfoIcon topic="rpeMatrix" />
+      </span>
       <button
         type="button"
         class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:bg-border-light dark:hover:bg-border-dark transition-colors duration-150 cursor-pointer shrink-0"

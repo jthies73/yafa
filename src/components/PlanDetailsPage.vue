@@ -28,6 +28,7 @@ import PlanFormSheet from "./PlanFormSheet.vue";
 import RoutineFormSheet from "./RoutineFormSheet.vue";
 import MesocycleChart from "./MesocycleChart.vue";
 import MesocycleSheet from "./MesocycleSheet.vue";
+import InfoIcon from "./InfoIcon.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
 
 const props = defineProps<{
@@ -366,9 +367,10 @@ const requestDeletePlan = () => {
       <!-- Periodization -->
       <div class="border-t border-border-light dark:border-border-dark pt-6">
         <h2
-          class="text-xl font-bold text-text-h-light dark:text-text-h-dark mb-4"
+          class="text-xl font-bold text-text-h-light dark:text-text-h-dark mb-4 flex items-center gap-1.5"
         >
           Periodization
+          <InfoIcon topic="mesocycle" />
         </h2>
 
         <!-- Populated — the whole card opens the editor -->

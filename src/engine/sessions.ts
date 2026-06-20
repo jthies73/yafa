@@ -1,5 +1,5 @@
 import type { RpeMatrix, Set as LoggedSet, Workout } from "../db/types";
-import { peakImpliedE1rm } from "./matrix";
+import { impliedE1rm, isQualifyingSet, peakImpliedE1rm } from "./matrix";
 
 // ----------------------------------------------
 // History → per-exercise sessions. Flattens workout history into an ordered
@@ -64,7 +64,24 @@ export function seedC1rmFromHistory(
 ): number | null {
   const allSets = sessions.flatMap((s) => s.sets);
   return (
-    (peakImpliedE1rm(matrix, allSets) ??
-      peakImpliedE1rm(matrix, allSets, true))?.e1rm ?? null
+    (peakImpliedE1rm(matrix, allSets) ?? peakImpliedE1rm(matrix, allSets, true))
+      ?.e1rm ?? null
   );
+}
+
+/**
+ * The chronological series of implied e1RMs from the QUALIFYING sets across these
+ * sessions (oldest → newest). Feeds the c1RM reconciliation EWMA — only honest,
+ * near-limit sets inform capacity, and order matters for the moving average.
+ */
+export function qualifyingE1rmSeries(
+  matrix: RpeMatrix,
+  sessions: ExerciseSession[],
+): number[] {
+  return sessions
+    .flatMap((s) => s.sets)
+    .filter(isQualifyingSet)
+    .map((s) =>
+      impliedE1rm(matrix, s.actualWeight, s.actualReps, s.actualRpe!),
+    );
 }

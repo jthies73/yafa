@@ -10,7 +10,9 @@ import {
   applyReset,
   consumeReset,
   initState,
+  reconcileC1rm,
   seedC1rm,
+  smoothE1rm,
   step,
 } from "../state";
 
@@ -156,5 +158,50 @@ describe("step", () => {
     const s = base();
     step(s, "success", "linear", LINEAR_KG, "w1", 5);
     expect(s.c1rm).toBe(100);
+  });
+});
+
+describe("smoothE1rm", () => {
+  it("returns null for an empty / all-invalid series", () => {
+    expect(smoothE1rm([])).toBeNull();
+    expect(smoothE1rm([0, -5])).toBeNull();
+  });
+
+  it("seeds from the first observation and tracks a steady series", () => {
+    expect(smoothE1rm([120])).toBe(120);
+    // A constant series stays put.
+    expect(smoothE1rm([120, 120, 120])).toBeCloseTo(120, 6);
+  });
+
+  it("moves toward a higher series but lags it (smoothing)", () => {
+    const est = smoothE1rm([100, 110, 110, 110])!;
+    expect(est).toBeGreaterThan(100);
+    expect(est).toBeLessThan(110);
+  });
+
+  it("clamps a single outlier's pull (robustness)", () => {
+    // One absurd spike can't drag the estimate near it.
+    const withSpike = smoothE1rm([100, 100, 100, 1000])!;
+    const baseline = smoothE1rm([100, 100, 100, 120])!;
+    // The 1000 spike is clamped, so it lands at the +20% band, like a ~120 reading.
+    expect(withSpike).toBeCloseTo(baseline, 6);
+  });
+});
+
+describe("reconcileC1rm", () => {
+  it("is a no-op within the deadband or without an estimate", () => {
+    expect(reconcileC1rm(100, null)).toBe(100);
+    expect(reconcileC1rm(100, 103)).toBe(100); // 3% < 5% deadband
+    expect(reconcileC1rm(0, 200)).toBe(0); // no anchor
+  });
+
+  it("nudges a fraction of the gap toward the estimate when it drifts up", () => {
+    // gap 20, beyond deadband → close 25% → 105.
+    expect(reconcileC1rm(100, 120)).toBeCloseTo(105, 6);
+  });
+
+  it("nudges downward too", () => {
+    // gap −20 → 100 + (−20)*0.25 = 95.
+    expect(reconcileC1rm(100, 80)).toBeCloseTo(95, 6);
   });
 });

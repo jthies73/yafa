@@ -10,22 +10,33 @@ const props = defineProps<{ calibrations: CalibrationChange[] }>();
 
 const { format: fmtWeight } = useWeightUnit();
 
-// Only changes worth showing: a fresh seed, or a real c1RM move. Holds and
-// regressions (which leave c1RM untouched until a later deload) are quiet.
+// Only changes worth showing: a fresh seed, a real c1RM move, or an automatic
+// recalibration. Holds and regressions (which leave c1RM untouched until a later
+// deload) are quiet.
 const shown = computed(() =>
   props.calibrations.filter(
-    (c) => c.reason === "seed" || c.reason === "increment" || c.resetArmed,
+    (c) =>
+      c.reason === "seed" ||
+      c.reason === "increment" ||
+      c.reason === "recalibrate" ||
+      c.resetArmed,
   ),
 );
 
 const label = (c: CalibrationChange): string => {
   if (c.reason === "seed") return "Calibrated";
   if (c.reason === "increment") return "Progressed";
+  if (c.reason === "recalibrate") return "Recalibrated";
   return "Deload armed";
 };
 
-const isUp = (c: CalibrationChange) =>
-  c.reason === "increment" || c.reason === "seed";
+const isUp = (c: CalibrationChange) => {
+  if (c.reason === "increment" || c.reason === "seed") return true;
+  // A recalibration can go either way — compare the anchor before/after.
+  if (c.reason === "recalibrate" && c.before != null && c.after != null)
+    return c.after >= c.before;
+  return false;
+};
 </script>
 
 <template>
@@ -61,7 +72,12 @@ const isUp = (c: CalibrationChange) =>
           </p>
           <p class="text-xs text-text-light dark:text-text-dark opacity-50">
             {{ label(c) }}
-            <template v-if="c.reason === 'increment' && c.before != null">
+            <template
+              v-if="
+                (c.reason === 'increment' || c.reason === 'recalibrate') &&
+                c.before != null
+              "
+            >
               · from {{ fmtWeight(c.before) }}
             </template>
             <template v-if="c.resetArmed"> · next session −10% </template>
@@ -85,7 +101,15 @@ const isUp = (c: CalibrationChange) =>
                   : 'text-text-light dark:text-text-dark bg-border-light/40 dark:bg-border-dark/40'
             "
           >
-            {{ c.reason === "seed" ? "new" : c.resetArmed ? "−10%" : "↑" }}
+            {{
+              c.reason === "seed"
+                ? "new"
+                : c.resetArmed
+                  ? "−10%"
+                  : isUp(c)
+                    ? "↑"
+                    : "↓"
+            }}
           </span>
         </div>
       </div>

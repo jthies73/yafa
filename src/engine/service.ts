@@ -26,8 +26,9 @@ import {
 } from "./mesocycle";
 import { prescribeExercise, type ExercisePrescription } from "./prescription";
 import { evaluate } from "./evaluation";
-import { consumeReset, step } from "./state";
+import { consumeReset, reconcileC1rm, smoothE1rm, step } from "./state";
 import { peakImpliedE1rm } from "./matrix";
+import { groupSessionsFor, qualifyingE1rmSeries } from "./sessions";
 
 // ----------------------------------------------
 // Engine service — the ONLY impure (Dexie) layer. It orchestrates the pure
@@ -90,7 +91,7 @@ export interface WorkoutPreview {
 export interface CalibrationChange {
   exerciseId: string;
   exerciseName: string;
-  reason: "seed" | "increment" | "hold" | "regression";
+  reason: "seed" | "increment" | "hold" | "regression" | "recalibrate";
   before: number | null;
   after: number | null;
   resetArmed?: boolean; // 3rd consecutive regression — next prescription deloads −10%
@@ -325,6 +326,13 @@ export async function applyWorkoutResults(
     }
   }
 
+  // Prior sessions feed the reconciliation EWMA. Read OUTSIDE the rw transaction
+  // (which spans only progressionStates); the current session is appended fresh, so
+  // it doesn't matter whether it has been persisted to db.workouts yet.
+  const priorWorkouts = (await db.workouts.toArray()).filter(
+    (w) => w.id !== workout.id,
+  );
+
   const changes: CalibrationChange[] = [];
   const finishedAt = workout.endTime ?? workout.startTime;
 
@@ -379,7 +387,6 @@ export async function applyWorkoutResults(
         workout.id,
         finishedAt,
       );
-      await putProgressionState(next);
 
       changes.push({
         exerciseId,
@@ -389,6 +396,30 @@ export async function applyWorkoutResults(
         after: next.c1rm,
         resetArmed: next.resetPending,
       });
+
+      // Reconcile: nudge the c1RM toward the smoothed e1RM when it has drifted.
+      // Skipped on a regression so it never softens the deload signal. Surfaced as
+      // its own automatic CalibrationChange when it actually moves the anchor.
+      let finalC1rm = next.c1rm;
+      if (outcome !== "regression" && next.c1rm != null) {
+        const sessions = groupSessionsFor(
+          [...priorWorkouts, workout],
+          exerciseId,
+        );
+        const estimate = smoothE1rm(qualifyingE1rmSeries(matrix, sessions));
+        const reconciled = reconcileC1rm(next.c1rm, estimate);
+        if (reconciled !== next.c1rm) {
+          finalC1rm = reconciled;
+          changes.push({
+            exerciseId,
+            exerciseName: exercise.name,
+            reason: "recalibrate",
+            before: next.c1rm,
+            after: reconciled,
+          });
+        }
+      }
+      await putProgressionState({ ...next, c1rm: finalC1rm });
     }
   });
   return changes;

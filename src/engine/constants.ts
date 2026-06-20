@@ -47,6 +47,21 @@ export const PRESCRIBED_WEIGHT_TOLERANCE_KG = 2.5;
 export const QUALIFYING_MIN_RPE = 8;
 export const QUALIFYING_MAX_REPS = 10;
 
+// --- c1RM reconciliation (HEURISTIC — explicitly tunable) ---
+//
+// The deterministic step (success/hold/regression) is the PRIMARY driver of the
+// c1RM. Reconciliation is a slow corrective overlay: it smooths the calculated
+// e1RM (a robust EWMA with an outlier clamp) and, only when that estimate has
+// drifted from the c1RM beyond a deadband, nudges the c1RM a fraction of the way
+// toward it. This deliberately relaxes the "e1RM never feeds c1RM" rule — here
+// e1RM is a slow bias on the anchor, never a replacement for it. A scalar Kalman
+// filter degenerates to exactly this EWMA at steady state, without the per-anchor
+// covariance state (and Dexie schema) it would cost; this is that, made explicit.
+export const E1RM_EWMA_ALPHA = 0.25; // smoothing: weight given to each new e1RM
+export const E1RM_OUTLIER_BAND = 0.2; // clip one observation's pull to ±20% of est
+export const RECONCILE_DEADBAND = 0.05; // ignore drift within ±5% of the c1RM
+export const RECONCILE_NUDGE_FRACTION = 0.25; // close 25% of the gap per reconcile
+
 // --- RPE matrix grid bounds (mirror src/db/rpeMatrix.ts) ---
 
 export const MATRIX_MIN_REPS = 1;

@@ -13,6 +13,7 @@ import ConfirmDialog from "./ConfirmDialog.vue";
 import LockToggle from "./LockToggle.vue";
 import ExerciseRpeMatrixEditor from "./ExerciseRpeMatrixEditor.vue";
 import WeightIncrementField from "./WeightIncrementField.vue";
+import InfoIcon from "./InfoIcon.vue";
 
 const showConfirm = ref(false);
 const matrixEditor = ref<InstanceType<typeof ExerciseRpeMatrixEditor> | null>(
@@ -176,11 +177,14 @@ const save = async () => {
     <div class="px-5 py-5 flex flex-col gap-6">
       <!-- Progression Model Selector -->
       <div class="flex flex-col gap-2">
-        <label
-          class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-        >
-          Progression Model
-        </label>
+        <span class="flex items-center gap-1">
+          <label
+            class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+          >
+            Progression Model
+          </label>
+          <InfoIcon topic="progressionModel" />
+        </span>
         <div
           class="flex gap-1 p-1 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl"
         >
@@ -323,11 +327,14 @@ const save = async () => {
                   <div
                     class="flex items-center justify-between gap-1 min-h-[18px]"
                   >
-                    <label
-                      class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-                    >
-                      Target RPE
-                    </label>
+                    <span class="flex items-center gap-1">
+                      <label
+                        class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+                      >
+                        Target RPE
+                      </label>
+                      <InfoIcon topic="targetRpe" />
+                    </span>
                     <LockToggle
                       v-if="periodizationEnabled"
                       :locked="isLocked('targetRpe')"
@@ -346,11 +353,14 @@ const save = async () => {
                   />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                  <label
-                    class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-                  >
-                    RPE Ceiling
-                  </label>
+                  <div class="flex items-center gap-1">
+                    <label
+                      class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+                    >
+                      RPE Ceiling
+                    </label>
+                    <InfoIcon topic="rpeCeiling" />
+                  </div>
                   <input
                     v-model.number="configParams.rpeCeiling"
                     v-numpad="'decimal'"
@@ -479,11 +489,14 @@ const save = async () => {
                   <div
                     class="flex items-center justify-between gap-1 min-h-[18px]"
                   >
-                    <label
-                      class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-                    >
-                      Target RPE
-                    </label>
+                    <span class="flex items-center gap-1">
+                      <label
+                        class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+                      >
+                        Target RPE
+                      </label>
+                      <InfoIcon topic="targetRpe" />
+                    </span>
                     <LockToggle
                       v-if="periodizationEnabled"
                       :locked="isLocked('targetRpe')"
@@ -502,11 +515,14 @@ const save = async () => {
                   />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                  <label
-                    class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-                  >
-                    RPE Ceiling
-                  </label>
+                  <div class="flex items-center gap-1">
+                    <label
+                      class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+                    >
+                      RPE Ceiling
+                    </label>
+                    <InfoIcon topic="rpeCeiling" />
+                  </div>
                   <input
                     v-model.number="configParams.rpeCeiling"
                     v-numpad="'decimal'"
@@ -669,11 +685,14 @@ const save = async () => {
                   <div
                     class="flex items-center justify-between gap-1 min-h-[18px]"
                   >
-                    <label
-                      class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-                    >
-                      Target RPE
-                    </label>
+                    <span class="flex items-center gap-1">
+                      <label
+                        class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+                      >
+                        Target RPE
+                      </label>
+                      <InfoIcon topic="targetRpe" />
+                    </span>
                     <LockToggle
                       v-if="periodizationEnabled"
                       :locked="isLocked('topSetTargetRpe')"
@@ -692,11 +711,14 @@ const save = async () => {
                   />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                  <label
-                    class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-                  >
-                    RPE Ceiling
-                  </label>
+                  <div class="flex items-center gap-1">
+                    <label
+                      class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+                    >
+                      RPE Ceiling
+                    </label>
+                    <InfoIcon topic="rpeCeiling" />
+                  </div>
                   <input
                     v-model.number="configParams.rpeCeiling"
                     v-numpad="'decimal'"
@@ -772,11 +794,14 @@ const save = async () => {
           </div>
           <div class="flex flex-col gap-1.5">
             <div class="flex items-center justify-between gap-1 min-h-[18px]">
-              <label
-                class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-              >
-                Target RPE
-              </label>
+              <span class="flex items-center gap-1">
+                <label
+                  class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+                >
+                  Target RPE
+                </label>
+                <InfoIcon topic="targetRpe" />
+              </span>
               <LockToggle
                 v-if="periodizationEnabled"
                 :locked="isLocked('targetRpe')"

@@ -5,7 +5,14 @@ import type {
   ProgressionState,
 } from "../db/types";
 import type { ProgressionOutcome } from "./evaluation";
-import { REGRESSION_RESET_TRIGGER, RESET_DROP } from "./constants";
+import {
+  E1RM_EWMA_ALPHA,
+  E1RM_OUTLIER_BAND,
+  RECONCILE_DEADBAND,
+  RECONCILE_NUDGE_FRACTION,
+  REGRESSION_RESET_TRIGGER,
+  RESET_DROP,
+} from "./constants";
 
 // ----------------------------------------------
 // Progression state transitions. These pure functions are what actually MOVE the
@@ -142,4 +149,48 @@ export function step(
       };
     }
   }
+}
+
+// ----------------------------------------------
+// c1RM reconciliation (robust EWMA). The deterministic step above is the primary
+// driver; this is a slow corrective overlay that keeps the anchor from drifting
+// away from demonstrated capacity over many sessions. Two pure pieces:
+//   1. smoothE1rm — an exponentially-weighted moving average of the e1RM series
+//      with a per-step outlier clamp, so a single fluke set can't yank the estimate.
+//   2. reconcileC1rm — nudges the c1RM a fraction of the way toward the estimate,
+//      but only once the gap exceeds a deadband (small drift is left alone).
+// At steady state a scalar Kalman filter reduces to exactly this EWMA; this is the
+// chosen, schema-free form of it.
+// ----------------------------------------------
+
+/**
+ * Robust EWMA over a chronological e1RM observation series. Each observation moves
+ * the running estimate by `alpha`, but its pull is first clamped to ±band of the
+ * current estimate so outliers (a sandbagged RPE, a fluke single) are damped.
+ * Returns null when there are no positive observations.
+ */
+export function smoothE1rm(observations: number[]): number | null {
+  const valid = observations.filter((o) => o > 0);
+  if (valid.length === 0) return null;
+  let est = valid[0];
+  for (let i = 1; i < valid.length; i++) {
+    const resid = valid[i] - est;
+    const maxResid = E1RM_OUTLIER_BAND * est;
+    const clipped = Math.max(-maxResid, Math.min(maxResid, resid));
+    est += E1RM_EWMA_ALPHA * clipped;
+  }
+  return est;
+}
+
+/**
+ * Nudge the c1RM toward a smoothed e1RM estimate. No-op unless the relative gap
+ * exceeds the deadband; then it closes a fraction of the gap (gradual convergence,
+ * not a snap). Kept UNROUNDED like every other c1RM transition. Null/zero inputs
+ * pass the anchor through unchanged.
+ */
+export function reconcileC1rm(c1rm: number, estimate: number | null): number {
+  if (estimate == null || c1rm <= 0) return c1rm;
+  const gap = estimate - c1rm;
+  if (Math.abs(gap) / c1rm <= RECONCILE_DEADBAND) return c1rm;
+  return c1rm + gap * RECONCILE_NUDGE_FRACTION;
 }
