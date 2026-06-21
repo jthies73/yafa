@@ -19,7 +19,7 @@ import { impliedE1rm, roundToLoadable, weightFromE1rm } from "./matrix";
 // post-workout worst-set evaluation, so a re-prescription can't mask a regression.
 //
 // This NEVER touches the c1RM — it is a today-only guardrail. The c1RM's own
-// correction from sustained divergence is the post-session EWMA reconciliation
+// correction from a divergent demonstrated capacity is the post-session catch-up
 // (see state.ts), not this.
 // ----------------------------------------------
 

@@ -13,9 +13,9 @@ import { evaluate } from "../evaluation";
 import {
   catchUpC1rm,
   consumeReset,
+  corroboratedE1rm,
   initState,
   seedC1rm,
-  smoothE1rm,
   step,
 } from "../state";
 import { peakImpliedE1rm } from "../matrix";
@@ -111,10 +111,12 @@ describe("loop — linear success increments c1RM", () => {
   });
 });
 
-// Mirrors service.applyWorkoutResults: one c1RM decision per session. A large
-// deviation from smoothed demonstrated capacity catches up fast and REPLACES the
-// increment (never both → no same-session up-then-down), gated past ±10%.
-describe("loop — large deviation catches up, replacing the increment", () => {
+// Mirrors service.applyWorkoutResults: one c1RM decision per session. Catch-up is
+// evaluated on EVERY outcome and, when it fires (>±10% divergence from the session's
+// corroborated demonstrated capacity — ≥2 qualifying sets), takes FULL PRECEDENCE over
+// the rules — overwriting the c1RM, clearing the streak, disarming the reset. Below the
+// threshold (or with <2 qualifying sets) the step stands.
+describe("loop — catch-up takes precedence over the progression rules", () => {
   const finalC1rm = (
     preStep: number,
     estimate: number | null,
@@ -124,14 +126,27 @@ describe("loop — large deviation catches up, replacing the increment", () => {
     return caught !== preStep ? caught : stepped; // catch-up wins, else the step stands
   };
 
+  /** The full persisted state, mirroring service: full override when catch-up fires. */
+  const persistedAfterCatchUp = (
+    state: ProgressionState,
+    next: ProgressionState,
+    estimate: number | null,
+  ) => {
+    const caught = catchUpC1rm(state.c1rm!, estimate);
+    const fired = caught !== state.c1rm;
+    return fired
+      ? { ...next, c1rm: caught, regressionStreak: 0, resetPending: false }
+      : next;
+  };
+
   it("a success uses the caught-up anchor instead of the small increment", () => {
     const start = { ...initState("ex", 0), c1rm: 100 };
     const r = runSession(start, "linear", LINEAR, { reps: 5, rpe: 8 }, "w1");
     expect(r.outcome).toBe("success");
     expect(r.state.c1rm).toBe(102.5); // step alone would only +increment
 
-    // Demonstrated capacity sits a sustained +30% above the anchor.
-    const estimate = smoothE1rm([130, 130, 130]);
+    // Two qualifying sets corroborate +30% above the anchor.
+    const estimate = corroboratedE1rm([130, 130], start.c1rm!);
     const final = finalC1rm(start.c1rm!, estimate, r.state.c1rm!);
     expect(final).toBeCloseTo(121, 6); // 100 + (130-100)*0.7, ONE move
     expect(final).not.toBe(102.5); // the increment was replaced, not added to
@@ -140,8 +155,32 @@ describe("loop — large deviation catches up, replacing the increment", () => {
   it("a small deviation does not fire — the normal increment stands", () => {
     const start = { ...initState("ex", 0), c1rm: 100 };
     const r = runSession(start, "linear", LINEAR, { reps: 5, rpe: 8 }, "w1");
-    const estimate = smoothE1rm([104, 104, 104]); // +4%, within the ±10% threshold
+    // +4%, within the ±10% threshold (two corroborating sets).
+    const estimate = corroboratedE1rm([104, 104], start.c1rm!);
     expect(finalC1rm(start.c1rm!, estimate, r.state.c1rm!)).toBe(102.5);
+  });
+
+  it("a lone set catches up (top-set program); within two sets, outlier is dropped", () => {
+    // A single top set fires catch-up directly — no other sets to compare it against.
+    expect(corroboratedE1rm([200], 80)).toBe(200);
+    expect(catchUpC1rm(80, 200)).toBeCloseTo(164, 6); // 80 + (200-80)*0.7
+    // With two sets, the outlier (furthest) is dropped — only the nearer one remains.
+    expect(corroboratedE1rm([80, 200], 80)).toBe(80); // 80 is nearer; no gap → no move
+    expect(catchUpC1rm(80, corroboratedE1rm([80, 200], 80))).toBe(80);
+  });
+
+  it("overrides a REGRESSION: c1RM jumps, streak clears, no reset armed", () => {
+    const start = { ...initState("ex", 0), c1rm: 100 };
+    const r = runSession(start, "linear", LINEAR, { reps: 5, rpe: 9.5 }, "w1");
+    expect(r.outcome).toBe("regression");
+    expect(r.state.regressionStreak).toBe(1); // step armed one strike
+
+    // But two qualifying sets corroborate +30% above the anchor.
+    const estimate = corroboratedE1rm([130, 130], start.c1rm!);
+    const persisted = persistedAfterCatchUp(start, r.state, estimate);
+    expect(persisted.c1rm).toBeCloseTo(121, 6); // caught up, not held
+    expect(persisted.regressionStreak).toBe(0); // streak wiped — catch-up won
+    expect(persisted.resetPending).toBe(false); // no deload armed this session
   });
 });
 

@@ -12,10 +12,7 @@ import AppBottomSheet from "./AppBottomSheet.vue";
 import ModifierArrow from "./ModifierArrow.vue";
 import { useWeightUnit } from "../composables/useWeightUnit";
 
-const {
-  label: weightUnit,
-  format: fmtWeight,
-} = useWeightUnit();
+const { label: weightUnit, format: fmtWeight } = useWeightUnit();
 
 const props = defineProps<{
   routineId: string | null;
@@ -101,7 +98,6 @@ const groupLine = (g: SetGroup): string => {
   );
   return parts.join(" ");
 };
-
 
 const FIELD_LABELS: Record<string, string> = {
   targetSets: "Sets",
@@ -294,9 +290,17 @@ const intensityArrow = computed<ArrowConfig | null>(() => {
               <span class="text-text-light dark:text-text-dark opacity-60"
                 >c1RM</span
               >
-              <span class="font-mono text-text-h-light dark:text-text-h-dark flex items-center gap-1.5">
-                <template v-if="e.resetPending && e.originalC1rm != null && e.c1rm != null">
-                  <span class="text-text-light dark:text-text-dark opacity-50 line-through">
+              <span
+                class="font-mono text-text-h-light dark:text-text-h-dark flex items-center gap-1.5"
+              >
+                <template
+                  v-if="
+                    e.resetPending && e.originalC1rm != null && e.c1rm != null
+                  "
+                >
+                  <span
+                    class="text-text-light dark:text-text-dark opacity-50 line-through"
+                  >
                     {{ fmtWeight(e.originalC1rm) }}
                   </span>
                   <span class="opacity-40">→</span>
@@ -310,7 +314,9 @@ const intensityArrow = computed<ArrowConfig | null>(() => {
               </span>
             </div>
             <div
-              v-if="e.config.progressionModel !== 'none' && e.failureStreak >= 1"
+              v-if="
+                e.config.progressionModel !== 'none' && e.failureStreak >= 1
+              "
               class="flex items-center justify-between gap-3"
             >
               <span class="text-text-light dark:text-text-dark opacity-60"

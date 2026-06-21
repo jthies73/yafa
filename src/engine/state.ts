@@ -8,8 +8,6 @@ import type { ProgressionOutcome } from "./evaluation";
 import {
   CATCHUP_CLOSE_FRACTION,
   CATCHUP_THRESHOLD,
-  E1RM_EWMA_ALPHA,
-  E1RM_OUTLIER_BAND,
   REGRESSION_RESET_TRIGGER,
   RESET_DROP,
 } from "./constants";
@@ -152,39 +150,40 @@ export function step(
 }
 
 // ----------------------------------------------
-// c1RM catch-up (robust EWMA). The deterministic step above is the primary driver;
-// this only engages when the anchor is STRONGLY deviated from demonstrated capacity
-// — the case progression rules alone would take many sessions to close. Two pieces:
-//   1. smoothE1rm — an exponentially-weighted moving average of the e1RM series
-//      with a per-step outlier clamp, so a single fluke set can't yank the estimate.
-//   2. catchUpC1rm — past a LARGE threshold, jumps most of the way toward the
-//      estimate in one move (small drift is left to the step). The caller applies it
-//      INSTEAD of the increment, so the two never collide in one session.
-// At steady state a scalar Kalman filter reduces to exactly this EWMA; this is the
-// chosen, schema-free form of it.
+// c1RM catch-up. Evaluated every finish; when triggered it takes PRECEDENCE over the
+// deterministic step above (the caller fully overrides the rule outcome — see
+// service.applyWorkoutResults). The step stands only when catch-up does NOT fire.
+// Two pieces:
+//   1. corroboratedE1rm — demonstrated capacity from a SINGLE session's qualifying
+//      sets. We trust honest sets over a smoothed average (a real divergence shouldn't
+//      be damped away), but require ≥2 sets and drop the lone outlier so one mistyped
+//      or fluke set can't move the anchor — in either direction.
+//   2. catchUpC1rm — past a LARGE threshold, jumps most of the way toward that estimate
+//      in one move. The caller applies it INSTEAD of the rule outcome, so the two never
+//      collide in one session.
 // ----------------------------------------------
 
 /**
- * Robust EWMA over a chronological e1RM observation series. Each observation moves
- * the running estimate by `alpha`, but its pull is first clamped to ±band of the
- * current estimate so outliers (a sandbagged RPE, a fluke single) are damped.
- * Returns null when there are no positive observations.
+ * Demonstrated capacity from a SINGLE session's qualifying e1RMs (RPE ≥ 8, reps ≤ 10).
+ * With ≥2 sets, drops the single most-extreme (a typo/fluke) and trusts the 2nd-furthest
+ * from the anchor. With exactly 1 set (top-set programs), uses it directly — there is no
+ * outlier to drop and the top set is the main event. Null only when no positive
+ * observations exist.
  */
-export function smoothE1rm(observations: number[]): number | null {
-  const valid = observations.filter((o) => o > 0);
+export function corroboratedE1rm(
+  sessionE1rms: number[],
+  anchor: number,
+): number | null {
+  const valid = sessionE1rms.filter((e) => e > 0);
   if (valid.length === 0) return null;
-  let est = valid[0];
-  for (let i = 1; i < valid.length; i++) {
-    const resid = valid[i] - est;
-    const maxResid = E1RM_OUTLIER_BAND * est;
-    const clipped = Math.max(-maxResid, Math.min(maxResid, resid));
-    est += E1RM_EWMA_ALPHA * clipped;
-  }
-  return est;
+  const byDistance = [...valid].sort(
+    (a, b) => Math.abs(b - anchor) - Math.abs(a - anchor),
+  );
+  return byDistance[Math.min(1, byDistance.length - 1)]; // when 1 set return it, when >=2 sets return the 2nd-furthest
 }
 
 /**
- * Catch the c1RM up to a smoothed e1RM estimate. Returns the anchor UNCHANGED
+ * Catch the c1RM up to the demonstrated e1RM estimate. Returns the anchor UNCHANGED
  * unless the relative gap exceeds the (large) threshold; then it closes most of the
  * gap in one move (fast convergence, not a per-session nibble). Returning the input
  * unchanged is the caller's signal that catch-up did not fire. Kept UNROUNDED like

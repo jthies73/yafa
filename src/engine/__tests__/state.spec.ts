@@ -10,9 +10,9 @@ import {
   applyReset,
   catchUpC1rm,
   consumeReset,
+  corroboratedE1rm,
   initState,
   seedC1rm,
-  smoothE1rm,
   step,
 } from "../state";
 
@@ -161,30 +161,29 @@ describe("step", () => {
   });
 });
 
-describe("smoothE1rm", () => {
-  it("returns null for an empty / all-invalid series", () => {
-    expect(smoothE1rm([])).toBeNull();
-    expect(smoothE1rm([0, -5])).toBeNull();
+describe("corroboratedE1rm", () => {
+  it("returns null only when there are no positive qualifying sets", () => {
+    expect(corroboratedE1rm([], 100)).toBeNull();
+    expect(corroboratedE1rm([0, -5], 100)).toBeNull();
   });
 
-  it("seeds from the first observation and tracks a steady series", () => {
-    expect(smoothE1rm([120])).toBe(120);
-    // A constant series stays put.
-    expect(smoothE1rm([120, 120, 120])).toBeCloseTo(120, 6);
+  it("uses a lone set directly (top-set program — no outlier to drop)", () => {
+    expect(corroboratedE1rm([130], 100)).toBe(130);
+    expect(corroboratedE1rm([130, 0], 100)).toBe(130); // only one positive
   });
 
-  it("moves toward a higher series but lags it (smoothing)", () => {
-    const est = smoothE1rm([100, 110, 110, 110])!;
-    expect(est).toBeGreaterThan(100);
-    expect(est).toBeLessThan(110);
+  it("drops a single high outlier and trusts the 2nd-furthest (up)", () => {
+    // One mistyped set far above can't carry the move; the corroborating 130 does.
+    expect(corroboratedE1rm([130, 1000], 100)).toBe(130);
   });
 
-  it("clamps a single outlier's pull (robustness)", () => {
-    // One absurd spike can't drag the estimate near it.
-    const withSpike = smoothE1rm([100, 100, 100, 1000])!;
-    const baseline = smoothE1rm([100, 100, 100, 120])!;
-    // The 1000 spike is clamped, so it lands at the +20% band, like a ~120 reading.
-    expect(withSpike).toBeCloseTo(baseline, 6);
+  it("drops a single low outlier and trusts the 2nd-furthest (down)", () => {
+    // A typo'd 20 is dropped; the genuine 195 stands → no real divergence.
+    expect(corroboratedE1rm([195, 20], 200)).toBe(195);
+  });
+
+  it("uses the nearer of two corroborating sets (conservative)", () => {
+    expect(corroboratedE1rm([130, 128], 100)).toBe(128);
   });
 });
 

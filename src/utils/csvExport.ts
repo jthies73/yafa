@@ -6,7 +6,12 @@ import { useWeightUnit } from "../composables/useWeightUnit";
 function escapeCsvCell(val: any): string {
   if (val === null || val === undefined) return "";
   const str = String(val);
-  if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
+  if (
+    str.includes(",") ||
+    str.includes('"') ||
+    str.includes("\n") ||
+    str.includes("\r")
+  ) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
@@ -69,14 +74,14 @@ export async function exportToExcelCsv(): Promise<void> {
       "Notes",
     ]
       .map(escapeCsvCell)
-      .join(",")
+      .join(","),
   );
 
   // Helper to format a routine exercise row
   const addRoutineExerciseRow = (
     planName: string,
     routineName: string,
-    rEx: any
+    rEx: any,
   ) => {
     const exercise = exercisesMap.get(rEx.exerciseId);
     const config = rEx.config;
@@ -86,7 +91,8 @@ export async function exportToExcelCsv(): Promise<void> {
     let progressionLabel = "";
     if (model === "linear") progressionLabel = "Linear";
     else if (model === "double") progressionLabel = "Double";
-    else if (model === "topset_backoff") progressionLabel = "Top Set + Back-Off";
+    else if (model === "topset_backoff")
+      progressionLabel = "Top Set + Back-Off";
     else if (model === "none") progressionLabel = "None";
 
     let targetSets = "";
@@ -131,7 +137,9 @@ export async function exportToExcelCsv(): Promise<void> {
         routineName,
         exercise ? exercise.name : rEx.exerciseId,
         exercise ? exercise.primaryMuscleGroups.join(", ") : "",
-        exercise && exercise.secondaryMuscleGroups ? exercise.secondaryMuscleGroups.join(", ") : "",
+        exercise && exercise.secondaryMuscleGroups
+          ? exercise.secondaryMuscleGroups.join(", ")
+          : "",
         progressionLabel,
         targetSets,
         targetRepsRange,
@@ -140,7 +148,7 @@ export async function exportToExcelCsv(): Promise<void> {
         config?.notes || "",
       ]
         .map(escapeCsvCell)
-        .join(",")
+        .join(","),
     );
   };
 
@@ -190,11 +198,13 @@ export async function exportToExcelCsv(): Promise<void> {
       `Estimated 1RM (${unitLabel})`,
     ]
       .map(escapeCsvCell)
-      .join(",")
+      .join(","),
   );
 
   // Sort workouts chronologically by start time
-  const sortedWorkouts = [...workouts].sort((a, b) => a.startTime - b.startTime);
+  const sortedWorkouts = [...workouts].sort(
+    (a, b) => a.startTime - b.startTime,
+  );
 
   for (const workout of sortedWorkouts) {
     const routine = routinesMap.get(workout.routineId);
@@ -212,7 +222,12 @@ export async function exportToExcelCsv(): Promise<void> {
         const isQualifying = isQualifyingSet(set);
         let e1rmDisplay = "";
         if (isQualifying) {
-          const e1rmKg = impliedE1rm(matrix, set.actualWeight, set.actualReps, set.actualRpe!);
+          const e1rmKg = impliedE1rm(
+            matrix,
+            set.actualWeight,
+            set.actualReps,
+            set.actualRpe!,
+          );
           e1rmDisplay = String(display(e1rmKg));
         }
 
@@ -232,7 +247,7 @@ export async function exportToExcelCsv(): Promise<void> {
             e1rmDisplay,
           ]
             .map(escapeCsvCell)
-            .join(",")
+            .join(","),
         );
       });
     }

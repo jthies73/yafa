@@ -49,18 +49,17 @@ export const QUALIFYING_MAX_REPS = 10;
 
 // --- c1RM catch-up (HEURISTIC — explicitly tunable) ---
 //
-// The deterministic step (success/hold/regression) is the PRIMARY driver of the
-// c1RM. Catch-up is a corrective that engages ONLY when the anchor is strongly
-// deviated from demonstrated capacity — the case progression rules alone would
-// take many sessions to close. It smooths the calculated e1RM (a robust EWMA with
-// an outlier clamp) and, past a LARGE threshold, jumps most of the way toward it
-// in one move, REPLACING that session's increment (never both → the two can't
-// collide). This deliberately relaxes the "e1RM never feeds c1RM" rule, but only
-// as a rare large correction, never an every-session bias. A scalar Kalman filter
-// degenerates to exactly this EWMA at steady state, without the per-anchor
-// covariance state (and Dexie schema) it would cost; this is that, made explicit.
-export const E1RM_EWMA_ALPHA = 0.25; // smoothing: weight given to each new e1RM
-export const E1RM_OUTLIER_BAND = 0.2; // clip one observation's pull to ±20% of est
+// Catch-up is evaluated every finish and, once the anchor is strongly deviated from
+// the session's demonstrated capacity, WINS over the deterministic rules outright:
+// past a LARGE threshold it jumps most of the way toward that estimate in one move,
+// fully overriding that session's rule outcome (the streak clears and no reset is
+// armed). Below the threshold the rules drive (success/hold/regression). This
+// deliberately relaxes the "e1RM never feeds c1RM" rule, but only as a large
+// divergence correction, never an every-session bias.
+//
+// Rather than smoothing across history, we trust a SINGLE session's honest sets — but
+// require ≥2 qualifying sets and move toward the 2nd-furthest from the anchor (drop the
+// lone outlier), so one mistyped/fluke set can't move the anchor in either direction.
 export const CATCHUP_THRESHOLD = 0.1; // only engage past ±10% deviation from demonstrated
 export const CATCHUP_CLOSE_FRACTION = 0.7; // close most of the gap in one move (fast catch-up)
 

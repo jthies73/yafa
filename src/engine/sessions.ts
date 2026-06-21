@@ -71,8 +71,8 @@ export function seedC1rmFromHistory(
 
 /**
  * The chronological series of implied e1RMs from the QUALIFYING sets across these
- * sessions (oldest → newest). Feeds the c1RM reconciliation EWMA — only honest,
- * near-limit sets inform capacity, and order matters for the moving average.
+ * sessions (oldest → newest). Feeds the c1RM catch-up — only honest, near-limit
+ * sets inform capacity, and order matters because catch-up trusts the most recent.
  */
 export function qualifyingE1rmSeries(
   matrix: RpeMatrix,

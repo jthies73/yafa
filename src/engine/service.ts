@@ -25,7 +25,7 @@ import {
 } from "./mesocycle";
 import { prescribeExercise, type ExercisePrescription } from "./prescription";
 import { evaluate } from "./evaluation";
-import { catchUpC1rm, consumeReset, smoothE1rm, step } from "./state";
+import { catchUpC1rm, consumeReset, corroboratedE1rm, step } from "./state";
 import { peakImpliedE1rm } from "./matrix";
 import { groupSessionsFor, qualifyingE1rmSeries } from "./sessions";
 
@@ -324,13 +324,6 @@ export async function applyWorkoutResults(
     }
   }
 
-  // Prior sessions feed the reconciliation EWMA. Read OUTSIDE the rw transaction
-  // (which spans only progressionStates); the current session is appended fresh, so
-  // it doesn't matter whether it has been persisted to db.workouts yet.
-  const priorWorkouts = (await db.workouts.toArray()).filter(
-    (w) => w.id !== workout.id,
-  );
-
   const changes: CalibrationChange[] = [];
   const finishedAt = workout.endTime ?? workout.startTime;
 
@@ -386,22 +379,25 @@ export async function applyWorkoutResults(
         finishedAt,
       );
 
-      // One c1RM move per session. A LARGE deviation from smoothed demonstrated
-      // capacity catches up fast and REPLACES the increment (so the two can never
-      // collide as an up-then-down in the same finish); otherwise the deterministic
-      // step stands. Skipped on a regression so the 3-strike reset owns the
-      // sustained downside. `step` still runs for streak/reset/cursor bookkeeping.
-      const estimate =
-        outcome !== "regression"
-          ? smoothE1rm(
-              qualifyingE1rmSeries(
-                matrix,
-                groupSessionsFor([...priorWorkouts, workout], exerciseId),
-              ),
-            )
-          : null;
+      // One c1RM move per session. Catch-up is evaluated on EVERY outcome (incl.
+      // regression — a grind over the ceiling still yields qualifying observations).
+      // When it fires (this session's demonstrated capacity strongly diverged from the
+      // anchor) it takes FULL PRECEDENCE over the deterministic rules: the c1RM jumps
+      // toward the estimate, the regression streak clears, and no reset is armed this
+      // session. The 3-strike −10% reset is the fallback only for sustained SMALL
+      // regressions that stay within the catch-up threshold. When catch-up does not
+      // fire, `step` stands unchanged (streak/reset/cursor). The estimate is
+      // session-local: it requires ≥2 qualifying sets in THIS session (corroboratedE1rm),
+      // so a lone set never moves the anchor.
+      const estimate = corroboratedE1rm(
+        qualifyingE1rmSeries(matrix, groupSessionsFor([workout], exerciseId)),
+        state.c1rm,
+      );
       const caught = catchUpC1rm(state.c1rm, estimate);
       const fired = caught !== state.c1rm;
+      const persisted = fired
+        ? { ...next, c1rm: caught, regressionStreak: 0, resetPending: false }
+        : next;
 
       changes.push({
         exerciseId,
@@ -412,10 +408,10 @@ export async function applyWorkoutResults(
             ? "increment"
             : outcome,
         before: state.c1rm,
-        after: fired ? caught : next.c1rm,
-        resetArmed: next.resetPending,
+        after: persisted.c1rm,
+        resetArmed: persisted.resetPending,
       });
-      await putProgressionState({ ...next, c1rm: fired ? caught : next.c1rm });
+      await putProgressionState(persisted);
     }
   });
   return changes;

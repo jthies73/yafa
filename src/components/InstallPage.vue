@@ -93,8 +93,6 @@ const STEPS: Record<OS, Step[]> = {
 
 const heading = computed(() => HEADINGS[os]);
 const steps = computed(() => STEPS[os]);
-
-
 </script>
 
 <template>
@@ -143,8 +141,6 @@ const steps = computed(() => STEPS[os]);
       </div>
 
       <template v-else>
-
-
         <!-- iOS-in-a-non-Safari-browser warning: installation needs Safari -->
         <div
           v-if="isIOSNonSafari"
