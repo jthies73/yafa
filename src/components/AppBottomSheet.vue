@@ -214,7 +214,7 @@ onUnmounted(() => {
         <slot name="subheader" />
 
         <!-- Body -->
-        <div class="overflow-y-auto flex-1 flex flex-col relative">
+        <div class="overflow-y-auto flex-1 flex flex-col relative" style="padding-bottom: var(--keypad-h, 0px)">
           <slot />
         </div>
 
