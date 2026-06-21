@@ -89,32 +89,41 @@ const isUp = (c: CalibrationChange) => {
         </div>
 
         <div class="flex items-center gap-2.5 shrink-0">
-          <span
-            v-if="c.after != null"
-            class="text-base font-bold font-mono text-text-h-light dark:text-text-h-dark"
-          >
-            {{ fmtWeight(c.after) }}
-          </span>
-          <span
-            class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-xs font-bold font-mono"
-            :class="
-              c.resetArmed
-                ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10'
-                : isUp(c)
+          <template v-if="c.resetArmed && c.after != null">
+            <span
+              class="text-base font-bold font-mono text-text-light dark:text-text-dark opacity-50 line-through"
+            >
+              {{ fmtWeight(c.after) }}
+            </span>
+            <span class="opacity-40">→</span>
+            <span class="text-base font-bold font-mono text-amber-500">
+              {{ fmtWeight(c.after * 0.9) }}
+            </span>
+          </template>
+          <template v-else>
+            <span
+              v-if="c.after != null"
+              class="text-base font-bold font-mono text-text-h-light dark:text-text-h-dark"
+            >
+              {{ fmtWeight(c.after) }}
+            </span>
+            <span
+              class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-xs font-bold font-mono"
+              :class="
+                isUp(c)
                   ? 'text-green-600 dark:text-green-400 bg-green-500/10'
                   : 'text-text-light dark:text-text-dark bg-border-light/40 dark:bg-border-dark/40'
-            "
-          >
-            {{
-              c.reason === "seed"
-                ? "new"
-                : c.resetArmed
-                  ? "−10%"
+              "
+            >
+              {{
+                c.reason === "seed"
+                  ? "new"
                   : isUp(c)
                     ? "↑"
                     : "↓"
-            }}
-          </span>
+              }}
+            </span>
+          </template>
         </div>
       </div>
     </div>
