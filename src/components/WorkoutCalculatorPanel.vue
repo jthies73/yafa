@@ -20,6 +20,7 @@ import { solveWeight, solveReps, solveRpe } from "../engine/calculator";
 import { impliedE1rm } from "../engine/matrix";
 import ExercisePickerSheet from "./ExercisePickerSheet.vue";
 import ExerciseFormSheet from "./ExerciseFormSheet.vue";
+import InfoIcon from "./InfoIcon.vue";
 
 const { label: weightUnit, toKg, format } = useWeightUnit();
 const { logCalculatorSet, removeCalculatorSet, calculatorSets } =
@@ -313,11 +314,14 @@ const onLogSet = () => {
   <div class="flex flex-col gap-6 p-5 select-none">
     <!-- Header -->
     <div>
-      <p
-        class="text-xs font-semibold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50"
-      >
-        Calculator
-      </p>
+      <div class="flex items-center gap-1">
+        <p
+          class="text-xs font-semibold uppercase tracking-wider text-text-light dark:text-text-dark opacity-50"
+        >
+          Calculator
+        </p>
+        <InfoIcon topic="calculator" />
+      </div>
       <p class="mt-0.5 text-sm text-text-light dark:text-text-dark opacity-60">
         Enter any two values — the third is calculated.
       </p>
@@ -432,11 +436,14 @@ const onLogSet = () => {
 
     <!-- Target RPE -->
     <div class="flex flex-col gap-2">
-      <label
-        class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-      >
-        Target RPE
-      </label>
+      <div class="flex items-center gap-1">
+        <label
+          class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+        >
+          Target RPE
+        </label>
+        <InfoIcon topic="targetRpe" />
+      </div>
       <div class="flex flex-wrap gap-1.5">
         <button
           v-for="v in RPE_VALUES"
