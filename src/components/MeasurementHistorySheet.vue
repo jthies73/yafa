@@ -217,12 +217,20 @@ const requestDeleteType = () => {
 <template>
   <AppBottomSheet v-model:open="open">
     <template #title>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center justify-between gap-4 w-full">
         <h2
           class="truncate text-lg font-bold text-text-h-light dark:text-text-h-dark"
         >
           {{ type?.name }}
         </h2>
+        <button
+          v-if="type"
+          type="button"
+          class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-500 hover:bg-red-500/20 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25 transition-colors duration-150 cursor-pointer shrink-0"
+          @click="requestDeleteType"
+        >
+          Delete
+        </button>
       </div>
     </template>
 
@@ -345,15 +353,6 @@ const requestDeleteType = () => {
           </button>
         </li>
       </ul>
-
-      <!-- Delete the whole measurement type -->
-      <button
-        v-if="type"
-        class="mt-5 w-full cursor-pointer rounded-lg border border-red-500/30 py-2.5 text-sm font-bold text-red-500 transition-colors duration-150 hover:bg-red-500/10"
-        @click="requestDeleteType"
-      >
-        Delete Measurement
-      </button>
 
       <div class="h-4"></div>
     </div>
