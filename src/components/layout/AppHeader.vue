@@ -40,6 +40,7 @@ const sidebar = ref<InstanceType<typeof AppSidebar> | null>(null);
   >
     <!-- Logo -->
     <a
+      href="/"
       class="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-accent rounded cursor-pointer"
       @click.prevent="router.push({ name: 'dashboard' })"
     >

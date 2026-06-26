@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { VitePWA } from "vite-plugin-pwa";
 import tailwindcss from "@tailwindcss/vite";
+import fs from "fs";
+import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -12,17 +14,33 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     vue(),
     tailwindcss(),
-    {
-      name: "html-transform",
+    mode === "production" && {
+      name: "seo-production",
       transformIndexHtml(html) {
-        if (mode !== "production") {
-          console.log("Removing robots meta tag for mode:", mode);
-          return html.replace(
-            '<meta name="robots" content="index, follow" />',
-            '<meta name="robots" content="noindex, nofollow" />',
-          );
-        }
         return html;
+      },
+      async closeBundle() {
+        const distPath = path.resolve("dist");
+        const robotsContent = [
+          "User-agent: *",
+          "Allow: /",
+          "Allow: /plans",
+          "Allow: /exercises",
+          "Allow: /jthies73",
+          "Disallow: /settings",
+          "",
+          "Sitemap: https://yafa.app/sitemap.xml",
+        ].join("\n");
+
+        try {
+          await fs.promises.writeFile(
+            path.resolve(distPath, "robots.txt"),
+            robotsContent,
+          );
+          console.log("[seo] Generated robots.txt");
+        } catch (error) {
+          console.error(`[seo] Error writing robots.txt: ${error}`);
+        }
       },
     },
     VitePWA({
@@ -44,6 +62,7 @@ export default defineConfig(({ mode }) => ({
         // Navigation requests fall back to the precached index.html.
         globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
         navigateFallback: "index.html",
+        navigateFallbackDenylist: [/^\/jthies73/],
         // Don't let a new worker take over until the user asks for it.
         skipWaiting: false,
         clientsClaim: true,

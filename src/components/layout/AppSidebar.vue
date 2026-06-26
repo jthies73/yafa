@@ -220,10 +220,8 @@ const recordCoffeeClick = () => {
   />
 
   <!-- Sidebar panel -->
-  <aside
+  <nav
     ref="sidebarEl"
-    role="dialog"
-    aria-modal="true"
     aria-label="Main navigation menu"
     class="fixed right-0 top-0 bottom-0 z-[60] w-3/4 max-w-xs bg-bg-light dark:bg-bg-dark text-text-light dark:text-text-dark shadow-2xl p-6 border-l border-border-light dark:border-border-dark flex flex-col justify-between h-full transition-transform duration-300 touch-pan-y"
     :style="sidebarStyle"
@@ -656,6 +654,7 @@ const recordCoffeeClick = () => {
           >Theme</span
         >
         <button
+          aria-label="Toggle theme"
           class="p-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-accent flex items-center justify-center cursor-pointer group"
           @click="$emit('toggle-theme')"
         >
@@ -703,7 +702,7 @@ const recordCoffeeClick = () => {
         </button>
       </div>
     </div>
-  </aside>
+  </nav>
 
   <UpdateSheet v-model:open="showUpdateSheet" />
   <ImportExportSheet v-model:open="showImportExportSheet" />
