@@ -6,6 +6,7 @@ import router from "./router";
 import { initializeFeatures, useFeatureFlags } from "./config/features";
 import { vNumpad } from "./directives/numpad";
 import { vKeynav } from "./directives/keynav";
+import { initializeSettings } from "./config/settings";
 
 const ACTIVE_PAGE_KEY = "yafa:activePage";
 
@@ -21,6 +22,7 @@ document.addEventListener("focusin", (e) => {
 });
 
 async function bootstrap() {
+  initializeSettings(localStorage);
   initializeFeatures();
   try {
     const features = useFeatureFlags();

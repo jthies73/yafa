@@ -11,6 +11,7 @@ import {
   type EntityCounts,
 } from "../db/backup";
 import { downloadBlob } from "../utils/download";
+import { readPortableSettings } from "../config/settings";
 
 const open = defineModel<boolean>("open", { required: true });
 
@@ -121,6 +122,30 @@ interface PreviewRow {
 
 // Every entity present in the backup (any of new/updated/unchanged) gets a row;
 // the right-hand status reflects its three-state classification.
+const settingsCounts = computed<EntityCounts>(() => {
+  const backupSettings = parsedBackup.value?.settings;
+  if (!backupSettings) {
+    return { new: 0, updated: 0, unchanged: 0 };
+  }
+  const localSettings = readPortableSettings(localStorage);
+  let newCount = 0;
+  let updatedCount = 0;
+  let unchangedCount = 0;
+
+  for (const [key, backupVal] of Object.entries(backupSettings)) {
+    const localVal = localSettings[key];
+    if (localVal === undefined) {
+      newCount++;
+    } else if (localVal !== backupVal) {
+      updatedCount++;
+    } else {
+      unchangedCount++;
+    }
+  }
+
+  return { new: newCount, updated: updatedCount, unchanged: unchangedCount };
+});
+
 const previewRows = computed<PreviewRow[]>(() => {
   const p = preview.value;
   if (!p) return [];
@@ -135,6 +160,9 @@ const previewRows = computed<PreviewRow[]>(() => {
     { label: "Measurement types", counts: p.measurementTypes },
     { label: "Measurements", counts: p.measurementEntries },
     { label: "Charts", counts: p.analyticsCharts },
+    ...(hasSettings.value
+      ? [{ label: "Settings", counts: settingsCounts.value }]
+      : []),
   ];
 
   return candidates.filter(
@@ -154,6 +182,7 @@ const importTotals = computed(() => {
     p.measurementEntries,
     p.analyticsCharts,
     ...(p.workouts.mode === "structured" ? [p.workouts.counts] : []),
+    ...(hasSettings.value ? [settingsCounts.value] : []),
   ];
   let newCount = counts.reduce((s, c) => s + c.new, 0);
   const updatedCount = counts.reduce((s, c) => s + c.updated, 0);
@@ -167,6 +196,8 @@ const importTotals = computed(() => {
 
 const pluralize = (n: number, singular: string, plural = `${singular}s`) =>
   `${n} ${n === 1 ? singular : plural}`;
+
+const hasSettings = computed(() => !!parsedBackup.value?.settings);
 
 
 

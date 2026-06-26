@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { applyPortableSettings, readPortableSettings } from "../settings";
+import { applyPortableSettings, readPortableSettings, initializeSettings } from "../settings";
 
 const fakeStore = (seed: Record<string, string> = {}) => {
   const map = new Map(Object.entries(seed));
@@ -52,5 +52,30 @@ describe("applyPortableSettings", () => {
     const store = fakeStore();
     applyPortableSettings(undefined, store);
     expect(store.map.size).toBe(0);
+  });
+});
+
+describe("initializeSettings", () => {
+  it("populates all default values when store is empty", () => {
+    const store = fakeStore();
+    initializeSettings(store);
+    expect(store.map.get("yafa:theme")).toBe("light");
+    expect(store.map.get("yafa:weightUnit")).toBe("kg");
+    expect(store.map.get("yafa:lengthUnit")).toBe("cm");
+    expect(store.map.get("yafa:analyticsTimeframe")).toBe("max");
+    expect(store.map.get("yafa:exerciseChartTimeframe")).toBe("max");
+  });
+
+  it("preserves existing values and only initializes missing ones", () => {
+    const store = fakeStore({
+      "yafa:theme": "dark",
+      "yafa:weightUnit": "lbs",
+    });
+    initializeSettings(store);
+    expect(store.map.get("yafa:theme")).toBe("dark");
+    expect(store.map.get("yafa:weightUnit")).toBe("lbs");
+    expect(store.map.get("yafa:lengthUnit")).toBe("cm");
+    expect(store.map.get("yafa:analyticsTimeframe")).toBe("max");
+    expect(store.map.get("yafa:exerciseChartTimeframe")).toBe("max");
   });
 });
