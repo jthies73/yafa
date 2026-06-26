@@ -14,43 +14,34 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     vue(),
     tailwindcss(),
-    {
-      name: "html-transform",
+    mode === "production" && {
+      name: "seo-production",
       transformIndexHtml(html) {
-        if (mode !== "production") {
-          console.log("Removing robots meta tag for mode:", mode);
-          return html.replace(
-            '<meta name="robots" content="index, follow" />',
-            '<meta name="robots" content="noindex, nofollow" />',
-          );
-        }
         return html;
       },
-    },
-    {
-      name: "generate-robots-txt",
-      closeBundle() {
+      async closeBundle() {
         const distPath = path.resolve("dist");
-        const robotsFile = path.resolve(distPath, "robots.txt");
-        
-        const productionContent = `User-agent: *\nAllow: /\nAllow: /plans\nAllow: /exercises\nAllow: /jthies73\nDisallow: /settings\n\nSitemap: https://yafa.app/sitemap.xml\n`;
-        const developmentContent = `User-agent: *\nDisallow: /\n`;
+        const robotsContent = [
+          "User-agent: *",
+          "Allow: /",
+          "Allow: /plans",
+          "Allow: /exercises",
+          "Allow: /jthies73",
+          "Disallow: /settings",
+          "",
+          "Sitemap: https://yafa.app/sitemap.xml",
+        ].join("\n");
 
-        const content = mode === "production" ? productionContent : developmentContent;
-
-        if (fs.existsSync(distPath)) {
-          fs.writeFileSync(robotsFile, content);
-          console.log(`[robots-txt] Generated robots.txt for mode: ${mode}`);
-
-          if (mode !== "production") {
-            const sitemapFile = path.resolve(distPath, "sitemap.xml");
-            if (fs.existsSync(sitemapFile)) {
-              fs.unlinkSync(sitemapFile);
-              console.log(`[robots-txt] Removed sitemap.xml for mode: ${mode}`);
-            }
-          }
+        try {
+          await fs.promises.writeFile(
+            path.resolve(distPath, "robots.txt"),
+            robotsContent,
+          );
+          console.log("[seo] Generated robots.txt");
+        } catch (error) {
+          console.error(`[seo] Error writing robots.txt: ${error}`);
         }
-      }
+      },
     },
     VitePWA({
       // "prompt": a new service worker stays in "waiting" until the user

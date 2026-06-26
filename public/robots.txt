@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Allow: /plans
-Allow: /exercises
-Allow: /jthies73
-Disallow: /settings
-
-Sitemap: https://yafa.app/sitemap.xml

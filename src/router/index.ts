@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Dashboard from "../components/Dashboard.vue";
+import NotFoundPage from "../components/NotFoundPage.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -10,7 +11,8 @@ const router = createRouter({
       component: Dashboard,
       meta: {
         title: "YAFA - Dashboard | Workout Companion & Tracker",
-        description: "Manage your daily fitness routine, track workouts, and autoregulate with RPE.",
+        description:
+          "Manage your daily fitness routine, track workouts, and autoregulate with RPE.",
       },
     },
     {
@@ -19,7 +21,8 @@ const router = createRouter({
       component: () => import("../components/PlansPage.vue"),
       meta: {
         title: "Workout Plans & Progression Models | YAFA",
-        description: "Browse, create, and customize workout plans. Autoregulate your progression.",
+        description:
+          "Browse, create, and customize workout plans. Autoregulate your progression.",
       },
     },
     {
@@ -28,7 +31,8 @@ const router = createRouter({
       component: () => import("../components/ExercisesPage.vue"),
       meta: {
         title: "Exercise Database & Directory | YAFA",
-        description: "Explore the comprehensive exercise library. Add custom lifts and track performance history.",
+        description:
+          "Explore the comprehensive exercise library. Add custom lifts and track performance history.",
       },
     },
     {
@@ -38,7 +42,8 @@ const router = createRouter({
       props: true,
       meta: {
         title: "Exercise Details & Settings | YAFA",
-        description: "Detailed guide, performance history, and settings for this exercise.",
+        description:
+          "Detailed guide, performance history, and settings for this exercise.",
       },
     },
     {
@@ -47,7 +52,8 @@ const router = createRouter({
       component: () => import("../components/SettingsPage.vue"),
       meta: {
         title: "Settings & Preferences | YAFA",
-        description: "Configure app features, UI preferences, and export training data.",
+        description:
+          "Configure app features, UI preferences, and export training data.",
       },
     },
     {
@@ -57,7 +63,8 @@ const router = createRouter({
       props: true,
       meta: {
         title: "Workout Plan Details | YAFA",
-        description: "View and customize workout routines, schedules, and active progressions in this plan.",
+        description:
+          "View and customize workout routines, schedules, and active progressions in this plan.",
       },
     },
     {
@@ -67,7 +74,8 @@ const router = createRouter({
       props: true,
       meta: {
         title: "Routine Details & Exercise Configuration | YAFA",
-        description: "View exercise lists and configure exercises for this workout routine.",
+        description:
+          "View exercise lists and configure exercises for this workout routine.",
       },
     },
     {
@@ -76,7 +84,8 @@ const router = createRouter({
       component: () => import("../components/AnalyticsPage.vue"),
       meta: {
         title: "Training Analytics & Progress Charts | YAFA",
-        description: "Analyze your training volume, intensity history, and estimated 1RM stats over time.",
+        description:
+          "Analyze your training volume, intensity history, and estimated 1RM stats over time.",
       },
     },
     {
@@ -85,7 +94,8 @@ const router = createRouter({
       component: () => import("../components/MeasurementsPage.vue"),
       meta: {
         title: "Body Measurements & Trackers | YAFA",
-        description: "Log weight, body fat percentage, and other circumferences to monitor body composition.",
+        description:
+          "Log weight, body fat percentage, and other circumferences to monitor body composition.",
       },
     },
     {
@@ -94,7 +104,8 @@ const router = createRouter({
       component: () => import("../components/WorkoutHistoryPage.vue"),
       meta: {
         title: "Workout Log History | YAFA",
-        description: "View your historical log of completed workouts, times, and performance stats.",
+        description:
+          "View your historical log of completed workouts, times, and performance stats.",
       },
     },
     {
@@ -103,14 +114,24 @@ const router = createRouter({
       component: () => import("../components/InstallPage.vue"),
       meta: {
         title: "Install YAFA (PWA) | Workout Tracker",
-        description: "Install Yet Another Fitness App on your iOS or Android device for offline, standalone tracking.",
+        description:
+          "Install Yet Another Fitness App on your iOS or Android device for offline, standalone tracking.",
+      },
+    },
+    {
+      path: "/:pathMatch(.*)*",
+      name: "not-found",
+      component: NotFoundPage,
+      meta: {
+        title: "404 - Page Not Found | YAFA",
       },
     },
   ],
 });
 
 router.afterEach((to) => {
-  const defaultTitle = "Y A F A - Yet Another Fitness App | Workout Companion & Tracker";
+  const defaultTitle =
+    "Y A F A - Yet Another Fitness App | Workout Companion & Tracker";
   document.title = (to.meta.title as string) || defaultTitle;
 
   const description = to.meta.description as string;
