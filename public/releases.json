@@ -1,6 +1,10 @@
 {
-  "latest": "0.11.0",
+  "latest": "0.12.0",
   "releases": [
+    {
+      "version": "0.12.0",
+      "notes": "- Add a 'Danger Zone' to Settings for deleting all data."
+    },
     {
       "version": "0.11.0",
       "notes": "- Refine Export/Import functionality."
