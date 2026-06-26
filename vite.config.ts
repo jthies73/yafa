@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { VitePWA } from "vite-plugin-pwa";
 import tailwindcss from "@tailwindcss/vite";
+import fs from "fs";
+import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -24,6 +26,31 @@ export default defineConfig(({ mode }) => ({
         }
         return html;
       },
+    },
+    {
+      name: "generate-robots-txt",
+      closeBundle() {
+        const distPath = path.resolve("dist");
+        const robotsFile = path.resolve(distPath, "robots.txt");
+        
+        const productionContent = `User-agent: *\nAllow: /\nAllow: /plans\nAllow: /exercises\nAllow: /jthies73\nDisallow: /settings\n\nSitemap: https://yafa.app/sitemap.xml\n`;
+        const developmentContent = `User-agent: *\nDisallow: /\n`;
+
+        const content = mode === "production" ? productionContent : developmentContent;
+
+        if (fs.existsSync(distPath)) {
+          fs.writeFileSync(robotsFile, content);
+          console.log(`[robots-txt] Generated robots.txt for mode: ${mode}`);
+
+          if (mode !== "production") {
+            const sitemapFile = path.resolve(distPath, "sitemap.xml");
+            if (fs.existsSync(sitemapFile)) {
+              fs.unlinkSync(sitemapFile);
+              console.log(`[robots-txt] Removed sitemap.xml for mode: ${mode}`);
+            }
+          }
+        }
+      }
     },
     VitePWA({
       // "prompt": a new service worker stays in "waiting" until the user

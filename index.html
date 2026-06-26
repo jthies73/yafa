@@ -11,11 +11,11 @@
     <meta name="theme-color" content="#08060d" />
     <meta
       name="description"
-      content="Y A F A (Yet Another Fitness App) is a customizable workout companion and tracker. Autoregulate your training with RPE and flexible progression models."
+      content="YAFA (Yet Another Fitness App) is an advanced offline-first workout companion for powerbuilding. Autoregulate with an adaptive RPE matrix, dynamic c1RM, and flexible progression models."
     />
     <meta
       name="keywords"
-      content="fitness app, workout tracker, gym log, weightlifting tracker, progressive overload, RPE matrix, bodybuilding app, powerlifting tracker, exercise science, autoregulated training, Yet Another Fitness App, Y A F A"
+      content="fitness app, workout tracker, gym log, weightlifting tracker, progressive overload, RPE matrix, bodybuilding app, powerlifting tracker, exercise science, autoregulated training, Yet Another Fitness App, Y A F A, mesocycles, e1RM, calculative 1RM, flexible progression models, autoregulation, RPE, fatigue management, offline-first, periodization"
     />
     <meta name="author" content="Y A F A" />
     <meta name="robots" content="index, follow" />
@@ -26,7 +26,7 @@
     <meta property="og:title" content="YAFA - Yet Another Fitness App" />
     <meta
       property="og:description"
-      content="Customizable fitness tracker designed to adapt to your training response. Autoregulate with RPE and custom progression models."
+      content="YAFA is an advanced offline-first workout companion for powerbuilding. Autoregulate with an adaptive RPE matrix, dynamic c1RM, and flexible progression models."
     />
     <meta property="og:image" content="https://yafa.app/pwa-512x512.png" />
     <meta property="og:image:width" content="512" />
@@ -41,7 +41,7 @@
     <meta property="twitter:title" content="YAFA - Yet Another Fitness App" />
     <meta
       property="twitter:description"
-      content="Customizable fitness tracker designed to adapt to your training response. Autoregulate with RPE and custom progression models."
+      content="YAFA is an advanced offline-first workout companion for powerbuilding. Autoregulate with an adaptive RPE matrix, dynamic c1RM, and flexible progression models."
     />
     <meta property="twitter:image" content="https://yafa.app/pwa-512x512.png" />
 
@@ -214,6 +214,28 @@
         overflow: auto;
       }
     </style>
+    <!-- JSON-LD Structured Data for Search Engine Rich Snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "YAFA - Yet Another Fitness App",
+      "operatingSystem": "All",
+      "applicationCategory": "HealthApplication",
+      "offers": {
+        "@type": "Offer",
+        "price": "0.00",
+        "priceCurrency": "USD"
+      },
+      "description": "YAFA is an advanced offline-first workout companion for powerbuilding. Autoregulate with an adaptive RPE matrix, dynamic c1RM, and flexible progression models.",
+      "features": "Adaptive RPE Matrix, Dynamic c1RM & e1RM Catch-Up, Flexible Progression Models, Mesocycles & Periodization, Regression Tracking & Resets, Offline-First Architecture, Progressive Overload, Autoregulation, Fatigue Management",
+      "author": {
+        "@type": "Person",
+        "name": "Johannes Thies",
+        "url": "https://yafa.app/jthies73"
+      }
+    }
+    </script>
   </head>
 
   <body>
@@ -240,7 +262,34 @@
     </div>
 
     <!-- The Vue application element -->
-    <div id="app"></div>
+    <div id="app">
+      <!-- SEO Fallback Content for Crawlers (Replaced once Vue mounts) -->
+      <div style="padding: 2rem; max-width: 800px; margin: 0 auto; font-family: sans-serif;">
+        <header>
+          <h1>YAFA - Yet Another Fitness App</h1>
+          <p>Log workouts, autoregulate your progression with an adaptive RPE matrix, and track your fitness goals with a customizable powerbuilding companion.</p>
+        </header>
+        <main>
+          <h2>Key Features</h2>
+          <ul>
+            <li><strong>Progressive Overload & Autoregulation:</strong> Utilize RPE and RIR to adjust daily loads based on immediate readiness and fatigue management.</li>
+            <li><strong>Adaptive RPE Matrix:</strong> A fully customizable, cell-based matrix that learns and corrects your performance curve automatically.</li>
+            <li><strong>Calculative 1RM Engine:</strong> Tracks a persistent anchor (c1RM) and incorporates e1RM catch-up logic to match your demonstrated capacity.</li>
+            <li><strong>Flexible Progression Models:</strong> Tailor overload patterns using Linear Progression, Double Progression, or Top Set + Back-Off strategies.</li>
+            <li><strong>Mesocycles & Periodization:</strong> Structure training blocks with specific focuses without rigid load multipliers.</li>
+            <li><strong>Offline-First & Resilient:</strong> Runs fully locally via IndexedDB with robust, non-destructive backup and restore capabilities.</li>
+          </ul>
+          <h2>Quick Navigation</h2>
+          <nav>
+            <a href="/">Dashboard</a> | 
+            <a href="/plans">Workout Plans</a> | 
+            <a href="/exercises">Exercise Database</a> | 
+            <a href="/install">Install App</a> |
+            <a href="/jthies73">Developer Portfolio</a>
+          </nav>
+        </main>
+      </div>
+    </div>
 
     <!-- Redirect script for static landing page -->
     <script type="module">
