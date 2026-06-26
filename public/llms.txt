@@ -8,19 +8,19 @@ Plan and track workouts with intelligent progression. Log exercises, measure per
 
 ## Progression & Autoregulation
 
-Nothing in YAFA is fixed—the system adapts to your current state using two key principles:
+Nothing in YAFA is fixed-the system adapts to your current state using two key principles:
 
-**Progressive Overload** — Systematically increase volume or intensity to drive strength and hypertrophy gains.
+**Progressive Overload** - Systematically increase volume or intensity to drive strength and hypertrophy gains.
 
-**Autoregulation** — Adjust daily loads based on your immediate readiness and fatigue. Instead of rigid percentages, log your RPE (Rate of Perceived Exertion) and Reps in Reserve (RIR) after each set, and YAFA calculates the right weight for tomorrow. This respects individual recovery capacities and day-to-day variance in strength.
+**Autoregulation** - Adjust daily loads based on your immediate readiness and fatigue. Instead of rigid percentages, log your RPE (Rate of Perceived Exertion) and Reps in Reserve (RIR) after each set, and YAFA calculates the right weight for tomorrow. This respects individual recovery capacities and day-to-day variance in strength.
 
 ## RPE Matrix & Planning Anchor
 
 YAFA uses an editable **RPE-to-percentage grid** (reps × RPE) where each cell holds a target % of 1RM. This maps effort to load:
 
-- **Global Matrix** — One matrix configured in Settings, seeded from evidence-based RTS defaults. The source of truth for all calculations.
-- **Exercise-Specific Overrides** — Toggle "Overwrite RPE matrix" in the exercise editor to fine-tune any single cell for that lift.
-- **Adaptive Learning** — After each session, YAFA nudges the grid toward your demonstrated performance, continuously refining it to fit how you actually respond.
+- **Global Matrix** - One matrix configured in Settings, seeded from evidence-based RTS defaults. The source of truth for all calculations.
+- **Exercise-Specific Overrides** - Toggle "Overwrite RPE matrix" in the exercise editor to fine-tune any single cell for that lift.
+- **Adaptive Learning** - After each session, YAFA nudges the grid toward your demonstrated performance, continuously refining it to fit how you actually respond.
 
 The **planning anchor** (c1RM, calculative 1RM) is the persistent weight target that all prescriptions derive from. It rises by your configured increment on success, can drop 10% on a reset, and jumps to catch large divergences from actual performance.
 
@@ -28,34 +28,34 @@ The **planning anchor** (c1RM, calculative 1RM) is the persistent weight target 
 
 Choose the model that fits each exercise:
 
-- **Linear Progression** — Simple weight-for-reps progression on main compounds. Success requires all sets to hit target reps and RPE; consecutive failures trigger a reset.
-- **Double Progression** — Advance reps first, weight second. Hypertrophy-focused: reach max reps at target RPE to earn the weight increase.
-- **Top Set + Back-Off** — Only the top set drives progression, back-offs are volume support. Ideal for peaking and high-intensity work.
+- **Linear Progression** - Simple weight-for-reps progression on main compounds. Success requires all sets to hit target reps and RPE; consecutive failures trigger a reset.
+- **Double Progression** - Advance reps first, weight second. Hypertrophy-focused: reach max reps at target RPE to earn the weight increase.
+- **Top Set + Back-Off** - Only the top set drives progression, back-offs are volume support. Ideal for peaking and high-intensity work.
 
 ## Periodization & Mesocycles
 
-Structure training into weeks with assigned focuses (Hypertrophy, Strength, Peaking, Deload). Each week's focus shifts your RPE and rep targets additively—the load re-renders from those adjusted targets via the matrix. Deload weeks ease both. No fixed schedule: build the mesocycle structure that fits your periodization plan.
+Structure training into weeks with assigned focuses (Hypertrophy, Strength, Peaking, Deload). Each week's focus shifts your RPE and rep targets additively-the load re-renders from those adjusted targets via the matrix. Deload weeks ease both. No fixed schedule: build the mesocycle structure that fits your periodization plan.
 
 ## Features
 
-- **Workout Plans** — Create custom routines with progression models
-- **Exercise Library** — Track performance history and progression
-- **Progress Tracking** — Analytics charts and estimated 1RM stats
-- **Body Measurements** — Log weight and body composition changes
-- **Offline Support** — All data stored locally, works without internet
-- **Installable** — Add to home screen on iOS or Android
-- **Data Management** — Import, export, and backup your training data
+- **Workout Plans** - Create custom routines with progression models
+- **Exercise Library** - Track performance history and progression
+- **Progress Tracking** - Analytics charts and estimated 1RM stats
+- **Body Measurements** - Log weight and body composition changes
+- **Offline Support** - All data stored locally, works without internet
+- **Installable** - Add to home screen on iOS or Android
+- **Data Management** - Import, export, and backup your training data
 
 ## Main Routes
 
-- Dashboard — Overview and quick actions
-- Plans — Manage workout routines
-- Exercises — Exercise library with settings
-- Analytics — Progress charts and stats
-- Measurements — Track body composition
-- History — Complete workout log
-- Settings — User preferences and data
-- Install — PWA installation guide
+- Dashboard - Overview and quick actions
+- Plans - Manage workout routines
+- Exercises - Exercise library with settings
+- Analytics - Progress charts and stats
+- Measurements - Track body composition
+- History - Complete workout log
+- Settings - User preferences and data
+- Install - PWA installation guide
 
 ## Using the App
 
