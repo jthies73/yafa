@@ -42,7 +42,9 @@ export function applyPortableSettings(
 }
 
 /** Initialize settings defaults in store (localStorage) if they are not already set. */
-export function initializeSettings(store: Pick<Storage, "getItem" | "setItem">): void {
+export function initializeSettings(
+  store: Pick<Storage, "getItem" | "setItem">,
+): void {
   const defaults: Record<string, string> = {
     "yafa:theme": "light",
     "yafa:weightUnit": "kg",
@@ -50,9 +52,12 @@ export function initializeSettings(store: Pick<Storage, "getItem" | "setItem">):
     "yafa:analyticsTimeframe": "max",
     "yafa:exerciseChartTimeframe": "max",
   };
-  
+
   if (typeof window !== "undefined" && window.matchMedia) {
-    defaults["yafa:theme"] = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    defaults["yafa:theme"] = window.matchMedia("(prefers-color-scheme: dark)")
+      .matches
+      ? "dark"
+      : "light";
   }
 
   for (const key of PORTABLE_SETTING_KEYS) {

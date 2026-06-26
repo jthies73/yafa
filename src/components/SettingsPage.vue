@@ -308,7 +308,8 @@ const deleteAllData = async () => {
               class="text-xs text-text-light dark:text-text-dark opacity-60 mt-0.5"
             >
               Permanently wipes all plans, exercises, routines, workouts, and
-              settings from this device.
+              settings from this device. Consider exporting a backup file first
+              if you might want to restore this data later.
             </p>
           </div>
           <button
@@ -327,7 +328,7 @@ const deleteAllData = async () => {
   <ConfirmDialog
     v-model:open="showDeleteConfirm"
     title="Delete all data?"
-    message="This will permanently erase every plan, exercise, routine, workout, measurement, and setting stored on this device. This cannot be undone."
+    message="This will permanently erase every plan, exercise, routine, workout, measurement, and setting stored on this device. This cannot be undone. Consider exporting a backup file first if you might want to restore this data later."
     confirm-label="Continue"
     cancel-label="Cancel"
     @confirm="onFirstConfirm"

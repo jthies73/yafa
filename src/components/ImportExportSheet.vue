@@ -199,8 +199,6 @@ const pluralize = (n: number, singular: string, plural = `${singular}s`) =>
 
 const hasSettings = computed(() => !!parsedBackup.value?.settings);
 
-
-
 const close = () => {
   open.value = false;
 };
@@ -375,7 +373,9 @@ const close = () => {
                     >{{ row.label }}</span
                   >
                   <div class="flex items-center gap-1.5 font-semibold text-sm">
-                    <template v-if="row.counts.new > 0 || row.counts.updated > 0">
+                    <template
+                      v-if="row.counts.new > 0 || row.counts.updated > 0"
+                    >
                       <span v-if="row.counts.new > 0" class="text-accent">
                         +{{ row.counts.new }}
                       </span>
@@ -385,7 +385,10 @@ const close = () => {
                       >
                         ·
                       </span>
-                      <span v-if="row.counts.updated > 0" class="text-indigo-500 dark:text-indigo-400">
+                      <span
+                        v-if="row.counts.updated > 0"
+                        class="text-indigo-500 dark:text-indigo-400"
+                      >
                         ~{{ row.counts.updated }}
                       </span>
                     </template>
@@ -407,9 +410,14 @@ const close = () => {
                 <span class="flex items-center gap-0.5">
                   <span class="text-accent font-bold">+</span> New
                 </span>
-                <span class="text-text-light dark:text-text-dark opacity-30">·</span>
+                <span class="text-text-light dark:text-text-dark opacity-30"
+                  >·</span
+                >
                 <span class="flex items-center gap-0.5">
-                  <span class="text-indigo-500 dark:text-indigo-400 font-bold">~</span> Updated
+                  <span class="text-indigo-500 dark:text-indigo-400 font-bold"
+                    >~</span
+                  >
+                  Updated
                 </span>
               </div>
 

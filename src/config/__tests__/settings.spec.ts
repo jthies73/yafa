@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { applyPortableSettings, readPortableSettings, initializeSettings } from "../settings";
+import {
+  applyPortableSettings,
+  readPortableSettings,
+  initializeSettings,
+} from "../settings";
 
 const fakeStore = (seed: Record<string, string> = {}) => {
   const map = new Map(Object.entries(seed));
