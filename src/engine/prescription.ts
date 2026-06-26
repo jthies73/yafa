@@ -7,7 +7,8 @@ import type {
   RpeMatrix,
   TopSetProgressionParams,
 } from "../db/types";
-import { roundToLoadable, weightFromE1rm } from "./matrix";
+import { matrixPct, roundToLoadable, weightFromE1rm } from "./matrix";
+import { solveReps } from "./calculator";
 
 // ----------------------------------------------
 // Prescription. Turns an exercise's EFFECTIVE config (already normalized and
@@ -68,7 +69,14 @@ export function prescribeExercise(
     return roundToLoadable(weightFromE1rm(matrix, c1rm, reps, loadRpe));
   };
 
-  const sets = buildSets(model, params, input.doubleRepCursor, load);
+  const sets = buildSets(
+    model,
+    params,
+    input.doubleRepCursor,
+    load,
+    matrix,
+    rpeCeiling,
+  );
   return { exerciseId: input.exerciseId, model, sets, c1rm };
 }
 
@@ -77,6 +85,8 @@ function buildSets(
   params: ProgressionParams,
   cursor: number | undefined,
   load: (reps: number, targetRpe: number) => number | null,
+  matrix: RpeMatrix,
+  rpeCeiling: number,
 ): PrescribedSet[] {
   switch (model) {
     case "linear": {
@@ -106,6 +116,15 @@ function buildSets(
       const backoffFraction = 1 - p.percentageDrop / 100;
       const backWeight =
         topWeight == null ? null : roundToLoadable(topWeight * backoffFraction);
+      // Back-off reps are DERIVED, not configured: at the dropped load, how many
+      // reps land on backOffRpe? Independent of c1RM because the back-off's
+      // %-of-1RM is just the top set's (at its capped load) scaled by the drop —
+      // so it renders even at cold start. solveReps with e1rm=1 minimizes
+      // |matrixPct(reps, backOffRpe) − backPct|.
+      const loadRpe = Math.min(p.topSetTargetRpe, rpeCeiling);
+      const backPct =
+        matrixPct(matrix, p.topSetTargetReps, loadRpe) * backoffFraction;
+      const backReps = solveReps(matrix, 1, backPct, p.backOffRpe);
       const sets: PrescribedSet[] = [
         {
           reps: p.topSetTargetReps,
@@ -116,8 +135,8 @@ function buildSets(
       ];
       for (let i = 0; i < p.backOffSets; i++) {
         sets.push({
-          reps: p.backOffReps,
-          rpe: null, // back-off RPE is a consequence of the dropped load, not a target
+          reps: backReps,
+          rpe: null, // logged-as-performed; backOffRpe shapes the reps, not a target
           weight: backWeight,
           role: "backoff",
           backoffFraction,

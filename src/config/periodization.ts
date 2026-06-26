@@ -73,7 +73,7 @@ export const LOCKABLE_FIELDS: Record<ProgressionModelType, string[]> = {
   topset_backoff: [
     "topSetTargetReps",
     "backOffSets",
-    "backOffReps",
+    "backOffRpe",
     "topSetTargetRpe",
   ],
   none: ["targetSets", "targetReps", "targetRpe"],

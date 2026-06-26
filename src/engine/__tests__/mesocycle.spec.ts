@@ -79,7 +79,7 @@ describe("applyMesoToParams", () => {
     expect(out.targetSets).toBe(dbl.targetSets); // sets are not periodized
   });
 
-  it("shifts top-set targets and leaves backOffReps alone", () => {
+  it("shifts top-set targets and leaves backOffRpe alone", () => {
     const ts = {
       ...DEFAULT_PROGRESSION_PARAMS.topset_backoff,
     } as TopSetProgressionParams;
@@ -90,7 +90,7 @@ describe("applyMesoToParams", () => {
     ) as TopSetProgressionParams;
     expect(out.topSetTargetRpe).toBe(9); // 8 + 1
     expect(out.backOffSets).toBe(ts.backOffSets); // sets are not periodized
-    expect(out.backOffReps).toBe(ts.backOffReps); // untouched
+    expect(out.backOffRpe).toBe(ts.backOffRpe); // untouched
   });
 
   it("clamps RPE to the 6–10 grid and reps ≥ 1", () => {

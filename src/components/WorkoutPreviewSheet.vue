@@ -108,7 +108,7 @@ const FIELD_LABELS: Record<string, string> = {
   topSetTargetReps: "Reps",
   topSetTargetRpe: "RPE",
   backOffSets: "Back-offs",
-  backOffReps: "Back-off reps",
+  backOffRpe: "Back-off RPE",
 };
 
 const lockedLine = (e: ExercisePreview): string =>

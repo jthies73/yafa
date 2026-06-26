@@ -5,7 +5,8 @@ import type {
   LinearProgressionParams,
   TopSetProgressionParams,
 } from "../../db/types";
-import { roundToLoadable, weightFromE1rm } from "../matrix";
+import { matrixPct, roundToLoadable, weightFromE1rm } from "../matrix";
+import { solveReps } from "../calculator";
 import { prescribeExercise } from "../prescription";
 
 const M = DEFAULT_RPE_MATRIX;
@@ -143,7 +144,7 @@ describe("prescribeExercise — top set", () => {
     topSetTargetRpe: 8,
     rpeCeiling: 9,
     backOffSets: 2,
-    backOffReps: 8,
+    backOffRpe: 7,
     percentageDrop: 10,
     weightIncrement: 2.5,
     incrementUnit: "kg",
@@ -168,7 +169,28 @@ describe("prescribeExercise — top set", () => {
     );
   });
 
-  it("cold start: all weights null but back-offs carry the drop fraction", () => {
+  it("derives back-off reps from the back-off RPE + drop (not a fixed count)", () => {
+    const at = (backOffRpe: number) =>
+      prescribeExercise({
+        exerciseId: "ex",
+        model: "topset_backoff",
+        params: { ...TOPSET, backOffRpe },
+        rpeCeiling: 9,
+        effectiveC1rm: 120,
+        matrix: M,
+      }).sets[1].reps;
+
+    // Exact: reps solved against the dropped %-of-1RM at the back-off RPE.
+    const backPct =
+      matrixPct(M, TOPSET.topSetTargetReps, TOPSET.topSetTargetRpe) * 0.9;
+    expect(at(7)).toBe(solveReps(M, 1, backPct, 7));
+    // Within the matrix domain, and higher target RPE → more reps at the same load.
+    expect(at(7)).toBeGreaterThanOrEqual(1);
+    expect(at(9)).toBeLessThanOrEqual(10);
+    expect(at(9)).toBeGreaterThanOrEqual(at(7));
+  });
+
+  it("cold start: weights null but reps are still derived and the drop fraction carried", () => {
     const p = prescribeExercise({
       exerciseId: "ex",
       model: "topset_backoff",
@@ -178,6 +200,9 @@ describe("prescribeExercise — top set", () => {
       matrix: M,
     });
     expect(p.sets.every((s) => s.weight === null)).toBe(true);
+    // Reps derive from the matrix ratio, so they render even without a c1RM.
+    expect(p.sets[1].reps).toBeGreaterThanOrEqual(1);
+    expect(p.sets[1].reps).toBe(p.sets[2].reps);
     // The fraction lets the tracker fill back-off weights once the cold-start
     // top set is logged (its demonstrated weight × fraction).
     expect(p.sets[1].backoffFraction).toBe(0.9);

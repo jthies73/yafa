@@ -171,7 +171,7 @@ const TOPSET: TopSetProgressionParams = {
   topSetTargetRpe: 8,
   rpeCeiling: 9,
   backOffSets: 2,
-  backOffReps: 8,
+  backOffRpe: 7,
   percentageDrop: 10,
   weightIncrement: 2.5,
   incrementUnit: "kg",

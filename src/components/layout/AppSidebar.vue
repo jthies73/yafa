@@ -229,7 +229,9 @@ const recordCoffeeClick = () => {
     :style="sidebarStyle"
     @pointerdown="beginDrag"
   >
-    <div class="flex flex-col gap-6 overflow-y-auto overflow-x-hidden min-h-0 pb-6">
+    <div
+      class="flex flex-col gap-6 overflow-y-auto overflow-x-hidden min-h-0 pb-6"
+    >
       <!-- Header row -->
       <div class="flex items-center justify-between">
         <div class="flex flex-col">

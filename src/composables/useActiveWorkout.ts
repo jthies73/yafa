@@ -148,6 +148,21 @@ export function useActiveWorkout() {
     );
   };
 
+  /**
+   * Every set logged this session for an exercise — the tracker's completed sets
+   * plus any calculator sets — so callers (e.g. the calculator's live e1RM) react
+   * to both. Reads the refs directly, so it stays reactive inside a computed.
+   */
+  const sessionSetsFor = (exerciseId: string): LoggedSet[] => {
+    const tracker =
+      activeWorkout.value?.exercises.find((e) => e.exerciseId === exerciseId)
+        ?.sets ?? [];
+    const calc = calculatorSets.value
+      .filter((cs) => cs.exerciseId === exerciseId)
+      .map((cs) => cs.set);
+    return [...tracker, ...calc];
+  };
+
   const finishWorkout = async () => {
     if (!activeWorkout.value) return;
 
@@ -258,5 +273,6 @@ export function useActiveWorkout() {
     syncProgress,
     logCalculatorSet,
     removeCalculatorSet,
+    sessionSetsFor,
   };
 }

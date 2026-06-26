@@ -3,6 +3,8 @@ import type {
   ProgressionModelType,
   ProgressionParams,
   ProgressionState,
+  RpeMatrix,
+  Set as LoggedSet,
 } from "../db/types";
 import type { ProgressionOutcome } from "./evaluation";
 import {
@@ -11,6 +13,7 @@ import {
   REGRESSION_RESET_TRIGGER,
   RESET_DROP,
 } from "./constants";
+import { impliedE1rm, isQualifyingSet, peakImpliedE1rm } from "./matrix";
 
 // ----------------------------------------------
 // Progression state transitions. These pure functions are what actually MOVE the
@@ -194,4 +197,34 @@ export function catchUpC1rm(c1rm: number, estimate: number | null): number {
   const gap = estimate - c1rm;
   if (Math.abs(gap) / c1rm <= CATCHUP_THRESHOLD) return c1rm;
   return c1rm + gap * CATCHUP_CLOSE_FRACTION;
+}
+
+/**
+ * The best e1RM to anchor calculations to MID-session, given the sets logged so
+ * far for an exercise. Same logic the engine applies at finish, surfaced live:
+ *   • No persisted c1RM yet → seed from the session's best set (strict qualifying,
+ *     then any usable set) so a brand-new exercise still calculates.
+ *   • A c1RM exists → it wins, UNLESS this session's qualifying sets diverge past
+ *     the catch-up threshold, in which case return the caught-up value (what the
+ *     finish-time fold would persist). Within the threshold the anchor is returned
+ *     unchanged. Pure — no DB, no clock.
+ */
+export function liveEffectiveE1rm(
+  matrix: RpeMatrix,
+  sessionSets: LoggedSet[],
+  currentC1rm: number | null,
+): number | null {
+  if (currentC1rm == null) {
+    return (
+      peakImpliedE1rm(matrix, sessionSets)?.e1rm ??
+      peakImpliedE1rm(matrix, sessionSets, true)?.e1rm ??
+      null
+    );
+  }
+  const sessionE1rms = sessionSets
+    .filter(isQualifyingSet)
+    .map((s) =>
+      impliedE1rm(matrix, s.actualWeight, s.actualReps, s.actualRpe!),
+    );
+  return catchUpC1rm(currentC1rm, corroboratedE1rm(sessionE1rms, currentC1rm));
 }

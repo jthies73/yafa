@@ -18,13 +18,18 @@ import { useWeightUnit } from "../composables/useWeightUnit";
 import { useActiveWorkout } from "../composables/useActiveWorkout";
 import { solveWeight, solveReps, solveRpe } from "../engine/calculator";
 import { impliedE1rm } from "../engine/matrix";
+import { liveEffectiveE1rm } from "../engine/state";
 import ExercisePickerSheet from "./ExercisePickerSheet.vue";
 import ExerciseFormSheet from "./ExerciseFormSheet.vue";
 import InfoIcon from "./InfoIcon.vue";
 
 const { label: weightUnit, toKg, format } = useWeightUnit();
-const { logCalculatorSet, removeCalculatorSet, calculatorSets } =
-  useActiveWorkout();
+const {
+  logCalculatorSet,
+  removeCalculatorSet,
+  calculatorSets,
+  sessionSetsFor,
+} = useActiveWorkout();
 
 // ── Exercise selection ────────────────────────────────────────────────────────
 
@@ -36,8 +41,8 @@ const matrix = computed<RpeMatrix>(
   () => selected.value?.rpeMatrix ?? DEFAULT_RPE_MATRIX,
 );
 
-// The calculator anchors to the most recent logged set in this session,
-// falling back to the persisted c1RM from the database.
+// The persisted c1RM is the baseline anchor; the live estimate layers this
+// session's sets on top (see effectiveE1rm).
 const dbC1rm = ref<number | null>(null);
 
 watch(selected, async (ex) => {
@@ -51,7 +56,17 @@ watch(selected, async (ex) => {
   }
 });
 
-const effectiveE1rm = computed(() => dbC1rm.value);
+// All sets logged this session for the selected exercise (tracker + calculator),
+// so logging a set anywhere refines the anchor live.
+const sessionSets = computed(() =>
+  selected.value ? sessionSetsFor(selected.value.id) : [],
+);
+
+// The persisted c1RM wins, unless this session's sets diverge enough to trigger
+// catch-up (then the caught-up value), or there's no c1RM yet (seed from sets).
+const effectiveE1rm = computed(() =>
+  liveEffectiveE1rm(matrix.value, sessionSets.value, dbC1rm.value),
+);
 
 const onSelect = (exercise: Exercise) => {
   selected.value = exercise;

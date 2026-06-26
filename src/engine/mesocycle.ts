@@ -104,7 +104,9 @@ export function applyMesoToParams(
         p.topSetTargetReps = clampReps(p.topSetTargetReps + mods.repDelta);
       if (adj("topSetTargetRpe"))
         p.topSetTargetRpe = clampRpe(p.topSetTargetRpe + mods.rpeDelta);
-      // backOffReps is lockable but not a natural meso target — left untouched.
+      // backOffRpe is lockable but not a natural meso target — left untouched.
+      // (The derived back-off reps still adapt: shifting topSetTargetRpe moves
+      // the top set's %-of-1RM, hence the dropped load the reps are solved at.)
       return p;
     }
     case "none": {

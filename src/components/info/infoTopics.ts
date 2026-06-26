@@ -99,6 +99,12 @@ For example, a 10% drop means back-off sets are prescribed at 90% of the top-set
     title: "Back-Off Sets",
     body: `The number of lighter sets performed after the top set. These sets use the reduced weight defined by the % Drop and accumulate volume at a lower intensity to aid recovery and hypertrophy.`,
   },
+  backOffRpe: {
+    title: "Back-Off RPE",
+    body: `The target effort for your back-off sets. The reps aren't fixed — the app derives how many reps land on this RPE at the dropped weight (set by the % Drop), using the exercise's RPE matrix.
+
+A lower back-off RPE means more reps in reserve on the lighter sets.`,
+  },
   calculator: {
     title: "RPE Calculator",
     body: `Enter any two of reps, weight, and RPE — the third is calculated using your training max and the exercise's RPE matrix.

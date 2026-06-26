@@ -3,7 +3,10 @@ import type {
   DoubleProgressionParams,
   LinearProgressionParams,
   ProgressionState,
+  Set as LoggedSet,
 } from "../../db/types";
+import { DEFAULT_RPE_MATRIX } from "../../db/rpeMatrix";
+import { impliedE1rm, matrixPct } from "../matrix";
 import {
   advanceDoubleCursor,
   applyIncrement,
@@ -12,6 +15,7 @@ import {
   consumeReset,
   corroboratedE1rm,
   initState,
+  liveEffectiveE1rm,
   seedC1rm,
   step,
 } from "../state";
@@ -202,5 +206,57 @@ describe("catchUpC1rm", () => {
   it("catches up downward too", () => {
     // gap −20 → 100 + (−20)*0.7 = 86.
     expect(catchUpC1rm(100, 80)).toBeCloseTo(86, 6);
+  });
+});
+
+describe("liveEffectiveE1rm", () => {
+  const M = DEFAULT_RPE_MATRIX;
+  // A set whose impliedE1rm is exactly `e1rm` at (reps, rpe).
+  const setImplying = (e1rm: number, reps: number, rpe: number): LoggedSet => {
+    const weight = e1rm * matrixPct(M, reps, rpe);
+    return {
+      id: "s",
+      timestamp: 0,
+      targetReps: reps,
+      actualReps: reps,
+      targetWeight: weight,
+      actualWeight: weight,
+      targetRpe: rpe,
+      actualRpe: rpe,
+      failure: false,
+    };
+  };
+
+  it("returns null with no anchor and no sets", () => {
+    expect(liveEffectiveE1rm(M, [], null)).toBeNull();
+  });
+
+  it("seeds from the session's best qualifying set when there is no c1RM", () => {
+    const s = setImplying(130, 5, 8); // RPE 8 qualifies
+    expect(liveEffectiveE1rm(M, [s], null)).toBeCloseTo(130, 6);
+  });
+
+  it("seeds from a sub-threshold set (relaxed) when no qualifying set exists", () => {
+    const sub = setImplying(120, 5, 6); // RPE 6 does not qualify
+    expect(liveEffectiveE1rm(M, [sub], null)).toBeCloseTo(
+      impliedE1rm(M, sub.actualWeight, 5, 6),
+      6,
+    );
+  });
+
+  it("keeps the c1RM when the session has no qualifying sets", () => {
+    const sub = setImplying(200, 5, 6); // not qualifying → ignored
+    expect(liveEffectiveE1rm(M, [sub], 100)).toBe(100);
+  });
+
+  it("keeps the c1RM when a qualifying set is within the catch-up threshold", () => {
+    const s = setImplying(105, 3, 9); // 5% over → no catch-up
+    expect(liveEffectiveE1rm(M, [s], 100)).toBe(100);
+  });
+
+  it("jumps to the caught-up value when a qualifying set diverges past the threshold", () => {
+    const s = setImplying(130, 3, 9); // 30% over → catch-up fires
+    // 100 + (130 − 100) * 0.7 = 121.
+    expect(liveEffectiveE1rm(M, [s], 100)).toBeCloseTo(121, 6);
   });
 });

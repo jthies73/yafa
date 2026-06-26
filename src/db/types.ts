@@ -45,7 +45,7 @@ export interface TopSetProgressionParams {
   topSetTargetRpe: number; // "Target RPE" for the top set (name kept for back-compat)
   rpeCeiling: number; // default 9
   backOffSets: number;
-  backOffReps: number; // rep target for each back-off set
+  backOffRpe: number; // target effort for back-offs; drives the derived rep count
   percentageDrop: number;
   weightIncrement: number;
   incrementUnit: WeightIncrementUnit;

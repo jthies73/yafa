@@ -47,7 +47,7 @@ export const DEFAULT_PROGRESSION_PARAMS: {
     topSetTargetRpe: 8,
     rpeCeiling: 9,
     backOffSets: 3,
-    backOffReps: 8,
+    backOffRpe: 7,
     percentageDrop: 10,
     weightIncrement: 2.5,
     incrementUnit: "kg",

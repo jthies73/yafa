@@ -636,25 +636,28 @@ const save = async () => {
           </div>
           <div class="flex flex-col gap-1.5">
             <div class="flex items-center justify-between gap-1 min-h-[18px]">
-              <label
-                class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-              >
-                Back-Off Reps
-              </label>
+              <span class="flex items-center gap-1">
+                <label
+                  class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+                >
+                  Back-Off RPE
+                </label>
+                <InfoIcon topic="backOffRpe" />
+              </span>
               <LockToggle
                 v-if="periodizationEnabled"
-                :locked="isLocked('backOffReps')"
-                @toggle="toggleLock('backOffReps')"
+                :locked="isLocked('backOffRpe')"
+                @toggle="toggleLock('backOffRpe')"
               />
             </div>
             <input
-              v-model.number="configParams.backOffReps"
-              v-numpad
+              v-model.number="configParams.backOffRpe"
+              v-numpad="'decimal'"
               v-keynav
               type="number"
-              min="1"
-              max="100"
-              step="1"
+              min="5"
+              max="10"
+              step="0.5"
               class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2.5 text-sm font-mono text-text-h-light dark:text-text-h-dark focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50"
             />
           </div>
