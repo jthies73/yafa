@@ -276,9 +276,7 @@ const deleteAllData = async () => {
       <div
         class="bg-red-500/10 border border-red-500/40 rounded-xl p-6 shadow-sm flex flex-col"
       >
-        <h2
-          class="text-lg font-bold text-red-500 mb-4 flex items-center gap-2"
-        >
+        <h2 class="text-lg font-bold text-red-500 mb-4 flex items-center gap-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
@@ -290,7 +288,9 @@ const deleteAllData = async () => {
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <path
+              d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+            />
             <line x1="12" y1="9" x2="12" y2="13" />
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
@@ -299,11 +299,16 @@ const deleteAllData = async () => {
 
         <div class="flex items-center justify-between">
           <div>
-            <div class="font-semibold text-text-h-light dark:text-text-h-dark text-sm">
+            <div
+              class="font-semibold text-text-h-light dark:text-text-h-dark text-sm"
+            >
               Delete All Data
             </div>
-            <p class="text-xs text-text-light dark:text-text-dark opacity-60 mt-0.5">
-              Permanently wipes all plans, exercises, routines, workouts, and settings from this device.
+            <p
+              class="text-xs text-text-light dark:text-text-dark opacity-60 mt-0.5"
+            >
+              Permanently wipes all plans, exercises, routines, workouts, and
+              settings from this device.
             </p>
           </div>
           <button
@@ -342,9 +347,18 @@ const deleteAllData = async () => {
           class="relative w-full max-w-sm flex flex-col gap-4 rounded-2xl border border-red-500/50 bg-bg-light dark:bg-bg-dark p-6 shadow-xl"
         >
           <div class="flex flex-col gap-2">
-            <h2 class="text-lg font-bold text-red-500">Are you absolutely sure?</h2>
-            <p class="text-sm leading-relaxed text-text-light dark:text-text-dark opacity-80">
-              Type <span class="font-mono font-bold text-text-h-light dark:text-text-h-dark">yes I am sure</span> to confirm permanent deletion.
+            <h2 class="text-lg font-bold text-red-500">
+              Are you absolutely sure?
+            </h2>
+            <p
+              class="text-sm leading-relaxed text-text-light dark:text-text-dark opacity-80"
+            >
+              Type
+              <span
+                class="font-mono font-bold text-text-h-light dark:text-text-h-dark"
+                >yes I am sure</span
+              >
+              to confirm permanent deletion.
             </p>
           </div>
           <input

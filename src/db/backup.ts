@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { APP_VERSION } from "../config/version";
 import { readZipText } from "../utils/zip";
+import { deepEqual } from "../utils/deepEqual";
 import {
   applyPortableSettings,
   readPortableSettings,
@@ -22,6 +23,42 @@ import type {
   AnalyticsChartConfig,
   ProgressionState,
 } from "./types";
+
+export interface EntityCounts {
+  new: number; // id absent locally
+  updated: number; // id present, at least one field diverges
+  unchanged: number; // id present, every field identical (up to date)
+}
+
+/**
+ * How workouts will be imported:
+ *  • structured    — the structured workout list is usable; counts are a normal diff.
+ *  • reconstructed — structured workouts are unusable but a raw fallback exists, so
+ *                    exercises + workouts are rebuilt from the name-keyed raw data.
+ *  • unrecoverable — structured workouts are unusable and there is no raw fallback;
+ *                    workouts are skipped, everything else still imports.
+ *  • empty         — the backup carries no workout data at all.
+ */
+export type WorkoutImportInfo =
+  | { mode: "structured"; counts: EntityCounts }
+  | {
+      mode: "reconstructed";
+      reason: string; // technical detail for secondary display
+      exercisesToCreate: number;
+      workoutsToCreate: number;
+    }
+  | { mode: "unrecoverable"; reason: string }
+  | { mode: "empty" };
+
+export interface ImportPreview {
+  exercises: EntityCounts;
+  routines: EntityCounts;
+  plans: EntityCounts;
+  workouts: WorkoutImportInfo;
+  measurementTypes: EntityCounts;
+  measurementEntries: EntityCounts;
+  analyticsCharts: EntityCounts;
+}
 
 /**
  * Full snapshot of the local database. Because YAFA is offline-only, this file
@@ -229,6 +266,151 @@ async function reconstructAndPersist(raw: RawWorkouts): Promise<void> {
     await db.exercises.bulkPut(exercisesToAdd);
     await db.workouts.bulkPut(workoutsToPut);
   });
+}
+
+/**
+ * Classify each backup item against what is already stored locally:
+ *  • new       — its id is absent locally
+ *  • unchanged — its id exists and every field is deep-equal (already up to date)
+ *  • updated   — its id exists but at least one field diverges
+ * Pure (no Dexie) so it is unit-testable in isolation.
+ */
+export function diffEntities<T extends { id: string }>(
+  backupItems: T[] | undefined,
+  localItems: T[],
+): EntityCounts {
+  const localById = new Map(localItems.map((i) => [i.id, i]));
+  let newCount = 0;
+  let updatedCount = 0;
+  let unchangedCount = 0;
+  for (const item of backupItems ?? []) {
+    const local = localById.get(item.id);
+    if (!local) newCount++;
+    else if (deepEqual(local, item)) unchangedCount++;
+    else updatedCount++;
+  }
+  return { new: newCount, updated: updatedCount, unchanged: unchangedCount };
+}
+
+/**
+ * Compute a dry-run preview of what a backup would import: new / updated /
+ * unchanged counts per entity type and the workout import mode. Pure reads —
+ * nothing is written to the database.
+ */
+export async function previewImport(
+  backup: BackupFile,
+): Promise<ImportPreview> {
+  if (backup?.app !== "yafa" || !backup.data) {
+    throw new Error("This file is not a valid YAFA backup.");
+  }
+  const { data } = backup;
+
+  const [
+    localExercises,
+    localRoutines,
+    localPlans,
+    localWorkouts,
+    localMeasurementTypes,
+    localMeasurementEntries,
+    localAnalyticsCharts,
+  ] = await Promise.all([
+    db.exercises.toArray(),
+    db.routines.toArray(),
+    db.plans.toArray(),
+    db.workouts.toArray(),
+    db.measurementTypes.toArray(),
+    db.measurementEntries.toArray(),
+    db.analyticsCharts.toArray(),
+  ]);
+
+  const exercises = diffEntities(data.exercises, localExercises);
+  const routines = diffEntities(data.routines, localRoutines);
+  const plans = diffEntities(data.plans, localPlans);
+  const measurementTypes = diffEntities(
+    data.measurementTypes,
+    localMeasurementTypes,
+  );
+  const measurementEntries = diffEntities(
+    data.measurementEntries,
+    localMeasurementEntries,
+  );
+  const analyticsCharts = diffEntities(
+    data.analyticsCharts,
+    localAnalyticsCharts,
+  );
+
+  // Dry-run the raw reconstruction to count what it would create, without
+  // writing anything. Mirrors reconstructAndPersist's inputs.
+  const reconstructionCounts = (raw: RawWorkouts) => {
+    let idCounter = 0;
+    const result = reconstructWorkoutsFromRaw({
+      raw,
+      existingExercises: [...localExercises, ...(data.exercises ?? [])],
+      existingWorkouts: localWorkouts.filter(
+        (w) => w.routineId === UNKNOWN_ROUTINE_ID,
+      ),
+      routineId: UNKNOWN_ROUTINE_ID,
+      now: 0,
+      newId: () => `preview-${idCounter++}`,
+    });
+    return {
+      exercisesToCreate: result.exercisesToAdd.length,
+      workoutsToCreate: result.workoutsToPut.length,
+    };
+  };
+
+  const structured = data.workouts ?? [];
+  const raw = data.rawWorkouts;
+  const hasRaw = !!raw && Object.keys(raw).length > 0;
+
+  let workouts: WorkoutImportInfo;
+
+  if (!structured.length && !hasRaw) {
+    workouts = { mode: "empty" };
+  } else if (!structured.length) {
+    // Legacy backup: only raw data present — always reconstructs.
+    workouts = {
+      mode: "reconstructed",
+      reason: "Backup contains no structured workout data.",
+      ...reconstructionCounts(raw!),
+    };
+  } else {
+    const mergedExerciseIds = new Set([
+      ...localExercises.map((e) => e.id),
+      ...(data.exercises ?? []).map((e) => e.id),
+    ]);
+    let invalidReason: string | null = null;
+    try {
+      assertStructuredWorkoutsValid(structured, mergedExerciseIds);
+    } catch (err) {
+      invalidReason = (err as Error).message;
+    }
+
+    if (invalidReason === null) {
+      workouts = {
+        mode: "structured",
+        counts: diffEntities(structured, localWorkouts),
+      };
+    } else if (hasRaw) {
+      workouts = {
+        mode: "reconstructed",
+        reason: invalidReason,
+        ...reconstructionCounts(raw!),
+      };
+    } else {
+      workouts = { mode: "unrecoverable", reason: invalidReason };
+    }
+  }
+
+  return {
+    exercises,
+    routines,
+    plans,
+    workouts,
+    measurementTypes,
+    measurementEntries,
+    analyticsCharts,
+  };
 }
 
 /**

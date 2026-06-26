@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { assertStructuredWorkoutsValid } from "../backup";
+import { assertStructuredWorkoutsValid, diffEntities } from "../backup";
 import type { Workout } from "../types";
 
 const known = new Set(["ex-1"]);
@@ -52,5 +52,65 @@ describe("assertStructuredWorkoutsValid", () => {
   it("throws when startTime is missing", () => {
     const bad = { ...valid, startTime: undefined } as unknown as Workout;
     expect(() => assertStructuredWorkoutsValid([bad], known)).toThrow();
+  });
+});
+
+describe("diffEntities", () => {
+  const local = [
+    { id: "a", name: "Alpha", created_at: 1 },
+    { id: "b", name: "Beta", created_at: 2 },
+  ];
+
+  it("counts a backup item with a fresh id as new", () => {
+    const backup = [{ id: "c", name: "Gamma", created_at: 3 }];
+    expect(diffEntities(backup, local)).toEqual({
+      new: 1,
+      updated: 0,
+      unchanged: 0,
+    });
+  });
+
+  it("counts an identical item as unchanged, not updated", () => {
+    const backup = [{ id: "a", name: "Alpha", created_at: 1 }];
+    expect(diffEntities(backup, local)).toEqual({
+      new: 0,
+      updated: 0,
+      unchanged: 1,
+    });
+  });
+
+  it("counts a field-only divergence as updated, not new", () => {
+    const backup = [{ id: "a", name: "Alpha renamed", created_at: 1 }];
+    expect(diffEntities(backup, local)).toEqual({
+      new: 0,
+      updated: 1,
+      unchanged: 0,
+    });
+  });
+
+  it("classifies a mixed batch", () => {
+    const backup = [
+      { id: "a", name: "Alpha", created_at: 1 }, // unchanged
+      { id: "b", name: "Beta v2", created_at: 2 }, // updated
+      { id: "z", name: "Zeta", created_at: 9 }, // new
+    ];
+    expect(diffEntities(backup, local)).toEqual({
+      new: 1,
+      updated: 1,
+      unchanged: 1,
+    });
+  });
+
+  it("treats an empty or undefined backup list as all zeros", () => {
+    expect(diffEntities([], local)).toEqual({
+      new: 0,
+      updated: 0,
+      unchanged: 0,
+    });
+    expect(diffEntities(undefined, local)).toEqual({
+      new: 0,
+      updated: 0,
+      unchanged: 0,
+    });
   });
 });
