@@ -60,7 +60,11 @@ export default defineConfig(({ mode }) => ({
         // Everything is precached, so the app shell and assets are served
         // cache-first after the initial fetch — no network round-trip on load.
         // Navigation requests fall back to the precached index.html.
-        globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"],
+        // 404.html is an nginx-only error page served via the `error_page`
+        // directive (internal; not directly accessible). Precaching it causes
+        // the SW install to fail because the fetch returns a 404.
+        globIgnores: ["404.html"],
         navigateFallback: "index.html",
         navigateFallbackDenylist: [/^\/jthies73/],
         // Don't let a new worker take over until the user asks for it.

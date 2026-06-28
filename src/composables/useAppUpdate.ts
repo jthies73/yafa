@@ -90,9 +90,12 @@ export function useAppUpdate() {
       // Activating the new service worker automatically reloads the page.
       if (needRefresh.value) {
         await applyCodeUpdate();
-      } else {
-        // Fallback for dev environment or if service workers are disabled.
+      } else if (!("serviceWorker" in navigator)) {
+        // Dev mode: no SW support, a hard reload is the only option.
         location.reload();
+      } else {
+        status.value = "error";
+        errorMessage.value = "Update not detected. Please try again later.";
       }
     } catch (err) {
       errorMessage.value = (err as Error).message;
