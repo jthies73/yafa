@@ -249,6 +249,6 @@ export interface AnalyticsChartConfig {
 
 // App preferences are persisted in localStorage (not IndexedDB).
 // Keys are namespaced with "yafa:" to avoid collisions.
-//   yafa:activePage  — last visited fullPath, restored on boot
-//   yafa:units       — "metric" | "imperial"
-//   theme            — "dark" | "light" (set by AppHeader, no namespace for legacy compat)
+//   yafa:activeWorkout — in-progress session snapshot, resumed on boot (device-only, not in backups)
+//   yafa:units         — "metric" | "imperial"
+//   theme              — "dark" | "light" (set by AppHeader, no namespace for legacy compat)

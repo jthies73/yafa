@@ -1,11 +1,12 @@
-import { ref, watch } from "vue";
+import { ref, watch, onScopeDispose } from "vue";
 import { getConfigSetCount } from "../utils/progression";
 import type { Set as LoggedSet, WorkoutExercise } from "../db/types";
 import type { PrescribedSet } from "../engine/prescription";
 import { DEFAULT_RPE_MATRIX } from "../db/rpeMatrix";
 import { proposeSetAdjustment, type SetAdjustment } from "../engine/adjustment";
 import { roundToLoadable } from "../engine/matrix";
-import { useActiveWorkout } from "./useActiveWorkout";
+import { useActiveWorkout, takePendingRestore } from "./useActiveWorkout";
+import { writeWorkoutSnapshot } from "./workoutPersistence";
 
 export interface SetEntry {
   id: string; // stable identity — becomes the persisted Set's id
@@ -103,6 +104,9 @@ export function useWorkoutTracker() {
     routine,
     exercisesMap,
     prescriptions,
+    plannedCounts,
+    calculatorSets,
+    isMinimized,
     syncExercises,
     syncProgress,
   } = useActiveWorkout();
@@ -135,7 +139,22 @@ export function useWorkoutTracker() {
     });
   }
 
-  watch(() => activeWorkout.value?.id, rebuild, { immediate: true });
+  // On mount, prefer a persisted snapshot (resume) over a fresh rebuild. The
+  // handoff is one-shot, so a later startWorkout (new id) always rebuilds.
+  function rebuildOrRestore() {
+    const pending = takePendingRestore();
+    if (pending && activeWorkout.value) {
+      cards.value = pending.cards;
+      addedNames.value = pending.addedNames;
+      // The cards/project watcher isn't registered yet at this immediate run,
+      // so project once to repopulate activeWorkout.exercises and trackerStats.
+      project();
+      return;
+    }
+    rebuild();
+  }
+
+  watch(() => activeWorkout.value?.id, rebuildOrRestore, { immediate: true });
 
   // Continuous projection: every card mutation re-derives the workout's
   // exercises (completed sets only, in final card order) so finishing the
@@ -164,6 +183,61 @@ export function useWorkoutTracker() {
   }
 
   watch(cards, project, { deep: true });
+
+  // ── Persist the running session ─────────────────────────────────────────────
+  // Debounced snapshot of the whole live session to localStorage so it survives
+  // an app close/reload. Pending inputs and adjusted targets live in `cards`, so
+  // the save is keyed off cards plus the satellite session state.
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function writeSnapshot() {
+    const w = activeWorkout.value;
+    if (!w) return;
+    writeWorkoutSnapshot(localStorage, {
+      workout: { id: w.id, routineId: w.routineId, startTime: w.startTime },
+      routine: routine.value,
+      exercisesMap: exercisesMap.value,
+      prescriptions: prescriptions.value,
+      plannedCounts: plannedCounts.value,
+      calculatorSets: calculatorSets.value,
+      isMinimized: isMinimized.value,
+      cards: cards.value,
+      addedNames: addedNames.value,
+    });
+  }
+
+  function persist() {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      writeSnapshot();
+    }, 400);
+  }
+
+  function flush() {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    writeSnapshot();
+  }
+
+  watch([cards, addedNames, calculatorSets, isMinimized], persist, {
+    deep: true,
+  });
+
+  // Flush synchronously when the page is backgrounded/hidden (the "phone shut
+  // off" case) — a debounced write would otherwise lose the last edits.
+  const onVisibility = () => {
+    if (document.visibilityState === "hidden") flush();
+  };
+  document.addEventListener("visibilitychange", onVisibility);
+  window.addEventListener("pagehide", flush);
+  onScopeDispose(() => {
+    if (saveTimer) clearTimeout(saveTimer);
+    document.removeEventListener("visibilitychange", onVisibility);
+    window.removeEventListener("pagehide", flush);
+  });
 
   const exerciseName = (id: string) =>
     exercisesMap.value[id]?.name || addedNames.value[id] || "Exercise";

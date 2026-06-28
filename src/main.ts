@@ -7,8 +7,7 @@ import { initializeFeatures, useFeatureFlags } from "./config/features";
 import { vNumpad } from "./directives/numpad";
 import { vKeynav } from "./directives/keynav";
 import { initializeSettings } from "./config/settings";
-
-const ACTIVE_PAGE_KEY = "yafa:activePage";
+import { restoreActiveWorkout } from "./composables/useActiveWorkout";
 
 document.addEventListener("focusin", (e) => {
   const target = e.target as HTMLElement;
@@ -38,19 +37,9 @@ async function bootstrap() {
       await seedDevSampleData();
     }
 
-    // Restore last active route from localStorage.
-    const savedPage = localStorage.getItem(ACTIVE_PAGE_KEY);
-    if (savedPage) {
-      await router.replace(savedPage).catch(() => {
-        // If the saved path is no longer valid just land on dashboard.
-        router.replace({ name: "dashboard" });
-      });
-    }
-
-    // Persist the current route on every navigation.
-    router.afterEach((to) => {
-      localStorage.setItem(ACTIVE_PAGE_KEY, to.fullPath);
-    });
+    // Rehydrate an in-progress workout from localStorage before the app mounts,
+    // so the running sheet reappears and the tracker resumes where it left off.
+    restoreActiveWorkout();
   } catch (err) {
     console.error("YAFA: Bootstrap failed", err);
   }

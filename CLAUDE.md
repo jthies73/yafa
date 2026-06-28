@@ -17,7 +17,7 @@ Guidance for Claude Code when working in this repository.
 
 `index.html` is a static landing page (inline styles + ~3s redirect) kept static for SEO before JS runs — don't convert it into a Vue route. The app mounts at `#app`.
 
-Persistence: all data is offline via IndexedDB. Save/restore the route `fullPath` (e.g. `/plans/123`) so reloads return to the exact page. PWA uses "prompt" mode.
+Persistence: all data is offline via IndexedDB. The app always starts on the dashboard. An in-progress workout is snapshotted to localStorage (`yafa:activeWorkout`, device-only, not in backups) and resumed on reopen — see `composables/workoutPersistence.ts`. PWA uses "prompt" mode.
 
 ## Stack
 

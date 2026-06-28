@@ -20,7 +20,7 @@ describe("readPortableSettings", () => {
       "yafa:theme": "dark",
       "yafa:weightUnit": "lbs",
       // device/session keys must NOT travel:
-      "yafa:activePage": "/analytics",
+      "yafa:activeWorkout": "{}",
       "yafa:dismissedInstallBanner": "true",
     });
     expect(readPortableSettings(store)).toEqual({
@@ -41,14 +41,14 @@ describe("applyPortableSettings", () => {
       {
         "yafa:theme": "light",
         "yafa:lengthUnit": "in",
-        "yafa:activePage": "/settings", // not allowlisted → ignored
+        "yafa:activeWorkout": "{}", // not allowlisted → ignored
         bogus: "x", // unknown → ignored
       },
       store,
     );
     expect(store.map.get("yafa:theme")).toBe("light");
     expect(store.map.get("yafa:lengthUnit")).toBe("in");
-    expect(store.map.has("yafa:activePage")).toBe(false);
+    expect(store.map.has("yafa:activeWorkout")).toBe(false);
     expect(store.map.has("bogus")).toBe(false);
   });
 

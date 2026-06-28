@@ -16,6 +16,11 @@ import {
 import { buildWorkoutSummary } from "../analytics/service";
 import type { WorkoutSummary } from "../analytics/summary";
 import type { ExercisePrescription } from "../engine/prescription";
+import type { ExerciseCard } from "./useWorkoutTracker";
+import {
+  readWorkoutSnapshot,
+  clearWorkoutSnapshot,
+} from "./workoutPersistence";
 
 export interface CalculatorSet {
   exerciseId: string;
@@ -68,6 +73,42 @@ const showSheet = ref(false);
 // the workout at finishWorkout() only.
 const calculatorSets = ref<CalculatorSet[]>([]);
 
+// Cards/addedNames captured from a persisted snapshot at restore, handed off to
+// the tracker which consumes them once on mount (instead of rebuilding fresh).
+let pendingRestore: {
+  cards: ExerciseCard[];
+  addedNames: Record<string, string>;
+} | null = null;
+
+/** Consume the one-shot restore handoff (null after the first read). */
+export function takePendingRestore() {
+  const p = pendingRestore;
+  pendingRestore = null;
+  return p;
+}
+
+/**
+ * Rehydrate the running session from localStorage on app startup. Sets the
+ * module refs and opens the sheet so the tracker, mounting next, picks up the
+ * cards via takePendingRestore. No-op when nothing is persisted. Must run before
+ * the app mounts so the tracker's immediate rebuild sees the handoff.
+ */
+export function restoreActiveWorkout() {
+  const snap = readWorkoutSnapshot(localStorage);
+  if (!snap) return;
+  prescriptions.value = snap.prescriptions;
+  plannedCounts.value = snap.plannedCounts;
+  routine.value = snap.routine;
+  exercisesMap.value = snap.exercisesMap;
+  calculatorSets.value = snap.calculatorSets;
+  trackerStats.value = { completed: 0, pending: 0 };
+  // exercises are re-projected from the hydrated cards by the tracker's project().
+  activeWorkout.value = { ...snap.workout, exercises: [] };
+  pendingRestore = { cards: snap.cards, addedNames: snap.addedNames };
+  isMinimized.value = snap.isMinimized;
+  showSheet.value = true;
+}
+
 // Clears the running workout's state. The post-workout summary is intentionally
 // left untouched so it can outlive the session it describes (closeSummary owns
 // it); a discard clears it too via discardWorkout.
@@ -81,6 +122,8 @@ function reset() {
   calculatorSets.value = [];
   isMinimized.value = false;
   showSheet.value = false;
+  // A finished/discarded session must never resurface on the next launch.
+  clearWorkoutSnapshot(localStorage);
 }
 
 export function useActiveWorkout() {
@@ -241,6 +284,7 @@ export function useActiveWorkout() {
     routine: computed(() => routine.value),
     exercisesMap: computed(() => exercisesMap.value),
     prescriptions: computed(() => prescriptions.value),
+    plannedCounts: computed(() => plannedCounts.value),
     trackerStats: computed(() => trackerStats.value),
     calculatorSets: computed(() => calculatorSets.value),
     calculatorSetCount: computed(() => calculatorSets.value.length),
