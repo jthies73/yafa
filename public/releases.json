@@ -1,6 +1,10 @@
 {
-  "latest": "0.14.0",
+  "latest": "0.15.0",
   "releases": [
+    {
+      "version": "0.15.0",
+      "notes": "- Active Workout persistence and Note Taking."
+    },
     {
       "version": "0.14.0",
       "notes": "- SEO improvements."
