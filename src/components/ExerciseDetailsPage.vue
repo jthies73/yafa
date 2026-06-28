@@ -262,6 +262,12 @@ const routineNameOf = (w: Workout): string =>
           >
             {{ exercise.primaryMuscleGroups.join(", ") }}
           </p>
+          <p
+            v-if="exercise.notes"
+            class="mt-2 whitespace-pre-wrap text-sm text-text-light dark:text-text-dark opacity-70"
+          >
+            {{ exercise.notes }}
+          </p>
         </div>
         <div class="flex items-center gap-2 self-start md:shrink-0">
           <button

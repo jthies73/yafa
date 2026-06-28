@@ -1,5 +1,6 @@
 import { ref, computed } from "vue";
 import { db } from "../db/db";
+import { updateExerciseNotes } from "../db/repository";
 import { getConfigSetCount } from "../utils/progression";
 import type {
   Workout,
@@ -181,6 +182,19 @@ export function useActiveWorkout() {
     trackerStats.value = stats;
   };
 
+  /**
+   * Edit the exercise's GLOBAL note (Exercise.notes) mid-workout: reflect it in the
+   * live exercisesMap so the UI updates immediately, and persist to the DB. The
+   * snapshot serializes exercisesMap, so the edit also survives a resume.
+   */
+  const setExerciseNote = (exerciseId: string, notes: string | undefined) => {
+    const ex = exercisesMap.value[exerciseId];
+    if (ex) ex.notes = notes?.trim() || undefined;
+    void updateExerciseNotes(exerciseId, notes).catch((error) => {
+      console.error("YAFA: failed to save exercise note", error);
+    });
+  };
+
   const logCalculatorSet = (entry: CalculatorSet) => {
     calculatorSets.value.push(entry);
   };
@@ -229,8 +243,9 @@ export function useActiveWorkout() {
       JSON.stringify({
         ...activeWorkout.value,
         endTime: Date.now(),
-        // Exercises the user never logged carry no information — drop them.
-        exercises: merged.filter((e) => e.sets.length),
+        // Drop exercises the user never touched — but keep one carrying a
+        // workout note even with no logged sets (e.g. "skipped, shoulder hurt").
+        exercises: merged.filter((e) => e.sets.length || e.note),
       }),
     );
     // Build the summary BEFORE persisting/learning: PR comparisons must see
@@ -315,6 +330,7 @@ export function useActiveWorkout() {
     maximize,
     syncExercises,
     syncProgress,
+    setExerciseNote,
     logCalculatorSet,
     removeCalculatorSet,
     sessionSetsFor,

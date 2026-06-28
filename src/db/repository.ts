@@ -242,6 +242,18 @@ export async function updateExercise(
 }
 
 /**
+ * Update only the global note, leaving every other exercise field untouched.
+ * Used by the routine config sheet and the in-workout notes editor — both of which
+ * must not rewrite name/muscles/matrix the way updateExercise does.
+ */
+export async function updateExerciseNotes(
+  id: string,
+  notes: string | undefined,
+): Promise<void> {
+  await db.exercises.update(id, { notes: notes?.trim() || undefined });
+}
+
+/**
  * Counts how many routine slots currently reference this exercise. Used to warn
  * the user before deletion (an exercise may appear multiple times in a routine).
  */

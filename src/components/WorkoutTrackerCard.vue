@@ -12,10 +12,12 @@ const props = defineProps<{
   collapsed?: boolean;
   /** Per-set flag: whether a re-prescription proposal is available. */
   proposalFlags?: boolean[];
+  /** Show the note indicator (a global or this-workout note exists). */
+  hasNote?: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: "request-delete-exercise"): void;
+  (e: "open-notes"): void;
   (e: "request-delete-set", index: number): void;
   (e: "edit-rpe", index: number): void;
   (e: "complete", index: number, field: "reps" | "weight"): void;
@@ -84,28 +86,43 @@ defineExpose({
       >
         {{ exerciseName }}
       </button>
-      <!-- Delete exercise -->
+      <!-- Note indicator (a note exists for this exercise) -->
+      <svg
+        v-if="hasNote"
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="shrink-0 text-accent"
+        aria-hidden="true"
+      >
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="8" y1="13" x2="16" y2="13" />
+        <line x1="8" y1="17" x2="13" y2="17" />
+      </svg>
+      <!-- Exercise menu (notes + remove) -->
       <button
         type="button"
-        class="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg text-text-light dark:text-text-dark opacity-40 hover:opacity-100 hover:text-red-500 dark:hover:text-red-400 cursor-pointer transition-colors duration-150"
-        title="Remove exercise"
-        @click="emit('request-delete-exercise')"
+        class="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg text-text-light dark:text-text-dark opacity-40 hover:opacity-100 hover:text-accent cursor-pointer transition-colors duration-150"
+        title="Notes & options"
+        @click="emit('open-notes')"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
           height="16"
           viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          fill="currentColor"
         >
-          <polyline points="3 6 5 6 21 6" />
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-          <path d="M10 11v6M14 11v6" />
-          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+          <circle cx="12" cy="5" r="1.75" />
+          <circle cx="12" cy="12" r="1.75" />
+          <circle cx="12" cy="19" r="1.75" />
         </svg>
       </button>
     </div>

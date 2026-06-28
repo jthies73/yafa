@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import type { PrescribedSet } from "../../engine/prescription";
 import {
   prescribedSetEntry,
+  projectCards,
   toSetRecord,
+  type ExerciseCard,
   type SetEntry,
 } from "../useWorkoutTracker";
 
@@ -17,6 +19,13 @@ const entry = (overrides: Partial<SetEntry> = {}): SetEntry => ({
 });
 
 const target: PrescribedSet = { reps: 5, rpe: 9, weight: 82.5, role: "top" };
+
+const card = (overrides: Partial<ExerciseCard> = {}): ExerciseCard => ({
+  id: "card-1",
+  exerciseId: "ex-1",
+  sets: [],
+  ...overrides,
+});
 
 describe("toSetRecord", () => {
   it("takes targets from the prescription and actuals from the inputs", () => {
@@ -83,5 +92,42 @@ describe("prescribedSetEntry", () => {
     expect(row.reps).toBe("8");
     expect(row.weight).toBe("");
     expect(row.rpe).toBe("");
+  });
+});
+
+describe("projectCards", () => {
+  it("keeps only completed sets and counts completed vs pending", () => {
+    const result = projectCards([
+      card({ sets: [entry(), entry({ id: "entry-2", done: false })] }),
+    ]);
+    expect(result.completed).toBe(1);
+    expect(result.pending).toBe(1);
+    expect(result.exercises).toHaveLength(1);
+    expect(result.exercises[0].sets).toHaveLength(1);
+    expect(result.exercises[0].sets[0].id).toBe("entry-1");
+  });
+
+  it("carries a card's workout note onto the projected exercise", () => {
+    const result = projectCards([
+      card({ note: "felt heavy", sets: [entry()] }),
+    ]);
+    expect(result.exercises[0].note).toBe("felt heavy");
+  });
+
+  it("omits the note key when the card has none", () => {
+    const result = projectCards([card({ sets: [entry()] })]);
+    expect("note" in result.exercises[0]).toBe(false);
+  });
+
+  it("projects a note-only card with no completed sets (preserved at finish via sets.length || note)", () => {
+    const result = projectCards([
+      card({ note: "skipped — shoulder", sets: [] }),
+    ]);
+    expect(result.exercises[0]).toMatchObject({
+      exerciseId: "ex-1",
+      sets: [],
+      note: "skipped — shoulder",
+    });
+    expect(result.completed).toBe(0);
   });
 });

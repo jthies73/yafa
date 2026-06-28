@@ -11,6 +11,7 @@ import { useActiveWorkout } from "../composables/useActiveWorkout";
 import { useSortableList } from "../composables/useSortableList";
 import type { SetAdjustment } from "../engine/adjustment";
 import WorkoutTrackerCard from "./WorkoutTrackerCard.vue";
+import WorkoutExerciseNotesSheet from "./WorkoutExerciseNotesSheet.vue";
 import ExercisePickerSheet from "./ExercisePickerSheet.vue";
 import ExerciseFormSheet from "./ExerciseFormSheet.vue";
 import RpeSheet from "./RpeSheet.vue";
@@ -33,7 +34,7 @@ const {
 } = useWorkoutTracker();
 
 const router = useRouter();
-const { isMinimized } = useActiveWorkout();
+const { isMinimized, exercisesMap, setExerciseNote } = useActiveWorkout();
 
 // Tapping an exercise name jumps to its detail page; minimize the running sheet
 // first so the page is visible (the workout stays live behind the docked bar).
@@ -149,6 +150,40 @@ const onConfirmDelete = () => {
   pendingDelete = null;
 };
 
+// ── Exercise notes sheet (global note + this-workout note + remove) ───────────
+const notesOpen = ref(false);
+const notesCardIndex = ref<number | null>(null);
+const notesCard = computed(() =>
+  notesCardIndex.value === null
+    ? null
+    : (cards.value[notesCardIndex.value] ?? null),
+);
+
+const globalNoteFor = (exerciseId: string) =>
+  exercisesMap.value[exerciseId]?.notes;
+
+const openNotes = (cardIndex: number) => {
+  notesCardIndex.value = cardIndex;
+  notesOpen.value = true;
+};
+
+const onUpdateGlobalNote = (notes: string | undefined) => {
+  const card = notesCard.value;
+  if (card) setExerciseNote(card.exerciseId, notes);
+};
+
+const onUpdateWorkoutNote = (notes: string | undefined) => {
+  const card = notesCard.value;
+  if (card) card.note = notes;
+};
+
+// Remove from the notes sheet reuses the shared confirm-then-delete flow.
+const onRemoveFromNotes = () => {
+  const idx = notesCardIndex.value;
+  notesOpen.value = false;
+  if (idx !== null) requestDeleteExercise(idx);
+};
+
 const cardRefs = ref<
   Record<number, InstanceType<typeof WorkoutTrackerCard> | null>
 >({});
@@ -236,8 +271,9 @@ const onSelectRpe = (rpe: string) => {
         :exercise-name="exerciseName(card.exerciseId)"
         :collapsed="dragging"
         :proposal-flags="proposalFlags[cardIndex]"
+        :has-note="!!card.note || !!globalNoteFor(card.exerciseId)"
         @open-detail="openExerciseDetail(card.exerciseId)"
-        @request-delete-exercise="requestDeleteExercise(cardIndex)"
+        @open-notes="openNotes(cardIndex)"
         @request-delete-set="requestDeleteSet(cardIndex, $event)"
         @edit-rpe="editRpe(cardIndex, $event)"
         @complete="
@@ -270,6 +306,16 @@ const onSelectRpe = (rpe: string) => {
       + Add exercise
     </button>
   </div>
+
+  <WorkoutExerciseNotesSheet
+    v-model:open="notesOpen"
+    :exercise-name="notesCard ? exerciseName(notesCard.exerciseId) : ''"
+    :global-note="notesCard ? globalNoteFor(notesCard.exerciseId) : undefined"
+    :workout-note="notesCard?.note"
+    @update:global-note="onUpdateGlobalNote"
+    @update:workout-note="onUpdateWorkoutNote"
+    @remove="onRemoveFromNotes"
+  />
 
   <ExercisePickerSheet
     v-model:open="showPicker"

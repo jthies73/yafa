@@ -22,6 +22,7 @@ export interface ExerciseCard {
   id: string; // stable key so reordering never re-creates the wrong card
   exerciseId: string;
   sets: SetEntry[];
+  note?: string; // workout-specific remark, persisted onto WorkoutExercise.note
 }
 
 // Mirror the row's own validity checks exactly (RPE is not required to complete).
@@ -98,6 +99,42 @@ export function toSetRecord(entry: SetEntry, prevTimestamp: number): LoggedSet {
   };
 }
 
+/**
+ * Pure projection of tracker cards into the workout's exercises: keeps only
+ * completed sets (in card order, with monotonic timestamps), carries each card's
+ * workout-specific note, and counts completed/pending sets. The reactive project()
+ * wires this to the active workout; kept pure so it's independently testable.
+ */
+export function projectCards(cards: ExerciseCard[]): {
+  exercises: WorkoutExercise[];
+  completed: number;
+  pending: number;
+} {
+  const exercises: WorkoutExercise[] = [];
+  let completed = 0;
+  let pending = 0;
+  for (const card of cards) {
+    const sets: LoggedSet[] = [];
+    let prevTimestamp = 0;
+    for (const entry of card.sets) {
+      if (isDone(entry)) {
+        const record = toSetRecord(entry, prevTimestamp);
+        prevTimestamp = record.timestamp;
+        sets.push(record);
+        completed += 1;
+      } else {
+        pending += 1;
+      }
+    }
+    exercises.push({
+      exerciseId: card.exerciseId,
+      sets,
+      ...(card.note ? { note: card.note } : {}),
+    });
+  }
+  return { exercises, completed, pending };
+}
+
 export function useWorkoutTracker() {
   const {
     activeWorkout,
@@ -160,24 +197,7 @@ export function useWorkoutTracker() {
   // exercises (completed sets only, in final card order) so finishing the
   // workout needs no extra data path — activeWorkout is always truthful.
   function project() {
-    const exercises: WorkoutExercise[] = [];
-    let completed = 0;
-    let pending = 0;
-    for (const card of cards.value) {
-      const sets: LoggedSet[] = [];
-      let prevTimestamp = 0;
-      for (const entry of card.sets) {
-        if (isDone(entry)) {
-          const record = toSetRecord(entry, prevTimestamp);
-          prevTimestamp = record.timestamp;
-          sets.push(record);
-          completed += 1;
-        } else {
-          pending += 1;
-        }
-      }
-      exercises.push({ exerciseId: card.exerciseId, sets });
-    }
+    const { exercises, completed, pending } = projectCards(cards.value);
     syncExercises(exercises);
     syncProgress({ completed, pending });
   }

@@ -152,6 +152,9 @@ export interface Set {
 export interface WorkoutExercise {
   exerciseId: string;
   sets: Set[];
+  // A one-off remark for this session ("felt heavy", "switch next meso"). Distinct
+  // from the exercise's global Exercise.notes (reusable setup info).
+  note?: string;
 }
 
 export interface Workout {

@@ -15,6 +15,7 @@ import {
   updateRoutine,
   deleteRoutine,
   createExercise,
+  updateExerciseNotes,
   type RoutineInput,
   type ExerciseInput,
 } from "../db/repository";
@@ -176,12 +177,13 @@ const toPlainConfig = (
   cfg?: RoutineExerciseConfig,
 ): RoutineExerciseConfig | undefined => {
   if (!cfg) return undefined;
+  // notes are no longer stored per routine slot — they live on the exercise
+  // (Exercise.notes) and are saved via handleSaveNotes.
   return {
     progressionModel: cfg.progressionModel,
     progressionParams: {
       ...cfg.progressionParams,
     } as unknown as ProgressionParams,
-    ...(cfg.notes ? { notes: cfg.notes } : {}),
     ...(cfg.lockedFields?.length
       ? { lockedFields: [...cfg.lockedFields] }
       : {}),
@@ -214,6 +216,12 @@ const handleSaveConfig = async (config: RoutineExerciseConfig) => {
   } finally {
     saving.value = false;
   }
+};
+
+// Persist the exercise's global note (Exercise.notes), independent of the routine.
+const handleSaveNotes = async (notes: string | undefined) => {
+  if (!configExerciseId.value) return;
+  await updateExerciseNotes(configExerciseId.value, notes);
 };
 
 const removeExercise = async (idx: number) => {
@@ -521,8 +529,10 @@ const getSummary = (config?: RoutineExerciseConfig) => {
     :exercise-id="configExerciseId"
     :is-editing="editingIndex !== null"
     :initial-config="initialConfig"
+    :initial-notes="exercisesMap[configExerciseId]?.notes"
     :periodization-enabled="periodizationEnabled"
     @save="handleSaveConfig"
+    @save-notes="handleSaveNotes"
     @remove="handleRemoveExercise"
     @open-detail="openExerciseDetail"
   />

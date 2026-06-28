@@ -30,6 +30,9 @@ const props = defineProps<{
   isEditing: boolean;
   exerciseId?: string;
   initialConfig?: RoutineExerciseConfig;
+  // The exercise's GLOBAL note (Exercise.notes) — edited here and saved back to the
+  // exercise, not the routine slot, so it's shared everywhere the exercise is used.
+  initialNotes?: string;
   periodizationEnabled?: boolean;
 }>();
 
@@ -37,6 +40,7 @@ const open = defineModel<boolean>("open", { required: true });
 
 const emit = defineEmits<{
   (e: "save", config: RoutineExerciseConfig): void;
+  (e: "save-notes", notes: string | undefined): void;
   (e: "remove"): void;
   (e: "open-detail"): void;
 }>();
@@ -99,18 +103,18 @@ watch(
   (isOpen) => {
     if (!isOpen) return;
     advancedOpen.value = false;
+    // The note is the exercise's global note, independent of the progression config.
+    configNotes.value = props.initialNotes ?? "";
     if (props.initialConfig) {
       configModel.value = props.initialConfig.progressionModel;
       configParams.value = paramsFor(
         props.initialConfig.progressionModel,
         props.initialConfig.progressionParams,
       );
-      configNotes.value = props.initialConfig.notes ?? "";
       lockedFields.value = new Set(props.initialConfig.lockedFields ?? []);
     } else {
       configModel.value = "linear";
       configParams.value = paramsFor("linear");
-      configNotes.value = "";
       lockedFields.value = new Set();
     }
   },
@@ -141,9 +145,10 @@ const save = async () => {
     progressionParams: {
       ...configParams.value,
     } as unknown as ProgressionParams,
-    ...(configNotes.value ? { notes: configNotes.value } : {}),
     ...(applicableLocks.length ? { lockedFields: applicableLocks } : {}),
   };
+  // The note saves to the exercise (global), separate from the routine config.
+  emit("save-notes", configNotes.value.trim() || undefined);
   emit("save", config);
 };
 </script>
@@ -846,20 +851,20 @@ const save = async () => {
         </p>
       </div>
 
-      <!-- Notes -->
+      <!-- Notes (global, saved to the exercise) -->
       <div class="flex flex-col gap-1.5">
         <label
           class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
         >
-          Notes
+          Exercise Note
           <span class="normal-case font-normal opacity-60 ml-1"
-            >(optional)</span
+            >(applies everywhere)</span
           >
         </label>
         <textarea
           v-model="configNotes"
           rows="3"
-          placeholder="Any specific cues or notes for this exercise..."
+          placeholder="Seat height, machine setup, form cues…"
           class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2.5 text-sm text-text-h-light dark:text-text-h-dark placeholder-text-light/40 dark:placeholder-text-dark/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50 resize-none"
         ></textarea>
       </div>
