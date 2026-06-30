@@ -613,20 +613,13 @@ const save = async () => {
             />
           </div>
           <div class="flex flex-col gap-1.5">
-            <div class="flex items-center justify-between gap-1 min-h-[18px]">
-              <span class="flex items-center gap-1">
-                <label
-                  class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-                >
-                  Back-Off Sets
-                </label>
-                <InfoIcon topic="backOffSets" />
-              </span>
-              <LockToggle
-                v-if="periodizationEnabled"
-                :locked="isLocked('backOffSets')"
-                @toggle="toggleLock('backOffSets')"
-              />
+            <div class="flex items-center gap-1">
+              <label
+                class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+              >
+                Back-Off Sets
+              </label>
+              <InfoIcon topic="backOffSets" />
             </div>
             <input
               v-model.number="configParams.backOffSets"
@@ -640,20 +633,13 @@ const save = async () => {
             />
           </div>
           <div class="flex flex-col gap-1.5">
-            <div class="flex items-center justify-between gap-1 min-h-[18px]">
-              <span class="flex items-center gap-1">
-                <label
-                  class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
-                >
-                  Back-Off RPE
-                </label>
-                <InfoIcon topic="backOffRpe" />
-              </span>
-              <LockToggle
-                v-if="periodizationEnabled"
-                :locked="isLocked('backOffRpe')"
-                @toggle="toggleLock('backOffRpe')"
-              />
+            <div class="flex items-center gap-1">
+              <label
+                class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark opacity-60"
+              >
+                Back-Off RPE
+              </label>
+              <InfoIcon topic="backOffRpe" />
             </div>
             <input
               v-model.number="configParams.backOffRpe"

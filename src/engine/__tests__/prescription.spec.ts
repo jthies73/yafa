@@ -150,7 +150,7 @@ describe("prescribeExercise — top set", () => {
     incrementUnit: "kg",
   };
 
-  it("renders a top set plus dropped back-offs (rpe null)", () => {
+  it("renders a top set plus dropped back-offs carrying the back-off RPE", () => {
     const p = prescribeExercise({
       exerciseId: "ex",
       model: "topset_backoff",
@@ -163,7 +163,7 @@ describe("prescribeExercise — top set", () => {
     const top = p.sets[0];
     expect(top.role).toBe("top");
     expect(p.sets[1].role).toBe("backoff");
-    expect(p.sets[1].rpe).toBeNull();
+    expect(p.sets[1].rpe).toBe(TOPSET.backOffRpe);
     expect(p.sets[1].weight).toBe(
       roundToLoadable((top.weight as number) * 0.9),
     );

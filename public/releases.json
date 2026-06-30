@@ -1,6 +1,10 @@
 {
-  "latest": "0.15.0",
+  "latest": "0.15.1",
   "releases": [
+    {
+      "version": "0.15.1",
+      "notes": "- Prefill Backoff RPE."
+    },
     {
       "version": "0.15.0",
       "notes": "- Active Workout persistence and Note Taking."

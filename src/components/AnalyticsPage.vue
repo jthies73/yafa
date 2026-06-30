@@ -222,7 +222,7 @@ const handleDelete = async () => {
       v-model:open="showForm"
       :editing="editing"
       @save="handleSave"
-      @delete="handleDelete"
+      @remove="handleDelete"
     />
   </div>
 </template>

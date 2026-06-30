@@ -367,11 +367,22 @@ export function useWorkoutTracker() {
 
     const matrix =
       exercisesMap.value[card.exerciseId]?.rpeMatrix ?? DEFAULT_RPE_MATRIX;
-    return proposeSetAdjustment(
+    const proposal = proposeSetAdjustment(
       matrix,
       { weight: pWeight, reps: pReps, rpe: pRpe },
       { reps: cur.target.reps, rpe: cur.target.rpe, weight: cur.target.weight },
     );
+    if (cur.target.role === "backoff") {
+      // Back-off load is a fixed % drop. Re-prescribe only downward: if the drop
+      // lands heavier than backOffRpe allows, reduce it. Cold-start fills are
+      // handled by fillColdStartFromGovernor.
+      return proposal !== null &&
+        cur.target.weight !== null &&
+        proposal.weight < cur.target.weight
+        ? proposal
+        : null;
+    }
+    return proposal;
   }
 
   /**

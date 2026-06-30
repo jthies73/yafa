@@ -180,8 +180,8 @@ const TOPSET: TopSetProgressionParams = {
 describe("evaluate — top set", () => {
   const presc = prescription("topset_backoff", [
     { reps: 5, rpe: 8, weight: 100, role: "top" },
-    { reps: 8, rpe: null, weight: 90, role: "backoff" },
-    { reps: 8, rpe: null, weight: 90, role: "backoff" },
+    { reps: 8, rpe: 7, weight: 90, role: "backoff" },
+    { reps: 8, rpe: 7, weight: 90, role: "backoff" },
   ]);
 
   it("success: top set hits reps & RPE (back-offs ignored)", () => {

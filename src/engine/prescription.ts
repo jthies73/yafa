@@ -136,7 +136,7 @@ function buildSets(
       for (let i = 0; i < p.backOffSets; i++) {
         sets.push({
           reps: backReps,
-          rpe: null, // logged-as-performed; backOffRpe shapes the reps, not a target
+          rpe: p.backOffRpe,
           weight: backWeight,
           role: "backoff",
           backoffFraction,

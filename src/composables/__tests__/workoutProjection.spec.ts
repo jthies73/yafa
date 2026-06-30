@@ -82,12 +82,24 @@ describe("prescribedSetEntry", () => {
     expect(row.completedAt).toBeNull();
   });
 
+  it("prefills back-off RPE like any other set", () => {
+    const row = prescribedSetEntry({
+      reps: 8,
+      rpe: 7,
+      weight: null,
+      role: "backoff",
+    });
+    expect(row.reps).toBe("8");
+    expect(row.weight).toBe("");
+    expect(row.rpe).toBe("7");
+  });
+
   it("leaves weight and RPE empty when the prescription has none", () => {
     const row = prescribedSetEntry({
       reps: 8,
       rpe: null,
       weight: null,
-      role: "backoff",
+      role: "straight",
     });
     expect(row.reps).toBe("8");
     expect(row.weight).toBe("");

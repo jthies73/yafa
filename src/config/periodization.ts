@@ -70,12 +70,7 @@ export const FOCUS_META: Record<PeriodizationFocus, FocusMeta> = {
 export const LOCKABLE_FIELDS: Record<ProgressionModelType, string[]> = {
   linear: ["targetSets", "targetReps", "targetRpe"],
   double: ["targetSets", "targetRpe"],
-  topset_backoff: [
-    "topSetTargetReps",
-    "backOffSets",
-    "backOffRpe",
-    "topSetTargetRpe",
-  ],
+  topset_backoff: ["topSetTargetReps", "topSetTargetRpe"],
   none: ["targetSets", "targetReps", "targetRpe"],
 };
 
